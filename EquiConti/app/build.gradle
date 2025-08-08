@@ -20,8 +20,10 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            // usa il proguard non-optimized per evitare il crash R8
+            // Disabilitiamo shrink/obfuscation per evitare il crash di R8
+            minifyEnabled false
+            shrinkResources false
+            // Lasciamo comunque i file proguard elencati (non verranno usati se minify=false)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
