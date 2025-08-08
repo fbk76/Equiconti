@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,22 +21,41 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Ensure SDK Components
+      - name: Install SDK components and accept licenses
         run: |
           sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
           yes | sdkmanager --licenses
 
+      - name: Locate ZIP
+        run: |
+          echo "Listing repo..."
+          ls -la || true
+          echo "Listing .github..."
+          ls -la .github || true
+          if [ -f "EquiConti_Android_Project.zip" ]; then
+            echo "ZIP_PATH=EquiConti_Android_Project.zip" >> $GITHUB_ENV
+          elif [ -f ".github/EquiConti_Android_Project.zip" ]; then
+            echo "ZIP_PATH=.github/EquiConti_Android_Project.zip" >> $GITHUB_ENV
+          else
+            echo "ERROR: EquiConti_Android_Project.zip non trovato (né in root né in .github/)" >&2
+            exit 1
+          fi
+          echo "ZIP trovato: $ZIP_PATH"
+
       - name: Unzip project
         run: |
-          unzip -o EquiConti_Android_Project.zip -d .
+          unzip -o "$ZIP_PATH" -d .
+          echo "Contenuto dopo unzip:"
           ls -la
+          echo "Contenuto cartella EquiConti:"
           ls -la EquiConti
 
-      - name: Build Release APK (no wrapper)
-        working-directory: ./EquiConti
-        run: |
-          # Usa Gradle "di sistema" installato dall'action
-          gradle assembleRelease
+      - name: Build Release APK
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.7
+          build-root-directory: EquiConti
+          arguments: assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
