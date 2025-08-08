@@ -1,11 +1,9 @@
 package com.cz.equiconti.data
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
-class Repo(private val db: EquiDb) {
+class Repo(val db: EquiDb) { // ← reso pubblico (era private)
 
     companion object {
         fun from(context: Context) = Repo(EquiDb.get(context))
@@ -46,7 +44,7 @@ class Repo(private val db: EquiDb) {
         return Report(startBalanceCents = startBal, rows = rows)
     }
 
-    // Generate monthly fees on 1st day: one sum per owner (sum of horse monthly fees)
+    // Genera le quote mensili il giorno 1: somma le quote dei cavalli per proprietario
     suspend fun generateMonthlyFees(date: LocalDate) {
         if (date.dayOfMonth != 1) return
         val owners = db.ownerDao().listOwners()
