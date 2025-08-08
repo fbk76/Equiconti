@@ -7,7 +7,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="EquiConti"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EquiConti">
+    android:theme="@style/Theme.EquiConti" ... >
         <activity
             android:name=".MainActivity"
             android:exported="true">
