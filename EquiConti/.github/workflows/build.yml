@@ -25,7 +25,7 @@ jobs:
           sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
           yes | sdkmanager --licenses
 
-      # Compila il progetto che sta nella cartella EquiConti/
+      # Compila il progetto nella cartella EquiConti
       - name: Build Release APK
         uses: gradle/gradle-build-action@v3
         with:
