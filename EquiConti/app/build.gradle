@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'org.jetbrains.kotlin.plugin.compose'
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
@@ -22,33 +23,26 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug {
-            minifyEnabled false
-        }
+        debug { minifyEnabled false }
     }
 
-    buildFeatures {
-        compose true
-    }
+    buildFeatures { compose true }
 
-    // ✅ Allinea tutto a Java 17
+    // ✅ Uniforma tutto a Java 17
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
-    // Con il plugin compose nuovo NON serve impostare kotlinCompilerExtensionVersion
-    // composeOptions { kotlinCompilerExtensionVersion '1.5.14' }
+    // Con il nuovo plugin Compose NON serve impostare kotlinCompilerExtensionVersion
 
     packaging {
         resources {
             excludes += ['/META-INF/AL2.0', '/META-INF/LGPL2.1']
         }
     }
-}  // <--- CHIUDE android
+}
 
 dependencies {
     // Compose BOM
@@ -65,7 +59,7 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     implementation 'androidx.compose.material3:material3'
 
-    // Material (Views) per tema/attributi richiesti
+    // Material (Views) per temi/attributi (colorPrimary ecc.)
     implementation 'com.google.android.material:material:1.12.0'
 
     // Room
@@ -78,10 +72,14 @@ dependencies {
     // WorkManager
     implementation 'androidx.work:work-runtime-ktx:2.9.0'
 
-    // Hilt
+    // Hilt core + compiler
     implementation 'com.google.dagger:hilt-android:2.51.1'
     kapt 'com.google.dagger:hilt-compiler:2.51.1'
     implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+
+    // Hilt + WorkManager (necessario per @HiltWorker)
+    implementation 'androidx.hilt:hilt-work:1.2.0'
+    kapt 'androidx.hilt:hilt-compiler:1.2.0'
 
     // Kotlinx serialization
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1'
