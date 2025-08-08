@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'org.jetbrains.kotlin.plugin.compose'   // <-- AGGIUNTO
+    id 'org.jetbrains.kotlin.plugin.compose'
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
 }
@@ -21,29 +21,24 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // <-- usa il file ProGuard non-optimized per evitare il bug R8
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
         }
     }
 
-    buildFeatures {
-        compose true
-    }
+    buildFeatures { compose true }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
     packagingOptions {
-        resources {
-            excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"]
-        }
+        resources { excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"] }
     }
 }
 
@@ -83,5 +78,4 @@ dependencies {
     kapt "androidx.hilt:hilt-compiler:1.2.0"
 
     // Kotlin serialization
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1"
-}
+    implementation "org.jetbrains.kotlinx:k
