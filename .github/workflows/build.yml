@@ -3,9 +3,17 @@ name: Build APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # Tutti i comandi girano dentro la sottocartella EquiConti
+    defaults:
+      run:
+        working-directory: EquiConti
 
     steps:
       - name: Checkout
@@ -15,45 +23,37 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
-          cache: 'gradle'
+          java-version: 17
+          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses
 
-      - name: Detect gradlew location
-        id: detect
+      # Se nel repo non c'è il wrapper, lo creiamo ora
+      - name: Install Gradle and generate wrapper
         shell: bash
         run: |
-          set -e
-          GRADLEW_PATH="$(git ls-files | grep -E '(^|/)gradlew$' | head -n1 || true)"
-          if [[ -z "$GRADLEW_PATH" ]]; then
-            echo "❌ gradlew non trovato nel repo"; exit 1
+          if [ ! -f gradlew ]; then
+            curl -s "https://get.sdkman.io" | bash
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+            sdk install gradle 8.7
+            gradle --version
+            gradle wrapper
           fi
-          GRADLEW_DIR="$(dirname "$GRADLEW_PATH")"
-          echo "GRADLEW_DIR=$GRADLEW_DIR" >> $GITHUB_ENV
-          echo "APK_DIR=$GRADLEW_DIR/app/build/outputs/apk/release" >> $GITHUB_ENV
-          echo "Trovato gradlew in: $GRADLEW_DIR"
 
       - name: Make gradlew executable
-        shell: bash
-        run: |
-          cd "$GRADLEW_DIR"
-          chmod +x gradlew
+        run: chmod +x ./gradlew
 
       - name: Build Release APK
-        shell: bash
-        run: |
-          cd "$GRADLEW_DIR"
-          ./gradlew --no-daemon clean assembleRelease
+        run: ./gradlew --no-daemon assembleRelease
 
+      # carichiamo l’APK come artifact (percorso relativo alla root del repo)
       - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: EquiConti-release-${{ github.run_number }}
-          path: ${{ env.APK_DIR }}/*.apk
-          if-no-files-found: error
-          retention-days: 14
+          name: app-release.apk
+          path: EquiConti/app/build/outputs/apk/release/app-release.apk
