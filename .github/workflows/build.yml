@@ -24,16 +24,36 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Detect gradlew location
+        id: detect
+        shell: bash
+        run: |
+          set -e
+          GRADLEW_PATH="$(git ls-files | grep -E '(^|/)gradlew$' | head -n1 || true)"
+          if [[ -z "$GRADLEW_PATH" ]]; then
+            echo "❌ gradlew non trovato nel repo"; exit 1
+          fi
+          GRADLEW_DIR="$(dirname "$GRADLEW_PATH")"
+          echo "GRADLEW_DIR=$GRADLEW_DIR" >> $GITHUB_ENV
+          echo "APK_DIR=$GRADLEW_DIR/app/build/outputs/apk/release" >> $GITHUB_ENV
+          echo "Trovato gradlew in: $GRADLEW_DIR"
+
       - name: Make gradlew executable
-        run: chmod +x ./gradlew
+        shell: bash
+        run: |
+          cd "$GRADLEW_DIR"
+          chmod +x gradlew
 
       - name: Build Release APK
-        run: ./gradlew --no-daemon clean assembleRelease
+        shell: bash
+        run: |
+          cd "$GRADLEW_DIR"
+          ./gradlew --no-daemon clean assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: EquiConti-release-${{ github.run_number }}
-          path: app/build/outputs/apk/release/*.apk
+          path: ${{ env.APK_DIR }}/*.apk
           if-no-files-found: error
           retention-days: 14
