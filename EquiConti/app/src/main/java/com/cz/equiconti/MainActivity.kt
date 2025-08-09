@@ -1,8 +1,6 @@
 package com.cz.equiconti
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -16,46 +14,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
-/**
- * Activity d’ingresso con protezione: prova a caricare la UI reale.
- * Se qualcosa lancia eccezione, mostra una schermata di fallback e logga l’errore.
- */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            // stato che decide se mostrare la UI reale o il fallback
+            // Se in futuro vuoi mostrare il fallback, potrai settare questo stato da eventi leciti.
             val showFallback = remember { mutableStateOf(false) }
 
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                if (!showFallback.value) {
-                    try {
-                        // 🔵 QUI viene caricata la tua UI reale
-                        MainApp()
-                    } catch (t: Throwable) {
-                        // Logga e passa al fallback
-                        Log.e("EquiConti", "Errore in composizione UI", t)
-                        Toast
-                            .makeText(this, "Errore di avvio: caricata schermata di emergenza", Toast.LENGTH_LONG)
-                            .show()
-                        showFallback.value = true
-                    }
-                } else {
+                if (showFallback.value) {
                     FallbackScreen()
+                } else {
+                    MainApp()
                 }
             }
         }
     }
 }
 
-/**
- * 🔁 Fallback molto semplice mostrato se la UI reale fallisce.
- */
 @Composable
 private fun FallbackScreen() {
     Box(
@@ -70,15 +51,10 @@ private fun FallbackScreen() {
 }
 
 /**
- * ✅ UI REALE (sostituisci il contenuto con la tua app).
- *
- * Per rimettere la tua interfaccia:
- * - incolla qui il tuo NavHost / schermate / composables principali
- *   (ad esempio OwnersScreen/OwnerDetail/TxnScreen, ecc.).
+ * Qui va la tua UI reale (NavHost / schermate principali).
  */
 @Composable
 fun MainApp() {
-    // Implementazione “safe” di default per compilare subito:
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
