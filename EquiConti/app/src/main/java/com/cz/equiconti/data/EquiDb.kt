@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Owner::class, Horse::class, Txn::class],
-    version = 1,
+    version = 2,                 // <-- bump versione per forzare ricreazione
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
@@ -24,7 +24,11 @@ abstract class EquiDb : RoomDatabase() {
                     context.applicationContext,
                     EquiDb::class.java,
                     "equiconti.db"
-                ).build().also { INSTANCE = it }
+                )
+                // Se mancano migration o l'hash schema non combacia, distrugge e ricrea
+                .fallbackToDestructiveMigration()
+                .build()
+                .also { INSTANCE = it }
             }
     }
 }
