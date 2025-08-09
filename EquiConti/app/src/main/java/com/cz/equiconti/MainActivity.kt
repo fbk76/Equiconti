@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,11 +41,9 @@ private fun EquiAppNav() {
     val nav = rememberNavController()
 
     NavHost(navController = nav, startDestination = "owners") {
-
         composable("owners") {
             OwnersScreen(nav = nav, vm = hiltViewModel())
         }
-
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -52,7 +51,6 @@ private fun EquiAppNav() {
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(nav = nav, ownerId = ownerId, vm = hiltViewModel())
         }
-
         composable(
             route = "report/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
