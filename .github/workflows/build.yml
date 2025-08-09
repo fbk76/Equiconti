@@ -7,6 +7,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # <<< CAMBIA QUI se il tuo modulo non si chiama "EquiConti"
+    env:
+      PROJECT_DIR: EquiConti
+
+    # Tutti i `run:` sotto useranno come cwd la cartella del progetto
+    defaults:
+      run:
+        working-directory: ${{ env.PROJECT_DIR }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,24 +25,23 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install SDK packages (API 34)
+      - name: Install SDK packages (API 34 + build-tools 34.0.0)
         run: |
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
           yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: app/build/outputs/apk/release/*.apk
+          name: app-release.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/release/*.apk
