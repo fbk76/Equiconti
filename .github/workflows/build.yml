@@ -6,10 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     defaults:
       run:
-        working-directory: EquiConti   # <-- cartella del progetto (cambiala se diversa)
+        working-directory: EquiConti
 
     steps:
       - name: Checkout
@@ -18,9 +17,9 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -28,23 +27,16 @@ jobs:
       - name: Accept SDK licenses
         run: yes | sdkmanager --licenses
 
-      # Genera il Gradle Wrapper se manca (incluso gradle-wrapper.jar)
-      - name: Install Gradle and generate wrapper
-        shell: bash
+      - name: Install Gradle and generate wrapper (8.7)
         run: |
-          if [ ! -f gradlew ]; then
-            curl -s "https://get.sdkman.io" | bash
-            source "$HOME/.sdkman/bin/sdkman-init.sh"
-            sdk install gradle 8.7
-            gradle --version
-            gradle wrapper
-          fi
+          gradle --version || true
+          gradle wrapper --gradle-version 8.7 --distribution-type all
 
       - name: Upload wrapper JAR (scaricalo e commit)
         uses: actions/upload-artifact@v4
         with:
           name: gradle-wrapper-jar
-          path: EquiConti/gradle/wrapper/gradle-wrapper.jar
+          path: gradle/wrapper/gradle-wrapper.jar
           if-no-files-found: error
           retention-days: 14
 
@@ -52,12 +44,10 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Release APK
-        run: ./gradlew --no-daemon assembleRelease
+        run: ./gradlew assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: EquiConti/app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
-          retention-days: 14
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
