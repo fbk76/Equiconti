@@ -1,6 +1,5 @@
 package com.cz.equiconti.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,37 +11,37 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cz.equiconti.vm.OwnersVm
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OwnersScreen(nav: NavController, vm: OwnersVm = hiltViewModel()) {
+fun OwnersScreen(
+    nav: NavController,
+    vm: OwnersVm = hiltViewModel()
+) {
     val owners by vm.owners.collectAsState()
-    var showAdd by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopBar("Clienti") },
+        topBar = { TopAppBar(title = { Text("Clienti") }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAdd = true }) { Text("+") }
-        }
-    ) { pad ->
-        Column(Modifier.padding(pad)) {
-            LazyColumn {
-                items(owners) { o ->
-                    ListItem(
-                        headlineContent = { Text("${o.surname} ${o.name}") },
-                        supportingContent = { Text(o.phone ?: "") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { nav.navigate("owner/${o.ownerId}") }
-                    )
-                    Divider()
-                }
+            FloatingActionButton(onClick = { nav.navigate("owner/new") }) {
+                Text("+")
             }
         }
-    }
-
-    if (showAdd) {
-        OwnerDialog(
-            onDismiss = { showAdd = false },
-            onSave = { vm.addOwner(it); showAdd = false }
-        )
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(owners) { o ->
+                ListItem(
+                    headlineContent = { Text("${o.surname}  ${o.name}") },
+                    supportingContent = { Text(o.phone ?: "") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Divider()
+            }
+        }
     }
 }
