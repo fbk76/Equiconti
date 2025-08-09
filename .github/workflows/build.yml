@@ -1,13 +1,21 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   push:
-    branches: [ "main" ]
+    branches: [ main ]
+    paths:
+      - "EquiConti/**"
+      - ".github/workflows/build.yml"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # Tutti i comandi 'run' partono da EquiConti/
+    defaults:
+      run:
+        working-directory: EquiConti
 
     steps:
       - name: Checkout
@@ -20,28 +28,27 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Install Android SDK (API 34)
+      - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: |
+            tools
+            platform-tools
             platforms;android-34
             build-tools;34.0.0
 
-      - name: Ensure Gradle wrapper is executable
-        run: chmod +x ./EquiConti/gradlew
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses
 
-      - name: Build release APK
-        working-directory: EquiConti
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: wrapper
-      - name: Assemble release
-        working-directory: EquiConti
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build Release APK
         run: ./gradlew --no-daemon assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: EquiConti-release-apk
-          path: EquiConti/app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
