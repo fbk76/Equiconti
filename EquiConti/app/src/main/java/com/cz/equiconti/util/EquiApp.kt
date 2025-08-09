@@ -1,12 +1,7 @@
-package com.cz.equiconti.util
+package com.cz.equiconti
 
 import android.app.Application
-import com.cz.equiconti.data.EquiDb
+import dagger.hilt.android.HiltAndroidApp
 
-class EquiApp : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        // Inizializzazione del database
-        EquiDb.get(this)
-    }
-}
+@HiltAndroidApp
+class EquiApp : Application()
