@@ -1,3 +1,28 @@
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Scarica SOLO il jar del wrapper 8.7
+      - name: Fetch Gradle wrapper JAR (8.7)
+        run: |
+          mkdir -p EquiConti/gradle/wrapper
+          curl -sSL -o EquiConti/gradle/wrapper/gradle-wrapper.jar \
+            https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.7/gradle-wrapper-8.7.jar
+          ls -l EquiConti/gradle/wrapper
+
+      # Committa il jar nel repo (una volta sola)
+      - name: Commit wrapper jar
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add EquiConti/gradle/wrapper/gradle-wrapper.jar
+          git commit -m "Add Gradle wrapper jar 8.7" || echo "Nothing to commit"
+          git push
+
 name: Build APK
 
 on:
