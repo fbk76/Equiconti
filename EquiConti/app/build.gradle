@@ -18,10 +18,9 @@ android {
         versionName "1.0.0"
     }
 
-    // firma unica per evitare errori in CI e su installazione
+    // Keystore di debug usato anche per la release di test (generato dal workflow)
     signingConfigs {
         debug {
-            // il workflow crea questo file nella root del repo
             storeFile file("$rootDir/debug.keystore")
             storePassword "android"
             keyAlias "androiddebugkey"
@@ -29,6 +28,7 @@ android {
         }
     }
 
+    // ✅ Punto 2: buildTypes aggiornati
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -37,36 +37,28 @@ android {
         }
         release {
             signingConfig signingConfigs.debug
-            // disattiviamo R8/shrink per stabilità (riattivabile più avanti)
-            minifyEnabled false
-            shrinkResources false
+            // R8 attivo + nostre regole (se serve disattivarlo: porta a false)
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            shrinkResources false
             debuggable false
         }
     }
 
-    buildFeatures {
-        compose true
-    }
+    buildFeatures { compose true }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
-    // compat con AGP 8.x
     packagingOptions {
-        resources {
-            excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"]
-        }
+        resources { excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"] }
     }
 }
 
 dependencies {
-    // Compose BOM
     implementation platform("androidx.compose:compose-bom:2025.01.01")
     androidTestImplementation platform("androidx.compose:compose-bom:2025.01.01")
 
