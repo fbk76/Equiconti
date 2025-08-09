@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Il progetto Android è nella cartella EquiConti
+    # Tutti i comandi "run:" lavorano dentro la cartella del progetto Android
     defaults:
       run:
         working-directory: EquiConti
@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
@@ -28,35 +28,32 @@ jobs:
       - name: Accept SDK licenses
         run: yes | sdkmanager --licenses
 
-      - name: Ensure Gradle wrapper properties (8.7)
-        run: |
-          mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
-            cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.7-all.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
-          fi
+      # Usiamo Gradle 8.7 solo per generare il wrapper
+      - name: Set up Gradle 8.7 (for wrapper)
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
 
-      - name: Fetch Gradle wrapper JAR (8.7) if missing
+      - name: Generate Gradle Wrapper (8.7)
         run: |
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            curl -sSL -o gradle/wrapper/gradle-wrapper.jar \
-              https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.7/gradle-wrapper-8.7.jar
-          fi
-          ls -l gradle/wrapper
+          gradle --version
+          gradle wrapper --gradle-version 8.7 --distribution-type all
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Verify wrapper files
+        run: |
+          ls -l gradle/wrapper
+          ls -l gradlew
+
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew --no-daemon assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: EquiConti-release-apk
+          # path relativo alla root del repo (non alla working-directory)
+          path: EquiConti/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
