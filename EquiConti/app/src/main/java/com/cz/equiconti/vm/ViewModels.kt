@@ -1,95 +1,69 @@
 package com.cz.equiconti.vm
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cz.equiconti.data.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
+
+// Se hai già la tua entity Owner, importa quella:
+// import com.cz.equiconti.data.Owner
+
+// --- fallback semplice per compilare subito ---
+// Eliminalo se usi la tua entity com.cz.equiconti.data.Owner
+data class Owner(
+    val id: Long,
+    val firstName: String,
+    val lastName: String,
+    val phone: String? = null
+)
+// ------------------------------------------------
 
 @HiltViewModel
 class OwnersVm @Inject constructor(
-    private val repo: Repo
+    // Se/Quando vorrai usare un DAO o un Repository, iniettalo qui
+    // private val ownerDao: OwnerDao
 ) : ViewModel() {
 
+    // Stato pubblico osservabile dalla UI
     private val _owners = MutableStateFlow<List<Owner>>(emptyList())
-    val owners = _owners.asStateFlow()
+    val owners: StateFlow<List<Owner>> = _owners.asStateFlow()
 
     init {
-        refresh()
+        // Per ora carichiamo un mock così l'app mostra qualcosa
+        viewModelScope.launch {
+            _owners.value = listOf(
+                Owner(id = 1L, firstName = "Fulvia", lastName = "Bolzan", phone = "123456789")
+            )
+        }
+
+        // Esempio con DAO (da usare quando avrai il DAO):
+        // viewModelScope.launch {
+        //     ownerDao.observeAll().collect { list -> _owners.value = list }
+        // }
     }
 
-    fun refresh() = viewModelScope.launch {
-        _owners.value = repo.listOwners()
-    }
-
-    fun addOwner(o: Owner) = viewModelScope.launch {
-        repo.upsertOwner(o)
-        refresh()
+    fun refresh() {
+        // hook per la UI; no-op per ora
     }
 }
 
 @HiltViewModel
 class OwnerDetailVm @Inject constructor(
-    private val repo: Repo
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-    private val _owner = MutableStateFlow<OwnerWithHorses?>(null)
-    val owner = _owner.asStateFlow()
-
-    private val _horses = MutableStateFlow<List<Horse>>(emptyList())
-    val horses = _horses.asStateFlow()
-
-    private val _balance = MutableStateFlow<Long?>(0L)
-    val balance = _balance.asStateFlow()
-
-    fun load(ownerId: Long) = viewModelScope.launch {
-        _owner.value = repo.getOwnerWithHorses(ownerId)
-        _horses.value = repo.listHorses(ownerId)
-        _balance.value = repo.db.txnDao().balanceForOwner(ownerId) ?: 0L
-    }
-
-    fun addHorse(h: Horse) = viewModelScope.launch {
-        repo.upsertHorse(h)
-        _horses.value = repo.listHorses(h.ownerId)
-        _balance.value = repo.db.txnDao().balanceForOwner(h.ownerId) ?: 0L
-    }
-}
-
-@HiltViewModel
-class TxnVm @Inject constructor(
-    private val repo: Repo
-) : ViewModel() {
-
-    private val _txns = MutableStateFlow<List<Txn>>(emptyList())
-    val txns = _txns.asStateFlow()
-
-    private var ownerId: Long = 0L
-
-    fun load(ownerId: Long) = viewModelScope.launch {
-        this@TxnVm.ownerId = ownerId
-        _txns.value = repo.listTxns(ownerId)
-    }
-
-    fun addTxn(t: Txn) = viewModelScope.launch {
-        repo.addTxn(t)
-        _txns.value = repo.listTxns(ownerId)
-    }
+    val ownerId: Long = savedStateHandle["ownerId"] ?: 0L
+    // Aggiungi qui stato/logica del dettaglio quando serve
 }
 
 @HiltViewModel
 class ReportVm @Inject constructor(
-    private val repo: Repo
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-
-    private val _report = MutableStateFlow<Report?>(null)
-    val report = _report.asStateFlow()
-
-    fun load(ownerId: Long, from: String, to: String) = viewModelScope.launch {
-        val rep = repo.report(ownerId, LocalDate.parse(from), LocalDate.parse(to))
-        _report.value = rep
-    }
+    val ownerId: Long = savedStateHandle["ownerId"] ?: 0L
+    // Aggiungi qui stato/logica del report quando serve
 }
