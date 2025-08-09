@@ -14,13 +14,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.cz.equiconti.ui.OwnersScreen
+import com.cz.equiconti.ui.AddOwnerScreen
 import com.cz.equiconti.ui.OwnerDetailScreen
+import com.cz.equiconti.ui.OwnersScreen
 import com.cz.equiconti.ui.ReportScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -39,10 +41,21 @@ class MainActivity : ComponentActivity() {
 private fun EquiAppNav() {
     val nav = rememberNavController()
 
-    NavHost(navController = nav, startDestination = "owners") {
+    NavHost(
+        navController = nav,
+        startDestination = "owners"
+    ) {
+        // Lista clienti
         composable("owners") {
             OwnersScreen(nav = nav, vm = hiltViewModel())
         }
+
+        // Nuovo cliente
+        composable("owner/new") {
+            AddOwnerScreen(nav = nav)
+        }
+
+        // Dettaglio cliente (ownerId come Long)
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -50,6 +63,8 @@ private fun EquiAppNav() {
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(nav = nav, ownerId = ownerId, vm = hiltViewModel())
         }
+
+        // Report per cliente
         composable(
             route = "report/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
