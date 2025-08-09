@@ -1,13 +1,12 @@
-package com.cz.equiconti
+package com.cz.equiconti.util
 
 import android.app.Application
-import com.cz.equiconti.util.CrashLogger
+import com.cz.equiconti.data.EquiDb
 
 class EquiApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Nel caso in cui il provider non fosse stato caricato, assicuriamoci il logger
-        CrashLogger.install(this)
-        CrashLogger.writeBreadcrumb(this, "Application onCreate")
+        // Inizializzazione del database
+        EquiDb.get(this)
     }
 }
