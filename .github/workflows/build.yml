@@ -7,15 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # <<< CAMBIA QUI se il tuo modulo non si chiama "EquiConti"
-    env:
-      PROJECT_DIR: EquiConti
-
-    # Tutti i `run:` sotto useranno come cwd la cartella del progetto
-    defaults:
-      run:
-        working-directory: ${{ env.PROJECT_DIR }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,24 +15,38 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install SDK packages (API 34 + build-tools 34.0.0)
         run: |
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
           yes | sdkmanager --licenses
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Generate debug keystore (used for debug & release)
+        run: |
+          keytool -genkeypair \
+            -v \
+            -storetype JKS \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -keystore debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/release/app-release.apk
