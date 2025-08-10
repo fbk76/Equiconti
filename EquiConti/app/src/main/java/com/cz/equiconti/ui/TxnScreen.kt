@@ -1,11 +1,26 @@
-// app/src/main/java/com/cz/equiconti/ui/TxnScreen.kt
 package com.cz.equiconti.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Divider
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,7 +42,7 @@ fun TxnScreen(
     var showAdd by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopBar("Movimenti") { nav.popBackStack() } },
+        topBar = { CenterAlignedTopAppBar(title = { Text("Movimenti") }) },
         floatingActionButton = { FloatingActionButton(onClick = { showAdd = true }) { Text("+") } }
     ) { pad ->
         Column(Modifier.padding(pad)) {
@@ -36,12 +51,9 @@ fun TxnScreen(
                 items(txns) { t ->
                     running += t.incomeCents - t.expenseCents
                     ListItem(
-                        headlineContent = { Text("${formatDate(t.dateMillis)} • ${t.operation}") },
+                        headlineContent = { Text("${millisToYmd(t.dateMillis)} • ${t.operation}") },
                         supportingContent = {
-                            Text(
-                                "Entrate: ${formatCurrency(t.incomeCents)}   " +
-                                "Uscite: ${formatCurrency(t.expenseCents)}"
-                            )
+                            Text("Entrate: ${formatCurrency(t.incomeCents)}  Uscite: ${formatCurrency(t.expenseCents)}")
                         },
                         trailingContent = { Text(formatCurrency(running)) }
                     )
@@ -52,21 +64,24 @@ fun TxnScreen(
     }
 
     if (showAdd) {
-        AddTxnDialog(
+        TxnDialog(
             ownerId = ownerId,
             onDismiss = { showAdd = false },
-            onSave = { vm.addTxn(it); showAdd = false }
+            onSave = {
+                vm.addTxn(it)
+                showAdd = false
+            }
         )
     }
 }
 
 @Composable
-private fun AddTxnDialog(
+private fun TxnDialog(
     ownerId: Long,
     onDismiss: () -> Unit,
     onSave: (Txn) -> Unit
 ) {
-    var date by remember { mutableStateOf(LocalDate.now().toString()) }
+    var date by remember { mutableStateOf(LocalDate.now().toString()) } // yyyy-MM-dd
     var operation by remember { mutableStateOf("") }
     var inc by remember { mutableStateOf("") }
     var exp by remember { mutableStateOf("") }
@@ -78,14 +93,16 @@ private fun AddTxnDialog(
             TextButton(
                 onClick = {
                     val zone = ZoneId.systemDefault()
-                    val millis = LocalDate.parse(date).atStartOfDay(zone).toInstant().toEpochMilli()
-                    val income = ((inc.toDoubleOrNull() ?: 0.0) * 100).toLong()
-                    val expense = ((exp.toDoubleOrNull() ?: 0.0) * 100).toLong()
+                    val dateMillis = LocalDate.parse(date).atStartOfDay(zone).toInstant().toEpochMilli()
+                    val income = ((inc.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
+                    val expense = ((exp.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
+
                     onSave(
                         Txn(
+                            // NB: **coincide con la data class corrente**
                             ownerId = ownerId,
-                            horseId = null,
-                            dateMillis = millis,
+                            // horseId lo lasciamo null
+                            dateMillis = dateMillis,
                             operation = operation,
                             incomeCents = income,
                             expenseCents = expense,
@@ -99,18 +116,16 @@ private fun AddTxnDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
         title = { Text("Nuovo movimento") },
         text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(date, { date = it }, label = { Text("Data (yyyy-MM-dd)") })
-                OutlinedTextField(operation, { operation = it }, label = { Text("Operazione") })
-                OutlinedTextField(inc, { inc = it }, label = { Text("Entrate (€)") })
-                OutlinedTextField(exp, { exp = it }, label = { Text("Uscite (€)") })
-                OutlinedTextField(note, { note = it }, label = { Text("Note") })
+            Column(Modifier.fillMaxWidth().padding(top = 4.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Data (yyyy-MM-dd)") })
+                OutlinedTextField(value = operation, onValueChange = { operation = it }, label = { Text("Operazione") })
+                OutlinedTextField(value = inc, onValueChange = { inc = it }, label = { Text("Entrate (€)") })
+                OutlinedTextField(value = exp, onValueChange = { exp = it }, label = { Text("Uscite (€)") })
+                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Note") })
             }
         }
     )
 }
 
-private fun formatDate(millis: Long): String {
-    val d = java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
-    return d.toString()
-}
+private fun millisToYmd(millis: Long): String =
+    LocalDate.ofEpochDay(millis / 86_400_000L).toString()
