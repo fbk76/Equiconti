@@ -1,3 +1,4 @@
+// app/src/main/java/com/cz/equiconti/data/EquiDb.kt
 package com.cz.equiconti.data
 
 import android.content.Context
@@ -7,7 +8,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Owner::class, Horse::class, Txn::class],
-    version = 2,                 // ⬅️ bump rispetto a prima
+    version = 3,                 // ⬅️ aumenta di +1 rispetto alla tua ultima release
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
@@ -25,9 +26,9 @@ abstract class EquiDb : RoomDatabase() {
                     EquiDb::class.java,
                     "equiconti.db"
                 )
-                .fallbackToDestructiveMigration() // ⬅️ wipe se schema cambia
+                .fallbackToDestructiveMigration() // ricrea il DB se cambia lo schema
                 .build()
-                    .also { INSTANCE = it }
+                .also { INSTANCE = it }
             }
     }
 }
