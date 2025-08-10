@@ -6,11 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [
-        Owner::class,
-        Horse::class,
-        Txn::class           // <-- registrata anche Txn
-    ],
+    entities = [Owner::class, Horse::class, Txn::class],
     version = 1,
     exportSchema = false
 )
@@ -29,9 +25,7 @@ abstract class EquiDb : RoomDatabase() {
                     EquiDb::class.java,
                     "equiconti.db"
                 )
-                // Se stai solo sviluppando e non ti interessa conservare dati
-                // fra cambi di schema, abilita la distruzione automatica:
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration()   // utile in sviluppo
                 .build()
                 .also { INSTANCE = it }
             }
