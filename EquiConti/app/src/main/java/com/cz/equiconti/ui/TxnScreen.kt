@@ -120,11 +120,11 @@ private fun TxnDialog(
                 Modifier.fillMaxWidth().padding(top = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Data (yyyy-MM-dd)") })
-                OutlinedTextField(value = operation, onValueChange = { operation = it }, label = { Text("Operazione") })
-                OutlinedTextField(value = inc, onValueChange = { inc = it }, label = { Text("Entrate (€)") })
-                OutlinedTextField(value = exp, onValueChange = { exp = it }, label = { Text("Uscite (€)") })
-                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Note (opzionale)") })
+                OutlinedTextField(value = date, onValueChange = { text -> date = text }, label = { Text("Data (yyyy-MM-dd)") })
+                OutlinedTextField(value = operation, onValueChange = { text -> operation = text }, label = { Text("Operazione") })
+                OutlinedTextField(value = inc, onValueChange = { text -> inc = text }, label = { Text("Entrate (€)") })
+                OutlinedTextField(value = exp, onValueChange = { text -> exp = text }, label = { Text("Uscite (€)") })
+                OutlinedTextField(value = note, onValueChange = { text -> note = text }, label = { Text("Note (opzionale)") })
             }
         }
     )
