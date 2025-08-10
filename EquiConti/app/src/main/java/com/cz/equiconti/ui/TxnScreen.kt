@@ -51,11 +51,9 @@ fun TxnScreen(
                 var running = 0L
                 items(txns) { t ->
                     running += t.incomeCents - t.expenseCents
+                    val d = LocalDate.ofEpochDay(t.dateMillis / 86_400_000L)
                     ListItem(
-                        headlineContent = {
-                            val d = LocalDate.ofEpochDay(t.dateMillis / 86_400_000L)
-                            Text("${d} • ${t.operation}")
-                        },
+                        headlineContent = { Text("$d • ${t.operation}") },
                         supportingContent = {
                             Text(
                                 "Entrate: ${formatCurrency(t.incomeCents)}   " +
@@ -100,7 +98,6 @@ private fun TxnDialog(
                     val millis = LocalDate.parse(date).atStartOfDay(zone).toInstant().toEpochMilli()
                     val income = ((inc.toDoubleOrNull() ?: 0.0) * 100).toLong()
                     val expense = ((exp.toDoubleOrNull() ?: 0.0) * 100).toLong()
-
                     onSave(
                         Txn(
                             ownerId = ownerId,
