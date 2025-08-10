@@ -40,7 +40,11 @@ interface TxnDao {
     @Query("""
         SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
         FROM Txn
-        WHERE ownerId = :ownerId AND dateMillis < :beforeMillis
+        WHERE ownerId = :ownerId
+          AND dateMillis < :beforeMillis
     """)
-    suspend fun balanceBefore(ownerId: Long, beforeMillis: Long): Long
+    suspend fun balanceBefore(
+        ownerId: Long,
+        beforeMillis: Long
+    ): Long
 }
