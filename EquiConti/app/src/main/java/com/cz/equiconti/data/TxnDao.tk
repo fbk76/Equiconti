@@ -11,16 +11,24 @@ interface TxnDao {
     @Insert
     suspend fun insert(txn: Txn): Long
 
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY dateMillis DESC")
+    @Query("""
+        SELECT * FROM Txn
+        WHERE ownerId = :ownerId
+        ORDER BY dateMillis DESC
+    """)
     fun listByOwner(ownerId: Long): Flow<List<Txn>>
 
     @Query("""
         SELECT * FROM Txn
         WHERE ownerId = :ownerId
-          AND dateMillis BETWEEN :from AND :to
+          AND dateMillis BETWEEN :fromMillis AND :toMillis
         ORDER BY dateMillis DESC
     """)
-    fun listInRange(ownerId: Long, from: Long, to: Long): Flow<List<Txn>>
+    fun listInRange(
+        ownerId: Long,
+        fromMillis: Long,
+        toMillis: Long
+    ): Flow<List<Txn>>
 
     @Query("""
         SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
@@ -32,7 +40,7 @@ interface TxnDao {
     @Query("""
         SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
         FROM Txn
-        WHERE ownerId = :ownerId AND dateMillis < :before
+        WHERE ownerId = :ownerId AND dateMillis < :beforeMillis
     """)
-    suspend fun balanceBefore(ownerId: Long, before: Long): Long
+    suspend fun balanceBefore(ownerId: Long, beforeMillis: Long): Long
 }
