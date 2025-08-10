@@ -1,11 +1,20 @@
+// app/src/main/java/com/cz/equiconti/data/Dao.kt
 package com.cz.equiconti.data
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
+/*  Owner DAO  */
 @Dao
 interface OwnerDao {
-    @Query("SELECT * FROM Owner ORDER BY surname, name")
-    suspend fun listOwners(): List<Owner>
+
+    // Flusso reattivo ordinato per cognome/nome
+    @Query("SELECT * FROM Owner ORDER BY lastName, firstName")
+    fun observeAll(): Flow<List<Owner>>
 
     @Insert
     suspend fun insert(owner: Owner): Long
@@ -16,15 +25,16 @@ interface OwnerDao {
     @Delete
     suspend fun delete(owner: Owner)
 
-    @Transaction
-    @Query("SELECT * FROM Owner WHERE ownerId = :id")
-    suspend fun loadWithHorses(id: Long): OwnerWithHorses?
+    @Query("SELECT * FROM Owner WHERE id = :id")
+    suspend fun getById(id: Long): Owner?
 }
 
+/*  Horse DAO  */
 @Dao
 interface HorseDao {
+
     @Query("SELECT * FROM Horse WHERE ownerId = :ownerId ORDER BY name")
-    suspend fun listByOwner(ownerId: Long): List<Horse>
+    fun observeByOwner(ownerId: Long): Flow<List<Horse>>
 
     @Insert
     suspend fun insert(horse: Horse): Long
@@ -36,26 +46,45 @@ interface HorseDao {
     suspend fun delete(horse: Horse)
 }
 
+/*  Transactions DAO  */
 @Dao
 interface TxnDao {
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY date, txnId")
-    suspend fun listByOwner(ownerId: Long): List<Txn>
 
     @Insert
     suspend fun insert(txn: Txn): Long
+
+    // Elenco movimenti per proprietario, più recenti prima (usa dateMillis!)
+    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY dateMillis DESC, id DESC")
+    fun listByOwner(ownerId: Long): Flow<List<Txn>>
+
+    // Intervallo date (millisecondi Epoch)
+    @Query("""
+        SELECT * FROM Txn
+        WHERE ownerId = :ownerId
+          AND dateMillis BETWEEN :from AND :to
+        ORDER BY dateMillis DESC, id DESC
+    """)
+    fun listInRange(ownerId: Long, from: Long, to: Long): Flow<List<Txn>>
+
+    // Saldo corrente (entrate - uscite)
+    @Query("""
+        SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
+        FROM Txn
+        WHERE ownerId = :ownerId
+    """)
+    suspend fun balanceForOwner(ownerId: Long): Long
+
+    // Saldo prima di una certa data (millisecondi)
+    @Query("""
+        SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
+        FROM Txn
+        WHERE ownerId = :ownerId AND dateMillis < :before
+    """)
+    suspend fun balanceBefore(ownerId: Long, before: Long): Long
 
     @Update
     suspend fun update(txn: Txn)
 
     @Delete
     suspend fun delete(txn: Txn)
-
-    @Query("SELECT SUM(incomeCents - expenseCents) FROM Txn WHERE ownerId = :ownerId")
-    suspend fun balanceForOwner(ownerId: Long): Long?
-
-    @Query("SELECT SUM(incomeCents - expenseCents) FROM Txn WHERE ownerId = :ownerId AND date < :fromDate")
-    suspend fun balanceBefore(ownerId: Long, fromDate: String): Long?
-
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId AND date BETWEEN :fromDate AND :toDate ORDER BY date, txnId")
-    suspend fun listInRange(ownerId: Long, fromDate: String, toDate: String): List<Txn>
 }
