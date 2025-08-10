@@ -1,27 +1,37 @@
 package com.cz.equiconti.vm
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.cz.equiconti.data.EquiDb
+import com.cz.equiconti.data.Txn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-
-import com.cz.equiconti.data.Txn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class TxnVm @Inject constructor() : ViewModel() {
+class TxnVm @Inject constructor(
+    private val db: EquiDb
+) : ViewModel() {
 
     private val _txns = MutableStateFlow<List<Txn>>(emptyList())
     val txns: StateFlow<List<Txn>> = _txns.asStateFlow()
 
-    /** in futuro potrai caricare dal DB usando ownerId */
+    private var currentOwnerId: Long = 0L
+
     fun load(ownerId: Long) {
-        // no-op (placeholder). Lasciato per coerenza con la UI.
+        currentOwnerId = ownerId
+        viewModelScope.launch {
+            db.txnDao().listByOwner(ownerId).collect { _txns.value = it }
+        }
     }
 
-    fun addTxn(txn: Txn) {
-        _txns.update { it + txn }
+    fun addTxn(t: Txn) {
+        viewModelScope.launch {
+            db.txnDao().insert(t)
+            // listByOwner() è un Flow: si aggiorna da solo
+        }
     }
 }
