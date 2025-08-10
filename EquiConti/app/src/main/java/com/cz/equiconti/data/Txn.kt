@@ -12,7 +12,7 @@ data class Txn(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val ownerId: Long,
     val horseId: Long? = null,
-    val dateMillis: Long,        // <-- importante
+    val dateMillis: Long,            // coerente con tutte le query del DAO
     val operation: String,
     val incomeCents: Long = 0,
     val expenseCents: Long = 0,
