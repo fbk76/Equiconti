@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey
 /**
  * Entità proprietario.
  * PK = id (autoGenerate).
- * Nomi campi allineati alla UI: firstName / lastName / phone.
  */
 @Entity(tableName = "Owner")
 data class Owner(
