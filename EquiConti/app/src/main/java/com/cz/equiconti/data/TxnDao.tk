@@ -30,6 +30,19 @@ interface TxnDao {
         toMillis: Long
     ): Flow<List<Txn>>
 
+    // (opzionale) versione "una tantum" se ti serve una List immediata:
+    @Query("""
+        SELECT * FROM Txn
+        WHERE ownerId = :ownerId
+          AND dateMillis BETWEEN :fromMillis AND :toMillis
+        ORDER BY dateMillis DESC
+    """)
+    suspend fun listInRangeOnce(
+        ownerId: Long,
+        fromMillis: Long,
+        toMillis: Long
+    ): List<Txn>
+
     @Query("""
         SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
         FROM Txn
@@ -40,11 +53,7 @@ interface TxnDao {
     @Query("""
         SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
         FROM Txn
-        WHERE ownerId = :ownerId
-          AND dateMillis < :beforeMillis
+        WHERE ownerId = :ownerId AND dateMillis < :beforeMillis
     """)
-    suspend fun balanceBefore(
-        ownerId: Long,
-        beforeMillis: Long
-    ): Long
+    suspend fun balanceBefore(ownerId: Long, beforeMillis: Long): Long
 }
