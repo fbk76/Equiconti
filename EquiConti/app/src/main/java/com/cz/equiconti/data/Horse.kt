@@ -21,6 +21,7 @@ data class Horse(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val ownerId: Long,
     val name: String,
-    val monthlyFeeCents: Long = 0,   // <— usato in Repo.generateMonthlyFees
+    /** quota mensile per cavallo in centesimi (es. 25000 = 250,00€) */
+    val monthlyFeeCents: Long = 0L,
     val notes: String? = null
 )
