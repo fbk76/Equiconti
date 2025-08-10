@@ -1,9 +1,10 @@
-// app/src/main/java/com/cz/equiconti/data/Txn.kt
 package com.cz.equiconti.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.util.Date
 
 @Entity(
     tableName = "Txn",
@@ -20,15 +21,19 @@ import androidx.room.PrimaryKey
             childColumns = ["horseId"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index("ownerId"),
+        Index("horseId")
     ]
 )
 data class Txn(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L, // ← NON txnId
+    @PrimaryKey(autoGenerate = true) val txnId: Long = 0L,
     val ownerId: Long,
     val horseId: Long? = null,
-    val date: Long,             // epoch millis
-    val operation: String,      // “income” | “expense” (o come preferisci)
-    val incomeCents: Long = 0L,
-    val expenseCents: Long = 0L,
-    val note: String? = null
+    val date: Date,
+    val operation: String,
+    val incomeCents: Long = 0,
+    val expenseCents: Long = 0,
+    val notes: String? = null
 )
