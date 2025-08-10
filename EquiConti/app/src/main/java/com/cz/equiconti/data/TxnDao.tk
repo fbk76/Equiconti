@@ -1,4 +1,3 @@
-// app/src/main/java/com/cz/equiconti/data/TxnDao.kt
 package com.cz.equiconti.data
 
 import androidx.room.Dao
