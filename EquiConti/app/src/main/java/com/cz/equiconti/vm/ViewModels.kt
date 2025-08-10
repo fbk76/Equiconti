@@ -7,32 +7,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-// usa l'entity reale
+// Entities reali
 import com.cz.equiconti.data.Owner
+import com.cz.equiconti.data.Txn
+
+/* ===================== OWNERS ===================== */
 
 @HiltViewModel
 class OwnersVm @Inject constructor() : ViewModel() {
 
-    // stato osservabile dalla UI
+    // Flusso osservabile dalla UI
     private val _owners = MutableStateFlow<List<Owner>>(emptyList())
     val owners: StateFlow<List<Owner>> = _owners.asStateFlow()
 
     init {
-        // mock minimale coerente con Owner(id, firstName, lastName, phone)
+        // Placeholder finché non colleghiamo Room/Repo:
         _owners.value = listOf(
-            Owner(id = 1L, firstName = "Fulvia", lastName = "Bolzan", phone = "123456789")
-        )
-    }
-
-    fun refresh() { /* no-op per ora */ }
-}
-
-@HiltViewModel
-class OwnerDetailVm @Inject constructor() : ViewModel() {
-    // aggiungi stato/logica del dettaglio quando serve
-}
-
-@HiltViewModel
-class ReportVm @Inject constructor() : ViewModel() {
-    // aggiungi stato/logica del report quando serve
-}
+            Owner(id =
