@@ -14,13 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,4 +46,63 @@ fun TxnScreen(
             FloatingActionButton(onClick = { showAdd = true }) { Text("+") }
         }
     ) { pad ->
-        Column(Modifier
+        Column(Modifier.padding(pad)) {
+            LazyColumn {
+                items(txns) { txn ->
+                    ListItem(
+                        headlineText = { Text(formatCurrency(txn.amountCents)) },
+                        supportingText = {
+                            Text(
+                                LocalDate.ofInstant(
+                                    Instant.ofEpochMilli(txn.date),
+                                    ZoneId.systemDefault()
+                                ).toString()
+                            )
+                        }
+                    )
+                    Divider()
+                }
+            }
+        }
+
+        if (showAdd) {
+            AddTxnDialog(
+                ownerId = ownerId,
+                onDismiss = { showAdd = false },
+                onSave = { amountCents, dateMillis, note ->
+                    vm.addTxn(
+                        Txn(
+                            id = 0L,
+                            ownerId = ownerId,
+                            horseId = null, // opzionale, qui non filtriamo per cavallo
+                            amountCents = amountCents,
+                            date = dateMillis,
+                            note = note
+                        )
+                    )
+                    showAdd = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun AddTxnDialog(
+    ownerId: Long,
+    onDismiss: () -> Unit,
+    onSave: (amountCents: Long, dateMillis: Long, note: String?) -> Unit
+) {
+    var amountText by remember { mutableStateOf("") }
+    var noteText by remember { mutableStateOf("") }
+    val todayMillis = remember { System.currentTimeMillis() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Aggiungi movimento") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = it },
+                    label = {
