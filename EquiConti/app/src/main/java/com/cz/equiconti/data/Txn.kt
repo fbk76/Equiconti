@@ -1,12 +1,16 @@
 package com.cz.equiconti.data
 
-import androidx.room.*
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Txn",
     indices = [
         Index("ownerId"),
-        Index("horseId")
+        Index("horseId"),
+        Index("dateMillis")
     ],
     foreignKeys = [
         ForeignKey(
@@ -24,13 +28,16 @@ import androidx.room.*
     ]
 )
 data class Txn(
-    @PrimaryKey(autoGenerate = true) val txnId: Long = 0,
+    @PrimaryKey(autoGenerate = true) val txnId: Long = 0L,
     val ownerId: Long,
     val horseId: Long? = null,
-    /** data in millisecondi (UTC/local non importa, ma sia coerente ovunque) */
+    /** data della transazione in millisecondi (epoch) */
     val dateMillis: Long,
+    /** descrizione/causale */
     val operation: String,
-    val incomeCents: Long,
-    val expenseCents: Long,
+    /** entrate in centesimi */
+    val incomeCents: Long = 0L,
+    /** uscite in centesimi */
+    val expenseCents: Long = 0L,
     val note: String? = null
 )
