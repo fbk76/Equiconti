@@ -1,37 +1,27 @@
 package com.cz.equiconti.vm
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.cz.equiconti.data.EquiDb
-import com.cz.equiconti.data.Txn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import javax.inject.Inject
+import com.cz.equiconti.data.Txn
 
 @HiltViewModel
-class TxnVm @Inject constructor(
-    private val db: EquiDb
-) : ViewModel() {
+class TxnVm @Inject constructor() : ViewModel() {
 
     private val _txns = MutableStateFlow<List<Txn>>(emptyList())
     val txns: StateFlow<List<Txn>> = _txns.asStateFlow()
 
-    private var currentOwnerId: Long = 0L
-
+    // In futuro: raccogli da txnDao.listByOwner(ownerId)
     fun load(ownerId: Long) {
-        currentOwnerId = ownerId
-        viewModelScope.launch {
-            db.txnDao().listByOwner(ownerId).collect { _txns.value = it }
-        }
+        // no-op per ora: lasciamo la lista com'è
     }
 
-    fun addTxn(t: Txn) {
-        viewModelScope.launch {
-            db.txnDao().insert(t)
-            // listByOwner() è un Flow: si aggiorna da solo
-        }
+    // In futuro: txnDao.insert(txn)
+    fun addTxn(txn: Txn) {
+        // Aggiorno lo stato locale così la UI vede subito il nuovo record
+        _txns.value = listOf(txn.copy(txnId = System.nanoTime())) + _txns.value
     }
 }
