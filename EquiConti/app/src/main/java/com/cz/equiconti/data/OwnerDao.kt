@@ -6,11 +6,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface OwnerDao {
 
-    @Query("SELECT * FROM owners ORDER BY lastName, firstName")
+    @Query("SELECT * FROM Owner ORDER BY lastName, firstName")
     fun observeAll(): Flow<List<Owner>>
-
-    @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
-    fun observeById(id: Long): Flow<Owner?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(owner: Owner): Long
@@ -20,4 +17,7 @@ interface OwnerDao {
 
     @Delete
     suspend fun delete(owner: Owner)
+
+    @Query("SELECT * FROM Owner WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): Owner?
 }
