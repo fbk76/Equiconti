@@ -1,21 +1,19 @@
-// app/src/main/java/com/cz/equiconti/data/Dao.kt
 package com.cz.equiconti.data
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
-/*  Owner DAO  */
 @Dao
 interface OwnerDao {
 
-    // Flusso reattivo ordinato per cognome/nome
+    /* Flow per liste reattive */
     @Query("SELECT * FROM Owner ORDER BY lastName, firstName")
     fun observeAll(): Flow<List<Owner>>
 
+    @Query("SELECT * FROM Owner WHERE id = :id")
+    suspend fun getById(id: Long): Owner?
+
+    /* Operazioni classiche */
     @Insert
     suspend fun insert(owner: Owner): Long
 
@@ -24,12 +22,8 @@ interface OwnerDao {
 
     @Delete
     suspend fun delete(owner: Owner)
-
-    @Query("SELECT * FROM Owner WHERE id = :id")
-    suspend fun getById(id: Long): Owner?
 }
 
-/*  Horse DAO  */
 @Dao
 interface HorseDao {
 
@@ -44,47 +38,4 @@ interface HorseDao {
 
     @Delete
     suspend fun delete(horse: Horse)
-}
-
-/*  Transactions DAO  */
-@Dao
-interface TxnDao {
-
-    @Insert
-    suspend fun insert(txn: Txn): Long
-
-    // Elenco movimenti per proprietario, più recenti prima (usa dateMillis!)
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY dateMillis DESC, id DESC")
-    fun listByOwner(ownerId: Long): Flow<List<Txn>>
-
-    // Intervallo date (millisecondi Epoch)
-    @Query("""
-        SELECT * FROM Txn
-        WHERE ownerId = :ownerId
-          AND dateMillis BETWEEN :from AND :to
-        ORDER BY dateMillis DESC, id DESC
-    """)
-    fun listInRange(ownerId: Long, from: Long, to: Long): Flow<List<Txn>>
-
-    // Saldo corrente (entrate - uscite)
-    @Query("""
-        SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
-        FROM Txn
-        WHERE ownerId = :ownerId
-    """)
-    suspend fun balanceForOwner(ownerId: Long): Long
-
-    // Saldo prima di una certa data (millisecondi)
-    @Query("""
-        SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
-        FROM Txn
-        WHERE ownerId = :ownerId AND dateMillis < :before
-    """)
-    suspend fun balanceBefore(ownerId: Long, before: Long): Long
-
-    @Update
-    suspend fun update(txn: Txn)
-
-    @Delete
-    suspend fun delete(txn: Txn)
 }
