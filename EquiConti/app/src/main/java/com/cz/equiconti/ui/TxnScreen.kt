@@ -1,4 +1,3 @@
-// app/src/main/java/com/cz/equiconti/ui/TxnScreen.kt
 package com.cz.equiconti.ui
 
 import androidx.compose.foundation.layout.*
@@ -11,27 +10,22 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cz.equiconti.data.Txn
-import com.cz.equiconti.util.formatCurrency
 import com.cz.equiconti.vm.TxnVm
+import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
-fun TxnScreen(
-    nav: NavController,
-    ownerId: Long,
-    vm: TxnVm = hiltViewModel()
-) {
+fun TxnScreen(nav: NavController, ownerId: Long, vm: TxnVm = hiltViewModel()) {
     LaunchedEffect(ownerId) { vm.load(ownerId) }
-    val txns by vm.txns.collectAsState(emptyList())
+    val txns by vm.txns.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopBar("Movimenti") { nav.popBackStack() } },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showAdd = true }) { Text("+") }
-        }
+        floatingActionButton = { FloatingActionButton(onClick = { showAdd = true }) { Text("+") } }
     ) { pad ->
         Column(Modifier.padding(pad)) {
             LazyColumn {
@@ -39,14 +33,9 @@ fun TxnScreen(
                 items(txns) { t ->
                     running += t.incomeCents - t.expenseCents
                     ListItem(
-                        headlineContent = {
-                            Text("${formatDate(t.dateMillis)} • ${t.operation}")
-                        },
+                        headlineContent = { Text("${formatDate(t.dateMillis)} • ${t.operation}") },
                         supportingContent = {
-                            Text(
-                                "Entrate: ${formatCurrency(t.incomeCents)}   " +
-                                "Uscite: ${formatCurrency(t.expenseCents)}"
-                            )
+                            Text("Entrate: ${formatCurrency(t.incomeCents)}  •  Uscite: ${formatCurrency(t.expenseCents)}")
                         },
                         trailingContent = { Text(formatCurrency(running)) }
                     )
@@ -65,49 +54,32 @@ fun TxnScreen(
     }
 }
 
-private val DATE_FMT: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-
-private fun formatDate(millis: Long): String =
-    LocalDate.ofEpochDay(millis / 86_400_000L).format(DATE_FMT)
-
-/**
- * Dialog per inserire una nuova transazione.
- * Salva usando il nuovo modello Txn (dateMillis in epoch millis).
- */
 @Composable
-fun TxnDialog(
-    onDismiss: () -> Unit,
-    onSave: (Txn) -> Unit,
-    ownerId: Long
-) {
-    var dateStr by remember { mutableStateOf(LocalDate.now().format(DATE_FMT)) }
+private fun TxnDialog(ownerId: Long, onDismiss: () -> Unit, onSave: (Txn) -> Unit) {
+    var date by remember { mutableStateOf(LocalDate.now()) }
     var operation by remember { mutableStateOf("") }
     var inc by remember { mutableStateOf("") }
     var exp by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
                 onClick = {
-                    val income = ((inc.replace(',', '.')).toDoubleOrNull() ?: 0.0) * 100
-                    val expense = ((exp.replace(',', '.')).toDoubleOrNull() ?: 0.0) * 100
-
-                    val date = runCatching { LocalDate.parse(dateStr, DATE_FMT) }
-                        .getOrElse { LocalDate.now() }
-                    val dateMillis = date.atStartOfDay(ZoneId.systemDefault())
-                        .toInstant().toEpochMilli()
-
+                    val zone = ZoneId.systemDefault()
+                    val millis = date.atStartOfDay(zone).toInstant().toEpochMilli()
+                    val income = ((inc.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
+                    val expense = ((exp.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
                     onSave(
                         Txn(
-                            txnId = 0,                 // autoGenerate
                             ownerId = ownerId,
                             horseId = null,
-                            dateMillis = dateMillis,
-                            operation = operation,
-                            incomeCents = income.toLong(),
-                            expenseCents = expense.toLong(),
-                            note = null
+                            dateMillis = millis,
+                            operation = operation.trim(),
+                            incomeCents = income,
+                            expenseCents = expense,
+                            note = note.ifBlank { null }
                         )
                     )
                 },
@@ -117,31 +89,27 @@ fun TxnDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
         title = { Text("Nuovo movimento") },
         text = {
-            Column(
-                Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = dateStr,
-                    onValueChange = { dateStr = it },
+                    value = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                    onValueChange = { runCatching { date = LocalDate.parse(it) } },
                     label = { Text("Data (yyyy-MM-dd)") }
                 )
-                OutlinedTextField(
-                    value = operation,
-                    onValueChange = { operation = it },
-                    label = { Text("Operazione") }
-                )
-                OutlinedTextField(
-                    value = inc,
-                    onValueChange = { inc = it },
-                    label = { Text("Entrate (€)") }
-                )
-                OutlinedTextField(
-                    value = exp,
-                    onValueChange = { exp = it },
-                    label = { Text("Uscite (€)") }
-                )
+                OutlinedTextField(operation, { operation = it }, label = { Text("Operazione") })
+                OutlinedTextField(inc, { inc = it }, label = { Text("Entrate (€)") })
+                OutlinedTextField(exp, { exp = it }, label = { Text("Uscite (€)") })
+                OutlinedTextField(note, { note = it }, label = { Text("Note") })
             }
         }
     )
 }
+
+private fun formatCurrency(cents: Long): String {
+    val f = NumberFormat.getCurrencyInstance(Locale.getDefault())
+    return f.format(cents / 100.0)
+}
+
+private fun formatDate(millis: Long): String =
+    DateTimeFormatter.ISO_LOCAL_DATE.format(
+        LocalDate.ofEpochDay(millis / 86_400_000)
+    )
