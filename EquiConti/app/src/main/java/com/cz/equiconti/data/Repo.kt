@@ -13,18 +13,12 @@ class Repo(private val db: EquiDb) {
 
     /* =============== OWNER =============== */
 
-    // Se vuoi un elenco "one-shot" (non Flow) per uso interno
     suspend fun listOwnersOnce(): List<Owner> = db.ownerDao().observeAll().first()
-
     suspend fun getOwnerById(id: Long): Owner? = db.ownerDao().getById(id)
 
-    suspend fun upsertOwner(owner: Owner): Long {
-        return if (owner.id == 0L) {
-            db.ownerDao().insert(owner)
-        } else {
-            db.ownerDao().update(owner); owner.id
-        }
-    }
+    suspend fun upsertOwner(owner: Owner): Long =
+        if (owner.id == 0L) db.ownerDao().insert(owner)
+        else { db.ownerDao().update(owner); owner.id }
 
     suspend fun deleteOwner(owner: Owner) = db.ownerDao().delete(owner)
 
@@ -33,11 +27,9 @@ class Repo(private val db: EquiDb) {
     suspend fun listHorsesOnce(ownerId: Long): List<Horse> =
         db.horseDao().observeByOwner(ownerId).first()
 
-    suspend fun upsertHorse(h: Horse): Long {
-        return if (h.id == 0L) db.horseDao().insert(h) else {
-            db.horseDao().update(h); h.id
-        }
-    }
+    suspend fun upsertHorse(h: Horse): Long =
+        if (h.id == 0L) db.horseDao().insert(h)
+        else { db.horseDao().update(h); h.id }
 
     suspend fun deleteHorse(h: Horse) = db.horseDao().delete(h)
 
@@ -55,7 +47,6 @@ class Repo(private val db: EquiDb) {
     suspend fun report(ownerId: Long, from: LocalDate, to: LocalDate): Report {
         val zone = ZoneId.systemDefault()
         val fromMillis = from.atStartOfDay(zone).toInstant().toEpochMilli()
-        // includi tutto il giorno "to"
         val toMillis = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
 
         val startBal = db.txnDao().balanceBefore(ownerId, fromMillis)
@@ -72,11 +63,6 @@ class Repo(private val db: EquiDb) {
 
     /* =============== QUOTE MENSILI =============== */
 
-    /**
-     * Genera automaticamente le quote mensili il giorno 1 di ogni mese.
-     * Somma le monthlyFeeCents di tutti i cavalli di ciascun owner e crea
-     * una Txn di spesa (expenseCents) datata al 1° del mese.
-     */
     suspend fun generateMonthlyFees(today: LocalDate) {
         if (today.dayOfMonth != 1) return
 
