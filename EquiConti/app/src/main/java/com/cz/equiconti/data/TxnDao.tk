@@ -1,37 +1,47 @@
-// app/src/main/java/com/cz/equiconti/data/TxnDao.java
-package com.cz.equiconti.data;
+// app/src/main/java/com/cz/equiconti/data/TxnDao.kt
+package com.cz.equiconti.data
 
-import androidx.room.Dao;
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
-
-import java.util.List;
-
-import kotlinx.coroutines.flow.Flow;
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
-public interface TxnDao {
+interface TxnDao {
 
     @Insert
-    long insert(Txn txn);
+    suspend fun insert(txn: Txn): Long
 
     @Update
-    void update(Txn txn);
+    suspend fun update(txn: Txn)
 
     @Delete
-    void delete(Txn txn);
+    suspend fun delete(txn: Txn)
 
-    // Lista di tutte le transazioni di un owner, ordinate per data decrescente
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY dateMillis DESC")
-    Flow<List<Txn>> listByOwner(long ownerId);
+    // Tutte le transazioni di un owner (dateMillis corretta)
+    @Query("""
+        SELECT * FROM Txn
+        WHERE ownerId = :ownerId
+        ORDER BY dateMillis DESC, txnId DESC
+    """)
+    fun observeByOwner(ownerId: Long): Flow<List<Txn>>
 
-    // Lista di tutte le transazioni di un owner in un intervallo di date
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId AND dateMillis BETWEEN :from AND :to ORDER BY dateMillis ASC")
-    Flow<List<Txn>> listInRange(long ownerId, long from, long to);
+    // Transazioni in intervallo (from/to in millis, non stringhe)
+    @Query("""
+        SELECT * FROM Txn
+        WHERE ownerId = :ownerId
+          AND dateMillis BETWEEN :from AND :to
+        ORDER BY dateMillis ASC, txnId ASC
+    """)
+    fun observeInRange(ownerId: Long, from: Long, to: Long): Flow<List<Txn>>
 
-    // Saldo prima di una certa data
-    @Query("SELECT SUM(incomeCents - expenseCents) FROM Txn WHERE ownerId = :ownerId AND dateMillis < :before")
-    Long balanceBefore(long ownerId, long before);
+    // Saldo prima di una certa data (millis)
+    @Query("""
+        SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
+        FROM Txn
+        WHERE ownerId = :ownerId AND dateMillis < :before
+    """)
+    suspend fun balanceBefore(ownerId: Long, before: Long): Long
 }
