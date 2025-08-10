@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Owner::class, Horse::class, Txn::class],
-    version = 3, // <— aumenta di 1 se hai già usato 2
+    version = 2,                 // ⬅️ bump rispetto a prima
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
@@ -25,9 +25,9 @@ abstract class EquiDb : RoomDatabase() {
                     EquiDb::class.java,
                     "equiconti.db"
                 )
-                // per semplicità: distrugge e ricrea se lo schema cambia
-                .fallbackToDestructiveMigration()
-                .build().also { INSTANCE = it }
+                .fallbackToDestructiveMigration() // ⬅️ wipe se schema cambia
+                .build()
+                    .also { INSTANCE = it }
             }
     }
 }
