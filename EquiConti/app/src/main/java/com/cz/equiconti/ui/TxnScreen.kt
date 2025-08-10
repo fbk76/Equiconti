@@ -11,11 +11,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cz.equiconti.data.Txn
 import com.cz.equiconti.vm.TxnVm
-import java.text.NumberFormat
+import com.cz.equiconti.util.formatCurrency
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun TxnScreen(nav: NavController, ownerId: Long, vm: TxnVm = hiltViewModel()) {
@@ -24,18 +23,24 @@ fun TxnScreen(nav: NavController, ownerId: Long, vm: TxnVm = hiltViewModel()) {
     var showAdd by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { TopBar("Movimenti") { nav.popBackStack() } },
-        floatingActionButton = { FloatingActionButton(onClick = { showAdd = true }) { Text("+") } }
+        topBar = { TopBar(title = "Movimenti") { nav.popBackStack() } },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAdd = true }) { Text("+") }
+        }
     ) { pad ->
         Column(Modifier.padding(pad)) {
             LazyColumn {
                 var running = 0L
-                items(txns) { t ->
+                items(txns, key = { it.txnId }) { t ->
                     running += t.incomeCents - t.expenseCents
                     ListItem(
-                        headlineContent = { Text("${formatDate(t.dateMillis)} • ${t.operation}") },
+                        headlineContent = {
+                            Text("${t.dateMillis.toYmd()} • ${t.operation}")
+                        },
                         supportingContent = {
-                            Text("Entrate: ${formatCurrency(t.incomeCents)}  •  Uscite: ${formatCurrency(t.expenseCents)}")
+                            Text(
+                                "Entrate: ${formatCurrency(t.incomeCents)}   Uscite: ${formatCurrency(t.expenseCents)}"
+                            )
                         },
                         trailingContent = { Text(formatCurrency(running)) }
                     )
@@ -49,14 +54,21 @@ fun TxnScreen(nav: NavController, ownerId: Long, vm: TxnVm = hiltViewModel()) {
         TxnDialog(
             ownerId = ownerId,
             onDismiss = { showAdd = false },
-            onSave = { vm.addTxn(it); showAdd = false }
+            onSave = {
+                vm.addTxn(it)
+                showAdd = false
+            }
         )
     }
 }
 
 @Composable
-private fun TxnDialog(ownerId: Long, onDismiss: () -> Unit, onSave: (Txn) -> Unit) {
-    var date by remember { mutableStateOf(LocalDate.now()) }
+private fun TxnDialog(
+    ownerId: Long,
+    onDismiss: () -> Unit,
+    onSave: (Txn) -> Unit
+) {
+    var date by remember { mutableStateOf(LocalDate.now().toString()) }
     var operation by remember { mutableStateOf("") }
     var inc by remember { mutableStateOf("") }
     var exp by remember { mutableStateOf("") }
@@ -68,15 +80,16 @@ private fun TxnDialog(ownerId: Long, onDismiss: () -> Unit, onSave: (Txn) -> Uni
             TextButton(
                 onClick = {
                     val zone = ZoneId.systemDefault()
-                    val millis = date.atStartOfDay(zone).toInstant().toEpochMilli()
-                    val income = ((inc.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
-                    val expense = ((exp.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
+                    val millis = LocalDate.parse(date).atStartOfDay(zone).toInstant().toEpochMilli()
+                    val income = ((inc.toDoubleOrNull() ?: 0.0) * 100).toLong()
+                    val expense = ((exp.toDoubleOrNull() ?: 0.0) * 100).toLong()
+
                     onSave(
                         Txn(
                             ownerId = ownerId,
-                            horseId = null,
-                            dateMillis = millis,
-                            operation = operation.trim(),
+                            horseId = null,                // opzionale
+                            dateMillis = millis,           // <-- nuovo campo
+                            operation = operation,
                             incomeCents = income,
                             expenseCents = expense,
                             note = note.ifBlank { null }
@@ -90,26 +103,15 @@ private fun TxnDialog(ownerId: Long, onDismiss: () -> Unit, onSave: (Txn) -> Uni
         title = { Text("Nuovo movimento") },
         text = {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                    onValueChange = { runCatching { date = LocalDate.parse(it) } },
-                    label = { Text("Data (yyyy-MM-dd)") }
-                )
-                OutlinedTextField(operation, { operation = it }, label = { Text("Operazione") })
-                OutlinedTextField(inc, { inc = it }, label = { Text("Entrate (€)") })
-                OutlinedTextField(exp, { exp = it }, label = { Text("Uscite (€)") })
-                OutlinedTextField(note, { note = it }, label = { Text("Note") })
+                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Data (yyyy-MM-dd)") })
+                OutlinedTextField(value = operation, onValueChange = { operation = it }, label = { Text("Operazione") })
+                OutlinedTextField(value = inc, onValueChange = { inc = it }, label = { Text("Entrate (€)") })
+                OutlinedTextField(value = exp, onValueChange = { exp = it }, label = { Text("Uscite (€)") })
+                OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Note (opz.)") })
             }
         }
     )
 }
 
-private fun formatCurrency(cents: Long): String {
-    val f = NumberFormat.getCurrencyInstance(Locale.getDefault())
-    return f.format(cents / 100.0)
-}
-
-private fun formatDate(millis: Long): String =
-    DateTimeFormatter.ISO_LOCAL_DATE.format(
-        LocalDate.ofEpochDay(millis / 86_400_000)
-    )
+private fun Long.toYmd(): String =
+    Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate().toString()
