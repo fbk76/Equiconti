@@ -28,7 +28,7 @@ fun AppNavGraph(navController: NavHostController) {
         composable("owner/{ownerId}") {
             OwnerDetailScreen(
                 onBack = { navController.popBackStack() },
-                onAddHorse = { /* opzionale */ }
+                onAddHorse = { /* eventuale azione */ }
             )
         }
 
@@ -38,4 +38,7 @@ fun AppNavGraph(navController: NavHostController) {
 
         composable("txns/{ownerId}") {
             val ownerId = it.arguments?.getString("ownerId")?.toLongOrNull() ?: 0L
-            TxnScreen(nav = navController, owner
+            TxnScreen(nav = navController, ownerId = ownerId)
+        }
+    }
+}
