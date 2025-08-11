@@ -11,78 +11,23 @@ class Repo(private val db: EquiDb) {
         fun from(context: Context) = Repo(EquiDb.get(context))
     }
 
-    /* ===== OWNER ===== */
+    /* =============== OWNER =============== */
 
     suspend fun listOwnersOnce(): List<Owner> = db.ownerDao().observeAll().first()
+
     suspend fun getOwnerById(id: Long): Owner? = db.ownerDao().getById(id)
-    suspend fun upsertOwner(owner: Owner): Long =
-        if (owner.id == 0L) db.ownerDao().insert(owner) else { db.ownerDao().update(owner); owner.id }
+
+    suspend fun upsertOwner(owner: Owner): Long {
+        return if (owner.id == 0L) {
+            db.ownerDao().insert(owner)
+        } else {
+            db.ownerDao().update(owner); owner.id
+        }
+    }
+
     suspend fun deleteOwner(owner: Owner) = db.ownerDao().delete(owner)
 
-    /* ===== HORSE ===== */
+    /* =============== HORSE =============== */
 
     suspend fun listHorsesOnce(ownerId: Long): List<Horse> =
-        db.horseDao().observeByOwner(ownerId).first()
-    suspend fun upsertHorse(h: Horse): Long =
-        if (h.id == 0L) db.horseDao().insert(h) else { db.horseDao().update(h); h.id }
-    suspend fun deleteHorse(h: Horse) = db.horseDao().delete(h)
-
-    /* ===== TXN ===== */
-
-    suspend fun addTxn(t: Txn): Long = db.txnDao().insert(t)
-    suspend fun deleteTxn(t: Txn) = db.txnDao().delete(t)
-    suspend fun updateTxn(t: Txn) = db.txnDao().update(t)
-    suspend fun listTxnsOnce(ownerId: Long): List<Txn> =
-        db.txnDao().observeByOwner(ownerId).first()
-
-    /* ===== REPORT ===== */
-
-    suspend fun report(ownerId: Long, from: LocalDate, to: LocalDate): Report {
-        val zone = ZoneId.systemDefault()
-        val fromMillis = from.atStartOfDay(zone).toInstant().toEpochMilli()
-        val toMillis = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
-
-        val startBal = db.txnDao().balanceBefore(ownerId, fromMillis)
-        val rows = db.txnDao().observeInRange(ownerId, fromMillis, toMillis).first().map {
-            ReportRow(
-                dateMillis = it.dateMillis,
-                operation = it.operation,
-                incomeCents = it.incomeCents,
-                expenseCents = it.expenseCents
-            )
-        }
-        return Report(startBalanceCents = startBal, rows = rows)
-    }
-
-    suspend fun generateMonthlyFees(today: LocalDate) {
-        if (today.dayOfMonth != 1) return
-        val zone = ZoneId.systemDefault()
-        val dateMillis = today.atStartOfDay(zone).toInstant().toEpochMilli()
-        val owners = db.ownerDao().observeAll().first()
-        for (o in owners) {
-            val horses = db.horseDao().observeByOwner(o.id).first()
-            val sumFees = horses.sumOf { it.monthlyFeeCents }
-            if (sumFees > 0) {
-                db.txnDao().insert(
-                    Txn(
-                        ownerId = o.id,
-                        horseId = null,
-                        dateMillis = dateMillis,
-                        operation = "Quota mensile cavallo/i",
-                        incomeCents = 0,
-                        expenseCents = sumFees,
-                        note = null
-                    )
-                )
-            }
-        }
-    }
-}
-
-data class Report(val startBalanceCents: Long, val rows: List<ReportRow>)
-data class ReportRow(
-    val dateMillis: Long,
-    val operation: String,
-    val incomeCents: Long,
-    val expenseCents: Long
-)
+        db.horseDao().observe
