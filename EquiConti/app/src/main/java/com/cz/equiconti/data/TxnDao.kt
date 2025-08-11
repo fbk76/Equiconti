@@ -1,32 +1,38 @@
 package com.cz.equiconti.data
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TxnDao {
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(txn: Txn): Long
-
-    @Update
-    suspend fun update(txn: Txn)
 
     @Delete
     suspend fun delete(txn: Txn)
 
-    // Lista movimenti per owner (serve a TxnScreen)
-    @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY dateMillis DESC, txnId DESC")
-    fun observeByOwner(ownerId: Long): Flow<List<Txn>>
-
+    /** Movimenti per proprietario (stream) */
     @Query("""
         SELECT * FROM Txn
         WHERE ownerId = :ownerId
-          AND dateMillis BETWEEN :from AND :to
+        ORDER BY dateMillis DESC, txnId DESC
+    """)
+    fun listByOwner(ownerId: Long): Flow<List<Txn>>
+
+    /** Se serve leggere un range (opzionale) */
+    @Query("""
+        SELECT * FROM Txn
+        WHERE ownerId = :ownerId AND dateMillis BETWEEN :from AND :to
         ORDER BY dateMillis ASC, txnId ASC
     """)
     fun listInRange(ownerId: Long, from: Long, to: Long): Flow<List<Txn>>
 
+    /** Bilanci (opzionali) */
     @Query("""
         SELECT COALESCE(SUM(incomeCents - expenseCents), 0)
         FROM Txn
