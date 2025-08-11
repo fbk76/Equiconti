@@ -1,35 +1,35 @@
-package com.cz.equiconti.data
+package com.cz.equiconti.ui
 
-import android.content.Context
-import kotlinx.coroutines.flow.first
-import java.time.LocalDate
-import java.time.ZoneId
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
-class Repo(private val db: EquiDb) {
-
-    companion object {
-        fun from(context: Context) = Repo(EquiDb.get(context))
-    }
-
-    /* =============== OWNER =============== */
-
-    suspend fun listOwnersOnce(): List<Owner> = db.ownerDao().observeAll().first()
-
-    suspend fun getOwnerById(id: Long): Owner? = db.ownerDao().getById(id)
-
-    suspend fun upsertOwner(owner: Owner): Long {
-        return if (owner.id == 0L) {
-            db.ownerDao().insert(owner)
-        } else {
-            db.ownerDao().update(owner); owner.id
+@Composable
+fun AppNavGraph(navController: NavHostController = rememberNavController()) {
+    NavHost(
+        navController = navController,
+        startDestination = "owners"
+    ) {
+        composable("owners") {
+            OwnersScreen(
+                onOwnerClick = { ownerId ->
+                    navController.navigate("owner/$ownerId")
+                },
+                onAddClick = {
+                    navController.navigate("addOwner")
+                }
+            )
         }
-    }
 
-    suspend fun deleteOwner(owner: Owner) = db.ownerDao().delete(owner)
+        composable("addOwner") {
+            AddOwnerScreen(
+                onSave = { /* dopo salvataggio torna indietro */ navController.popBackStack() },
+                onCancel = { navController.popBackStack() }
+            )
+        }
 
-    /* =============== HORSE =============== */
-
-    suspend fun listHorsesOnce(ownerId: Long): List<Horse> =
-        db.horseDao().observe
-}
-   
+        composable("owner/{ownerId}") {
+            OwnerDetailScreen(
+                onBack = { navController.popBackStack
