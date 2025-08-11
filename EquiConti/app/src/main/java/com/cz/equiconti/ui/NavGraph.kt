@@ -22,11 +22,11 @@ fun NavGraph(navController: NavHostController) {
         composable("owners") {
             OwnersScreen(
                 onAddOwner = { navController.navigate("addOwner") },
-                onOwnerClick = { id -> navController.navigate("owner/$id") }
+                onOwnerClick = { ownerId -> navController.navigate("owner/$ownerId") }
             )
         }
 
-        // Aggiunta proprietario
+        // Aggiungi proprietario
         composable("addOwner") {
             AddOwnerScreen(
                 onBack = { navController.popBackStack() }
@@ -40,12 +40,13 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(
-                id = ownerId, // <— NOME PARAMETRO CORRETTO
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
                 onAddHorse = { navController.navigate("owner/$ownerId/addHorse") }
             )
         }
 
-        // Aggiunta cavallo
+        // Aggiungi cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
