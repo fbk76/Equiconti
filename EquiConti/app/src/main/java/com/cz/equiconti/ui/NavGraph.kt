@@ -20,22 +20,14 @@ fun NavGraph(navController: NavHostController) {
     ) {
         // Lista proprietari
         composable("owners") {
-            OwnersScreen(
-                nav = navController,
-                onAddOwner = { navController.navigate("addOwner") },
-                onOwnerClick = { ownerId ->
-                    navController.navigate("ownerDetail/$ownerId")
-                }
-            )
+            OwnersScreen(nav = navController)
         }
 
         // Aggiungi proprietario
         composable("addOwner") {
             AddOwnerScreen(
                 nav = navController,
-                onSave = {
-                    navController.popBackStack()
-                }
+                onSave = { navController.popBackStack() }
             )
         }
 
