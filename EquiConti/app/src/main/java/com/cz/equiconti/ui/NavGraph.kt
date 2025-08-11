@@ -1,8 +1,8 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
@@ -26,7 +26,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta proprietario
+        // Aggiunta proprietario: QUI NON VA PASSATO ownerId, SOLO onBack!
         composable("addOwner") {
             AddOwnerScreen(
                 onBack = { navController.popBackStack() }
@@ -56,14 +56,3 @@ fun NavGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() }
             )
         }
-
-        // Movimenti
-        composable(
-            route = "owner/{ownerId}/txns",
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            TxnScreen(nav = navController, ownerId = ownerId)
-        }
-    }
-}
