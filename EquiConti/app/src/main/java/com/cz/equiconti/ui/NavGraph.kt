@@ -45,7 +45,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta cavallo (creiamo una schermata placeholder)
+        // Aggiunta cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
