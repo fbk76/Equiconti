@@ -4,32 +4,38 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun AppNavGraph(navController: NavHostController = rememberNavController()) {
+fun AppNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = "owners"
     ) {
         composable("owners") {
             OwnersScreen(
-                onOwnerClick = { ownerId ->
-                    navController.navigate("owner/$ownerId")
-                },
-                onAddClick = {
-                    navController.navigate("addOwner")
-                }
+                onOwnerClick = { id -> navController.navigate("owner/$id") },
+                onAddClick = { navController.navigate("addOwner") }
             )
         }
 
         composable("addOwner") {
             AddOwnerScreen(
-                onSave = { /* dopo salvataggio torna indietro */ navController.popBackStack() },
+                onSave = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() }
             )
         }
 
         composable("owner/{ownerId}") {
             OwnerDetailScreen(
-                onBack = { navController.popBackStack
+                onBack = { navController.popBackStack() },
+                onAddHorse = { /* opzionale */ }
+            )
+        }
+
+        composable("report") {
+            ReportScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable("txns/{ownerId}") {
+            val ownerId = it.arguments?.getString("ownerId")?.toLongOrNull() ?: 0L
+            TxnScreen(nav = navController, owner
