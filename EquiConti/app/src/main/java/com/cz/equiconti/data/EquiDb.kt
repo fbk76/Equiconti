@@ -1,21 +1,9 @@
-package com.cz.equiconti.data
-
-import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-
 @Database(
-    entities = [
-        Owner::class,
-        Horse::class,
-        Txn::class
-    ],
-    version = 3,               // <-- incrementa rispetto alla tua versione attuale
+    entities = [Owner::class, Horse::class, Txn::class],
+    version = 4, // <-- incrementa
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
-
     abstract fun ownerDao(): OwnerDao
     abstract fun horseDao(): HorseDao
     abstract fun txnDao(): TxnDao
@@ -30,8 +18,7 @@ abstract class EquiDb : RoomDatabase() {
                     EquiDb::class.java,
                     "equiconti.db"
                 )
-                    // ❗ Durante lo sviluppo: ricrea il DB se lo schema cambia
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // ricrea il DB se lo schema cambia
                     .build()
                     .also { INSTANCE = it }
             }
