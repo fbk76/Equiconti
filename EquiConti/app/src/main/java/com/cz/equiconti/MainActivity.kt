@@ -3,74 +3,24 @@ package com.cz.equiconti
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import com.cz.equiconti.ui.AddOwnerScreen
-import com.cz.equiconti.ui.OwnerDetailScreen
-import com.cz.equiconti.ui.OwnersScreen
-import com.cz.equiconti.ui.ReportScreen
+import com.cz.equiconti.ui.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                EquiAppNav()
+            // Se hai un tema tuo, rimpiazza con quello. Altrimenti MaterialTheme va benissimo.
+            MaterialTheme {
+                Surface {
+                    val navController = rememberNavController()
+                    NavGraph(navController = navController)
+                }
             }
-        }
-    }
-}
-
-@Composable
-private fun EquiAppNav() {
-    val nav = rememberNavController()
-
-    NavHost(
-        navController = nav,
-        startDestination = "owners"
-    ) {
-        // Lista clienti
-        composable("owners") {
-            OwnersScreen(nav = nav, vm = hiltViewModel())
-        }
-
-        // Nuovo cliente
-        composable("owner/new") {
-            AddOwnerScreen(nav = nav)
-        }
-
-        // Dettaglio cliente (ownerId come Long)
-        composable(
-            route = "owner/{ownerId}",
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            OwnerDetailScreen(nav = nav, ownerId = ownerId, vm = hiltViewModel())
-        }
-
-        // Report per cliente
-        composable(
-            route = "report/{ownerId}",
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            ReportScreen(nav = nav, ownerId = ownerId, vm = hiltViewModel())
         }
     }
 }
