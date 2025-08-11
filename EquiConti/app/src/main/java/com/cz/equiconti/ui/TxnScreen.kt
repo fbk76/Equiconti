@@ -4,22 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,8 +43,8 @@ fun TxnScreen(
                         supportingContent = {
                             Text(
                                 "Entrate: ${formatCurrency(t.incomeCents)}   " +
-                                    "Uscite: ${formatCurrency(t.expenseCents)}" +
-                                    (t.note?.let { "   Note: $it" } ?: "")
+                                "Uscite: ${formatCurrency(t.expenseCents)}" +
+                                (t.note?.let { "   Note: $it" } ?: "")
                             )
                         },
                         trailingContent = { Text(formatCurrency(running)) }
@@ -86,8 +72,8 @@ private fun TxnDialog(
 ) {
     var dateText by remember { mutableStateOf(LocalDate.now().toString()) } // yyyy-MM-dd
     var operation by remember { mutableStateOf("") }
-    var incomeText by remember { mutableStateOf("") }  // € interi o decimali
-    var expenseText by remember { mutableStateOf("") } // € interi o decimali
+    var incomeText by remember { mutableStateOf("") }  // euro (es: 12.50)
+    var expenseText by remember { mutableStateOf("") } // euro
     var noteText by remember { mutableStateOf("") }
     var horseIdText by remember { mutableStateOf("") } // opzionale
 
@@ -101,8 +87,8 @@ private fun TxnDialog(
                         .toInstant()
                         .toEpochMilli()
 
-                    val incomeCents = ((incomeText.toDoubleOrNull() ?: 0.0) * 100).roundToLong()
-                    val expenseCents = ((expenseText.toDoubleOrNull() ?: 0.0) * 100).roundToLong()
+                    val incomeCents = ((incomeText.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).roundToLong()
+                    val expenseCents = ((expenseText.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).roundToLong()
                     val horseId = horseIdText.toLongOrNull()
 
                     onSave(
@@ -110,7 +96,7 @@ private fun TxnDialog(
                             ownerId = ownerId,
                             horseId = horseId,
                             dateMillis = dateMillis,
-                            operation = operation,
+                            operation = operation.trim(),
                             incomeCents = incomeCents,
                             expenseCents = expenseCents,
                             note = noteText.ifBlank { null }
@@ -166,5 +152,5 @@ private fun TxnDialog(
 
 private fun formatDate(millis: Long): String {
     val dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault())
-    return dt.format(DateTimeFormatter.ISO_DATE)
+    return dt.format(DateTimeFormatter.ISO_DATE) // yyyy-MM-dd
 }
