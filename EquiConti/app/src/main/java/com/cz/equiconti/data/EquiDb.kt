@@ -11,7 +11,7 @@ import androidx.room.TypeConverters
     version = 1,
     exportSchema = false
 )
-@TypeConverters(Converters::class)
+
 abstract class EquiDb : RoomDatabase() {
     abstract fun ownerDao(): OwnerDao
     abstract fun horseDao(): HorseDao
