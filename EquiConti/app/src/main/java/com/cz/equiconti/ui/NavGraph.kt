@@ -7,10 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.AddHorseScreen
-import com.cz.equiconti.ui.owner.AddOwnerScreen
-import com.cz.equiconti.ui.owner.OwnerDetailScreen
-import com.cz.equiconti.ui.owner.OwnersScreen
-import com.cz.equiconti.ui.txn.TxnScreen
+// ATTENZIONE: gli altri screen (OwnersScreen, AddOwnerScreen, OwnerDetailScreen, TxnScreen)
+// sono nello STESSO package di NavGraph (com.cz.equiconti.ui), quindi NON servono import.
 
 @Composable
 fun NavGraph(navController: NavHostController) {
