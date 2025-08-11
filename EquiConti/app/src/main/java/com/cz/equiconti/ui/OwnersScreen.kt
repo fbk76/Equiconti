@@ -1,76 +1,65 @@
-package com.cz.equiconti.ui
+package com.cz.equiconti.ui.owner
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cz.equiconti.data.Owner
-import com.cz.equiconti.vm.OwnersVm
 
-/**
- * Lista proprietari: usa Owner.firstName / Owner.lastName.
- */
 @Composable
 fun OwnersScreen(
-    nav: NavController,
-    vm: OwnersVm = hiltViewModel()
+    onAddOwner: () -> Unit,
+    onOwnerClick: (Long) -> Unit,
+    vm: OwnersViewModel = hiltViewModel()
 ) {
-    val owners by vm.owners.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
-    var editing: Owner? by remember { mutableStateOf(null) }
+    val owners by vm.owners.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("Proprietari") }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { editing = null; showDialog = true }) {
-                Text("+")
+            FloatingActionButton(onClick = onAddOwner) { Text("+") }
+        },
+        topBar = { CenterAlignedTopAppBar(title = { Text("Proprietari") }) }
+    ) { padding ->
+        if (owners.isEmpty()) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Nessun proprietario. Premi + per aggiungerne uno.")
             }
-        }
-    ) { pad ->
-        Column(Modifier.padding(pad).fillMaxSize()) {
-            LazyColumn {
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
                 items(owners) { o ->
-                    ListItem(
-                        headlineContent = { Text("${o.firstName} ${o.lastName}".trim()) },
-                        supportingContent = { o.phone?.let { Text(it) } },
-                        modifier = Modifier.clickable {
-                            editing = o
-                            showDialog = true
-                        }
-                    )
+                    OwnerRow(o) { onOwnerClick(o.id) }
                     Divider()
                 }
             }
         }
     }
+}
 
-    if (showDialog) {
-        OwnerDialog(
-            initial = editing,
-            onDismiss = { showDialog = false },
-            onSave = { saved ->
-                // Qui collega la tua logica reale di salvataggio (DAO/Repo) se già presente.
-                // Per ora chiudiamo solo il dialog.
-                showDialog = false
-            }
-        )
-    }
+@Composable
+private fun OwnerRow(o: Owner, onClick: () -> Unit) {
+    ListItem(
+        headlineContent = { Text("${o.lastName} ${o.firstName}") },
+        supportingContent = { if (!o.phone.isNullOrBlank()) Text(o.phone!!) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    )
 }
