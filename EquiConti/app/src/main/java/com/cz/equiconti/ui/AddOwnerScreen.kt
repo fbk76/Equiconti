@@ -1,4 +1,4 @@
-package com.cz.equiconti.ui
+package com.cz.equiconti.ui.owner
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -13,49 +13,51 @@ fun AddOwnerScreen(
     nav: NavController,
     onSave: (Owner) -> Unit
 ) {
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
+    var first by remember { mutableStateOf("") }
+    var last by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(title = { Text("Nuovo proprietario") })
-        }
-    ) { pad ->
-        Column(Modifier.padding(pad).padding(16.dp)) {
-            OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
-                label = { Text("Nome") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
-                label = { Text("Cognome") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Telefono") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    onSave(Owner(
-                        id = 0L,
-                        firstName = firstName,
-                        lastName = lastName,
-                        phone = phone
-                    ))
-                    nav.popBackStack()
-                },
-                modifier = Modifier.fillMaxWidth()
+        topBar = { CenterAlignedTopAppBar(title = { Text("Nuovo proprietario") }) },
+        bottomBar = {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Salva")
+                OutlinedButton(
+                    onClick = { nav.popBackStack() },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Annulla") }
+
+                Button(
+                    enabled = first.isNotBlank() && last.isNotBlank(),
+                    onClick = {
+                        onSave(
+                            Owner(
+                                firstName = first.trim(),
+                                lastName = last.trim(),
+                                phone = phone.trim().ifBlank { null }
+                            )
+                        )
+                        nav.popBackStack() // torna alla lista che osserverà il Flow e si aggiornerà
+                    },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Salva") }
             }
+        }
+    ) { padding ->
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(value = first, onValueChange = { first = it }, label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = last, onValueChange = { last = it }, label = { Text("Cognome") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Telefono (opz.)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
     }
 }
