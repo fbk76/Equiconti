@@ -2,70 +2,62 @@ package com.cz.equiconti.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.AddOwnerScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.owner.OwnersViewModel
 
-private object Routes {
-    const val OWNERS = "owners"
-    const val OWNER_NEW = "owner/new"
-    const val OWNER_DETAIL = "owner/{ownerId}"
-}
-
 @Composable
 fun AppNavGraph(
-    navController: NavHostController
+    navController: androidx.navigation.NavHostController = rememberNavController()
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = Routes.OWNERS
-    ) {
-        // Lista proprietari
-        composable(Routes.OWNERS) {
+    NavHost(navController = navController, startDestination = "owners") {
+
+        composable("owners") {
+            val vm: OwnersViewModel = hiltViewModel()
+
             OwnersScreen(
-                onOwnerClick = { ownerId: Long ->
+                state = vm.state,                     // se il tuo screen usa uno state; altrimenti passagli la lista
+                onOwnerClick = { ownerId ->
                     navController.navigate("owner/$ownerId")
                 },
                 onAddOwner = {
-                    navController.navigate(Routes.OWNER_NEW)
+                    navController.navigate("addOwner")
                 }
             )
         }
 
-        // Aggiungi proprietario
-        composable(Routes.OWNER_NEW) {
-            // Se ti serve salvare dal VM:
+        composable("addOwner") {
             val vm: OwnersViewModel = hiltViewModel()
             AddOwnerScreen(
-                nav = navController,
                 onSave = { owner ->
-                    // se nel VM hai una funzione di salvataggio, usala:
-                    // vm.save(owner)
-                    // poi torna indietro alla lista
-                    navController.popBackStack()
-                }
+                    vm.save(owner)
+                    navController.popBackStack()      // torna alla lista
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
-        // Dettaglio proprietario (il composable legge l'ID dal SavedStateHandle del suo VM)
         composable(
-            route = Routes.OWNER_DETAIL,
-            arguments = listOf(
-                navArgument("ownerId") { type = NavType.LongType }
-            )
-        ) {
+            route = "owner/{ownerId}",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(
+                ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onAddHorse = {
-                    // qui in futuro potrai navigare alla schermata per aggiungere un cavallo
-                }
+                onAddHorse = { /* navController.navigate("addHorse/$ownerId") se/quando serve */ }
             )
         }
+
+        // Se hai lo screen movimenti:
+        // composable("txn/{ownerId}",
+        //     arguments = listOf(navArgument("ownerId"){ type = NavType.LongType })
+        // ) { ... }
     }
 }
