@@ -22,46 +22,49 @@ fun NavGraph(navController: NavHostController) {
         composable("owners") {
             OwnersScreen(
                 onAddOwner = { navController.navigate("addOwner") },
-                onOwnerClick = { ownerId -> navController.navigate("owner/$ownerId") }
+                onOwnerClick = { ownerId ->
+                    navController.navigate("ownerDetail/$ownerId")
+                }
             )
         }
 
-        // Aggiunta proprietario - richiede onBack e onSave
+        // Aggiungi proprietario  — firma: (nav: NavController, onSave: (Owner) -> Unit)
         composable("addOwner") {
             AddOwnerScreen(
-                onBack = { navController.popBackStack() },
-                onSave = { navController.popBackStack() } // dopo il salvataggio torniamo indietro
+                nav = navController,
+                onSave = { /* dopo il salvataggio torniamo alla lista */
+                    navController.popBackStack()
+                }
             )
         }
 
-        // Dettaglio proprietario
+        // Dettaglio proprietario — firma: (onBack: () -> Unit, onAddHorse: () -> Unit = {})
         composable(
-            route = "owner/{ownerId}",
+            route = "ownerDetail/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(
-                ownerId = ownerId,
-                onAddHorse = { navController.navigate("owner/$ownerId/addHorse") }
+                onBack = { navController.popBackStack() },
+                onAddHorse = { navController.navigate("addHorse/$ownerId") }
             )
         }
 
-        // Aggiunta cavallo - richiede ownerId, onBack e onSave
+        // Aggiungi cavallo — firma: (ownerId: Long, onBack: () -> Unit)
         composable(
-            route = "owner/{ownerId}/addHorse",
+            route = "addHorse/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             AddHorseScreen(
                 ownerId = ownerId,
-                onBack = { navController.popBackStack() },
-                onSave = { navController.popBackStack() } // torna alla schermata precedente
+                onBack = { navController.popBackStack() }
             )
         }
 
-        // Movimenti del proprietario
+        // Movimenti — firma: (nav: NavController, ownerId: Long)
         composable(
-            route = "owner/{ownerId}/txns",
+            route = "txns/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
