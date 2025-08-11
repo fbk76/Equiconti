@@ -26,7 +26,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta proprietario (solo onBack)
+        // Aggiunta proprietario
         composable("addOwner") {
             AddOwnerScreen(
                 onBack = { navController.popBackStack() }
@@ -40,7 +40,7 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(
-                ownerId = ownerId,
+                id = ownerId, // <— NOME PARAMETRO CORRETTO
                 onAddHorse = { navController.navigate("owner/$ownerId/addHorse") }
             )
         }
@@ -65,5 +65,5 @@ fun NavGraph(navController: NavHostController) {
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             TxnScreen(nav = navController, ownerId = ownerId)
         }
-    } // <-- chiude NavHost
-}     // <-- chiude NavGraph()
+    }
+}
