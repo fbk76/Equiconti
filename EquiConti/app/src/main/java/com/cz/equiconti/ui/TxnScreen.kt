@@ -82,12 +82,12 @@ fun TxnScreen(
 private fun TxnDialog(
     ownerId: Long,
     onDismiss: () -> Unit,
-    onSave: (com.cz.equiconti.data.Txn) -> Unit // <-- tipo completamente qualificato
+    onSave: (com.cz.equiconti.data.Txn) -> Unit
 ) {
     var dateText by remember { mutableStateOf(LocalDate.now().toString()) } // yyyy-MM-dd
     var operation by remember { mutableStateOf("") }
-    var incomeText by remember { mutableStateOf("") }  // euro
-    var expenseText by remember { mutableStateOf("") } // euro
+    var incomeText by remember { mutableStateOf("") }  // € interi o decimali
+    var expenseText by remember { mutableStateOf("") } // € interi o decimali
     var noteText by remember { mutableStateOf("") }
     var horseIdText by remember { mutableStateOf("") } // opzionale
 
@@ -106,9 +106,65 @@ private fun TxnDialog(
                     val horseId = horseIdText.toLongOrNull()
 
                     onSave(
-                        com.cz.equiconti.data.Txn( // <-- uso la data class giusta
+                        com.cz.equiconti.data.Txn(
                             ownerId = ownerId,
                             horseId = horseId,
                             dateMillis = dateMillis,
                             operation = operation,
                             incomeCents = incomeCents,
+                            expenseCents = expenseCents,
+                            note = noteText.ifBlank { null }
+                        )
+                    )
+                },
+                enabled = operation.isNotBlank() && dateText.isNotBlank()
+            ) { Text("Salva") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
+        title = { Text("Nuovo movimento") },
+        text = {
+            Column(Modifier.padding(top = 4.dp)) {
+                OutlinedTextField(
+                    value = dateText,
+                    onValueChange = { dateText = it },
+                    label = { Text("Data (yyyy-MM-dd)") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = operation,
+                    onValueChange = { operation = it },
+                    label = { Text("Operazione") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = incomeText,
+                    onValueChange = { incomeText = it },
+                    label = { Text("Entrate (€)") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = expenseText,
+                    onValueChange = { expenseText = it },
+                    label = { Text("Uscite (€)") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = horseIdText,
+                    onValueChange = { horseIdText = it },
+                    label = { Text("ID cavallo (opzionale)") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    label = { Text("Note (opzionale)") }
+                )
+            }
+        }
+    )
+}
+
+private fun formatDate(millis: Long): String {
+    val dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault())
+    return dt.format(DateTimeFormatter.ISO_DATE)
+}
