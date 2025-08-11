@@ -28,7 +28,6 @@ android {
         }
     }
 
-    // ✅ Punto 2: buildTypes aggiornati
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -37,25 +36,41 @@ android {
         }
         release {
             signingConfig signingConfigs.debug
-            // R8 attivo + nostre regole (se serve disattivarlo: porta a false)
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             debuggable false
         }
     }
 
-    buildFeatures { compose true }
+    buildFeatures {
+        compose true
+    }
+
+    // ✅ Opt-in globale alle API sperimentali Material/Material3 + JVM 17
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += [
+            "-Xopt-in=androidx.compose.material.ExperimentalMaterialApi",
+            "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 
     packagingOptions {
-        resources { excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"] }
+        resources {
+            excludes += ["/META-INF/AL2.0", "/META-INF/LGPL2.1"]
+        }
     }
+}
+
+// Facoltativo ma utile con Hilt/KAPT
+kapt {
+    correctErrorTypes = true
 }
 
 dependencies {
