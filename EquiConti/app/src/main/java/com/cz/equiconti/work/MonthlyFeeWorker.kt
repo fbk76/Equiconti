@@ -12,17 +12,16 @@ import java.time.LocalDate
 @HiltWorker
 class MonthlyFeeWorker @AssistedInject constructor(
     @Assisted appContext: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val repo: Repo
-) : CoroutineWorker(appContext, workerParams) {
+    @Assisted params: WorkerParameters
+) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
-        val today = LocalDate.now()
-        try {
-            repo.generateMonthlyFees(today)
-        } catch (e: Exception) {
-            return Result.retry()
+        return try {
+            val repo = Repo.from(applicationContext)
+            repo.generateMonthlyFees(LocalDate.now())
+            Result.success()
+        } catch (t: Throwable) {
+            Result.retry()
         }
-        return Result.success()
     }
 }
