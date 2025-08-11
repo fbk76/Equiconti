@@ -11,7 +11,7 @@ import androidx.room.RoomDatabase
         Horse::class,
         Txn::class
     ],
-    version = 2,                 // <— bump della versione per forzare la ricreazione
+    version = 3,               // <-- incrementa rispetto alla tua versione attuale
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
@@ -21,21 +21,19 @@ abstract class EquiDb : RoomDatabase() {
     abstract fun txnDao(): TxnDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: EquiDb? = null
+        @Volatile private var INSTANCE: EquiDb? = null
 
-        fun get(context: Context): EquiDb {
-            return INSTANCE ?: synchronized(this) {
+        fun get(context: Context): EquiDb =
+            INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     EquiDb::class.java,
-                    "equidb"
+                    "equiconti.db"
                 )
-                    // In sviluppo fa il reset automatico se lo schema cambia
+                    // ❗ Durante lo sviluppo: ricrea il DB se lo schema cambia
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
             }
-        }
     }
 }
