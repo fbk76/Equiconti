@@ -1,4 +1,3 @@
-// app/src/main/java/com/cz/equiconti/data/EquiDb.kt
 package com.cz.equiconti.data
 
 import android.content.Context
@@ -7,28 +6,36 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [Owner::class, Horse::class, Txn::class],
-    version = 3,                 // ⬅️ aumenta di +1 rispetto alla tua ultima release
+    entities = [
+        Owner::class,
+        Horse::class,
+        Txn::class
+    ],
+    version = 2,                 // <— bump della versione per forzare la ricreazione
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
+
     abstract fun ownerDao(): OwnerDao
     abstract fun horseDao(): HorseDao
     abstract fun txnDao(): TxnDao
 
     companion object {
-        @Volatile private var INSTANCE: EquiDb? = null
+        @Volatile
+        private var INSTANCE: EquiDb? = null
 
-        fun get(context: Context): EquiDb =
-            INSTANCE ?: synchronized(this) {
+        fun get(context: Context): EquiDb {
+            return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     EquiDb::class.java,
-                    "equiconti.db"
+                    "equidb"
                 )
-                .fallbackToDestructiveMigration() // ricrea il DB se cambia lo schema
-                .build()
-                .also { INSTANCE = it }
+                    // In sviluppo fa il reset automatico se lo schema cambia
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { INSTANCE = it }
             }
+        }
     }
 }
