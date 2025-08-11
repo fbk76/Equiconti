@@ -32,4 +32,4 @@ class Repo(private val db: EquiDb) {
     suspend fun listHorsesOnce(ownerId: Long): List<Horse> =
         db.horseDao().observe
 }
-}    
+   
