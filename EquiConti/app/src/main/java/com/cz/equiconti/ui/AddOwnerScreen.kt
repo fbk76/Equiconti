@@ -1,60 +1,61 @@
 package com.cz.equiconti.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.cz.equiconti.data.Owner
 
 @Composable
-fun AddOwnerScreen(nav: NavController) {
+fun AddOwnerScreen(
+    nav: NavController,
+    onSave: (Owner) -> Unit
+) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("Nuovo proprietario") }) }
+        topBar = {
+            CenterAlignedTopAppBar(title = { Text("Nuovo proprietario") })
+        }
     ) { pad ->
-        Column(
-            Modifier.padding(pad).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Column(Modifier.padding(pad).padding(16.dp)) {
             OutlinedTextField(
                 value = firstName,
-                onValueChange = { text -> firstName = text },
+                onValueChange = { firstName = it },
                 label = { Text("Nome") },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = lastName,
-                onValueChange = { text -> lastName = text },
+                onValueChange = { lastName = it },
                 label = { Text("Cognome") },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = phone,
-                onValueChange = { text -> phone = text },
-                label = { Text("Telefono (opzionale)") },
+                onValueChange = { phone = it },
+                label = { Text("Telefono") },
                 modifier = Modifier.fillMaxWidth()
             )
-
-            // Bottoni fittizi per far compilare
-            TextButton(onClick = { nav.popBackStack() }, enabled = firstName.isNotBlank() || lastName.isNotBlank()) {
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    onSave(Owner(
+                        id = 0L,
+                        firstName = firstName,
+                        lastName = lastName,
+                        phone = phone
+                    ))
+                    nav.popBackStack()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text("Salva")
             }
-            TextButton(onClick = { nav.popBackStack() }) { Text("Annulla") }
         }
     }
 }
