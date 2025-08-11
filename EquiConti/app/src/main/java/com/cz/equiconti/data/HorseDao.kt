@@ -19,10 +19,6 @@ interface HorseDao {
     @Query("SELECT * FROM Horse WHERE ownerId = :ownerId ORDER BY name")
     fun observeByOwner(ownerId: Long): Flow<List<Horse>>
 
-    // Se vuoi anche una funzione con lo stesso SQL ma nome diverso:
-    @Query("SELECT * FROM Horse WHERE ownerId = :ownerId ORDER BY name")
-    fun listByOwner(ownerId: Long): Flow<List<Horse>>
-
     @Query("SELECT * FROM Horse WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): Horse?
 }
