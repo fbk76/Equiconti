@@ -1,23 +1,27 @@
 package com.cz.equiconti.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.cz.equiconti.data.Owner
 
 @Composable
-fun OwnerDetailScreen(nav: NavController, ownerId: Long) {
-    // Versione neutra per compilare: niente addHorse
+fun OwnerDetailScreen(
+    nav: NavController,
+    owner: Owner
+) {
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("Dettaglio proprietario") }) }
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("${owner.firstName} ${owner.lastName}") }
+            )
+        }
     ) { pad ->
-        Column(Modifier.padding(pad)) {
-            Text("Owner #$ownerId")
-            Text("Schermata in lavorazione.")
+        Column(Modifier.padding(pad).padding(16.dp)) {
+            Text("Nome: ${owner.firstName}")
+            Text("Cognome: ${owner.lastName}")
+            Text("Telefono: ${owner.phone}")
         }
     }
 }
