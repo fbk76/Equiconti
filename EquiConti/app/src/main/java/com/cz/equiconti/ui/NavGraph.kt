@@ -21,6 +21,7 @@ fun NavGraph(navController: NavHostController) {
         // Lista proprietari
         composable("owners") {
             OwnersScreen(
+                nav = navController,
                 onAddOwner = { navController.navigate("addOwner") },
                 onOwnerClick = { ownerId ->
                     navController.navigate("ownerDetail/$ownerId")
@@ -28,17 +29,17 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiungi proprietario  — firma: (nav: NavController, onSave: (Owner) -> Unit)
+        // Aggiungi proprietario
         composable("addOwner") {
             AddOwnerScreen(
                 nav = navController,
-                onSave = { /* dopo il salvataggio torniamo alla lista */
+                onSave = {
                     navController.popBackStack()
                 }
             )
         }
 
-        // Dettaglio proprietario — firma: (onBack: () -> Unit, onAddHorse: () -> Unit = {})
+        // Dettaglio proprietario
         composable(
             route = "ownerDetail/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -50,7 +51,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiungi cavallo — firma: (ownerId: Long, onBack: () -> Unit)
+        // Aggiungi cavallo
         composable(
             route = "addHorse/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -62,7 +63,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Movimenti — firma: (nav: NavController, ownerId: Long)
+        // Movimenti
         composable(
             route = "txns/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
