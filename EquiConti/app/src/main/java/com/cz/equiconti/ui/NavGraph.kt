@@ -6,6 +6,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.cz.equiconti.ui.owner.AddHorseScreen
+import com.cz.equiconti.ui.owner.AddOwnerScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.txn.TxnScreen
@@ -24,11 +26,10 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta proprietario (se presente nel progetto)
+        // Aggiunta proprietario (richiede onBack)
         composable("addOwner") {
             AddOwnerScreen(
-                onSave = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -44,7 +45,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta cavallo (se presente nel progetto)
+        // Aggiunta cavallo (creiamo una schermata placeholder)
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -52,12 +53,11 @@ fun NavGraph(navController: NavHostController) {
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             AddHorseScreen(
                 ownerId = ownerId,
-                onSave = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
+                onBack = { navController.popBackStack() }
             )
         }
 
-        // Movimenti del proprietario
+        // Movimenti
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
