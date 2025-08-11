@@ -1,44 +1,17 @@
-package com.cz.equiconti.ui
+// DENTRO NavHost { ... } sostituisci/aggiungi:
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-
-@Composable
-fun AppNavGraph(navController: NavHostController) {
-    NavHost(
-        navController = navController,
-        startDestination = "owners"
-    ) {
-        composable("owners") {
-            OwnersScreen(
-                onOwnerClick = { id -> navController.navigate("owner/$id") },
-                onAddClick = { navController.navigate("addOwner") }
-            )
-        }
-
-        composable("addOwner") {
-            AddOwnerScreen(
-                onSave = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
-            )
-        }
-
-        composable("owner/{ownerId}") {
-            OwnerDetailScreen(
-                onBack = { navController.popBackStack() },
-                onAddHorse = { /* eventuale azione */ }
-            )
-        }
-
-        composable("report") {
-            ReportScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("txns/{ownerId}") {
-            val ownerId = it.arguments?.getString("ownerId")?.toLongOrNull() ?: 0L
-            TxnScreen(nav = navController, ownerId = ownerId)
-        }
-    }
+composable(
+    route = "owner/{ownerId}",
+    arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+) { backStackEntry ->
+    val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+    // chiama la tua schermata di dettaglio passando ownerId
+    OwnerDetailScreen(nav = nav, ownerId = ownerId)
 }
+
+composable(
+    route = "owner/{ownerId}/txns",
+    arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+) { backStackEntry ->
+    val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+    // chiama la schermata movimenti
