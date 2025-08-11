@@ -1,19 +1,16 @@
 package com.cz.equiconti.data
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import androidx.room.Delete
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OwnerDao {
 
-    // Flow osservabile di tutti i proprietari (usato da Repo.observeOwners)
-    @Query("SELECT * FROM Owner ORDER BY lastName, firstName")
-    fun observeAll(): Flow<List<Owner>>
-
-    @Query("SELECT * FROM Owner WHERE id = :id LIMIT 1")
-    suspend fun getById(id: Long): Owner?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insert(owner: Owner): Long
 
     @Update
@@ -21,4 +18,10 @@ interface OwnerDao {
 
     @Delete
     suspend fun delete(owner: Owner)
+
+    @Query("SELECT * FROM owner WHERE id = :id")
+    suspend fun getById(id: Long): Owner?
+
+    @Query("SELECT * FROM owner")
+    fun observeAll(): Flow<List<Owner>>
 }
