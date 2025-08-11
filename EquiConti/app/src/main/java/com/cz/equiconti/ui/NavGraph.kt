@@ -26,7 +26,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta proprietario: QUI NON VA PASSATO ownerId, SOLO onBack!
+        // Aggiunta proprietario (solo onBack)
         composable("addOwner") {
             AddOwnerScreen(
                 onBack = { navController.popBackStack() }
@@ -56,3 +56,14 @@ fun NavGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() }
             )
         }
+
+        // Movimenti
+        composable(
+            route = "owner/{ownerId}/txns",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            TxnScreen(nav = navController, ownerId = ownerId)
+        }
+    } // <-- chiude NavHost
+}     // <-- chiude NavGraph()
