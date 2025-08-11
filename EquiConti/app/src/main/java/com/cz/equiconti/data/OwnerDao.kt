@@ -1,6 +1,11 @@
 package com.cz.equiconti.data
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -15,10 +20,11 @@ interface OwnerDao {
     @Delete
     suspend fun delete(owner: Owner)
 
-    // ← QUI la firma corretta: Flow e NON suspend
-    @Query("SELECT * FROM Owner ORDER BY surname, name")
+    // Stream continuo di tutti i proprietari, ordinati per cognome poi per PK
+    @Query("SELECT * FROM Owner ORDER BY lastname, OwnerId")
     fun observeAll(): Flow<List<Owner>>
 
-    @Query("SELECT * FROM Owner WHERE ownerId = :id LIMIT 1")
+    // Lettura di un proprietario per PK (colonna OwnerId)
+    @Query("SELECT * FROM Owner WHERE OwnerId = :id LIMIT 1")
     suspend fun getById(id: Long): Owner?
 }
