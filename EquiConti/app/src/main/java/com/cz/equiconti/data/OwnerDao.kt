@@ -10,10 +10,10 @@ import androidx.room.Update
 interface OwnerDao {
 
     @Query("SELECT * FROM owner")
-    suspend fun getAll(): List<Owner>
+    suspend fun observeAll(): List<Owner>
 
-    @Query("SELECT * FROM owner WHERE ownerId = :ownerId")
-    suspend fun getById(ownerId: Long): Owner?
+    @Query("SELECT * FROM owner WHERE id = :id")
+    suspend fun getById(id: Long): Owner?
 
     @Insert
     suspend fun insert(owner: Owner): Long
