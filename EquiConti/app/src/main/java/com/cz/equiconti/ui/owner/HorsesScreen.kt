@@ -1,95 +1,53 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallTopAppBar
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Horse
-import com.cz.equiconti.data.Owner
-import com.cz.equiconti.ui.owner.OwnersViewModel
-import kotlinx.coroutines.launch
 
-/**
- * Lista cavalli per un proprietario.
- *
- * - Mostra il nome del proprietario nella top bar
- * - Elenca i cavalli (se vuoto -> messaggio “nessun cavallo”)
- * - FAB: chiama onAddHorse(ownerId)
- */
 @Composable
 fun HorsesScreen(
     ownerId: Long,
     onBack: () -> Unit,
     onAddHorse: (Long) -> Unit,
-    onHorseClick: (Horse) -> Unit = {},
-    vm: OwnersViewModel = hiltViewModel(),
+    vm: OwnersViewModel = hiltViewModel()
 ) {
-    val scope = rememberCoroutineScope()
-
-    // carico l'owner per il titolo
-    var owner by remember { mutableStateOf<Owner?>(null) }
-    LaunchedEffect(ownerId) {
-        owner = vm.getOwnerById(ownerId)
-    }
-
-    // flusso cavalli
-    val horses by vm.observeHorses(ownerId).collectAsState(initial = emptyList())
+    val horses = vm.horses(ownerId).collectAsState(initial = emptyList()).value
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        owner?.let { "${it.lastName} ${it.firstName}" } ?: "Cavalli"
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Indietro"
-                        )
+        topBar = { SmallTopAppBar(title = { Text("Cavalli") }) }
+    ) { pad ->
+        Column(
+            Modifier
+                .padding(pad)
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onBack) { Text("Indietro") }
+                Button(onClick = { onAddHorse(ownerId) }) { Text("Nuovo cavallo") }
+            }
+
+            if (horses.isEmpty()) {
+                Text("Nessun cavallo registrato.", style = MaterialTheme.typography.bodyLarge)
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(horses, key = { it.id }) { h ->
+                        HorseRow(h)
+                        Divider()
                     }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { onAddHorse(ownerId) }) {
-                Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
-            }
-        }
-    ) { padding ->
-        if (horses.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Nessun cavallo registrato.")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                items(horses) { horse ->
-                    HorseRow(
-                        horse = horse,
-                        onClick = { onHorseClick(horse) }
-                    )
-                    Divider()
                 }
             }
         }
@@ -97,27 +55,15 @@ fun HorsesScreen(
 }
 
 @Composable
-private fun HorseRow(
-    horse: Horse,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(horse.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            val subtitle = buildString {
-                horse.breed?.let { append(it) }
-                if (isNotEmpty()) append("  ")
-                horse.color?.let { append(it) }
-            }
-            if (subtitle.isNotBlank()) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+private fun HorseRow(h: Horse) {
+    Column {
+        Text(h.name, style = MaterialTheme.typography.titleMedium)
+        if (!h.notes.isNullOrBlank()) {
+            Text(h.notes!!, style = MaterialTheme.typography.bodySmall)
+        }
+        if (h.monthlyFeeCents > 0) {
+            val euro = (h.monthlyFeeCents / 100.0)
+            Text("Quota mensile: €%.2f".format(euro), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
