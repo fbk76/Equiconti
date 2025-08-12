@@ -6,10 +6,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Horse
-import com.cz.equiconti.ui.owner.OwnersViewModel
 
 @Composable
 fun AddHorseScreen(
@@ -19,27 +19,29 @@ fun AddHorseScreen(
     vm: OwnersViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var fee by remember { mutableStateOf("") } // euro
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = "Nuovo cavallo")
+        Text("Nuovo cavallo")
 
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Nome cavallo") },
-            modifier = Modifier.fillMaxWidth()
+            value = name, onValueChange = { name = it },
+            label = { Text("Nome") }, modifier = Modifier.fillMaxWidth()
         )
-
         OutlinedTextField(
-            value = note,
-            onValueChange = { note = it },
-            label = { Text("Note (opzionale)") },
+            value = notes, onValueChange = { notes = it },
+            label = { Text("Note (opz.)") }, modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = fee, onValueChange = { fee = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' } },
+            label = { Text("Quota mensile (€)") },
+            keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -48,12 +50,13 @@ fun AddHorseScreen(
             Button(
                 enabled = name.isNotBlank(),
                 onClick = {
-                    // Costruisci l’oggetto Horse secondo il tuo data class
+                    val cents = ((fee.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
                     val horse = Horse(
-                        id = 0L,            // autoGenerate
+                        id = 0L,
                         ownerId = ownerId,
-                        name = name,
-                        note = if (note.isBlank()) null else note
+                        name = name.trim(),
+                        monthlyFeeCents = cents,
+                        notes = notes.trim().ifBlank { null }
                     )
                     vm.upsertHorse(horse)
                     onSaved()
