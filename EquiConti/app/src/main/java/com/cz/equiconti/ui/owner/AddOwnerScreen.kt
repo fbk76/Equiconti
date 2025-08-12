@@ -1,110 +1,63 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cz.equiconti.data.Owner
+import kotlinx.coroutines.launch
 
-/**
- * Schermata per inserire un nuovo proprietario.
- * Firma concordata: (nav, onSave)
- */
 @Composable
 fun AddOwnerScreen(
     nav: NavController,
-    onSave: (Owner) -> Unit
+    ownerId: Long? = null,             // se in futuro vorrai “modifica”
+    onSaved: (Long) -> Unit,
+    vm: OwnersViewModel = hiltViewModel()
 ) {
+    val scope = rememberCoroutineScope()
+
     var first by remember { mutableStateOf("") }
     var last by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
+    // se passi un id per edit, puoi caricare i dati
+    LaunchedEffect(ownerId) {
+        if (ownerId != null && ownerId != 0L) {
+            vm.getOwnerById(ownerId)?.let {
+                first = it.firstName
+                last = it.lastName
+                phone = it.phone.orEmpty()
+            }
+        }
+    }
+
     Scaffold(
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
+        topBar = { TopAppBar(title = { Text("Nuovo proprietario") }) }
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(first, { first = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(last, { last = it }, label = { Text("Cognome") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(phone, { phone = it }, label = { Text("Telefono (opz.)") }, modifier = Modifier.fillMaxWidth())
+
+            Button(
                 onClick = {
-                    if (first.isNotBlank() || last.isNotBlank()) {
-                        onSave(
+                    scope.launch {
+                        val id = vm.upsertOwner(
                             Owner(
+                                id = ownerId ?: 0L,
                                 firstName = first.trim(),
-                                lastName  = last.trim(),
-                                phone     = phone.trim().ifBlank { null }
+                                lastName = last.trim(),
+                                phone = phone.ifBlank { null }
                             )
                         )
-                        nav.popBackStack()
+                        onSaved(id)
                     }
                 },
-                icon = { Icon(Icons.Filled.Check, contentDescription = "Salva") },
-                text = { Text("Salva") }
-            )
+                enabled = first.isNotBlank() && last.isNotBlank()
+            ) { Text("Salva") }
         }
-    ) { padding ->
-        AddOwnerForm(
-            padding = padding,
-            first = first,
-            onFirst = { first = it },
-            last = last,
-            onLast = { last = it },
-            phone = phone,
-            onPhone = { phone = it }
-        )
-    }
-}
-
-@Composable
-private fun AddOwnerForm(
-    padding: PaddingValues,
-    first: String,
-    onFirst: (String) -> Unit,
-    last: String,
-    onLast: (String) -> Unit,
-    phone: String,
-    onPhone: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top
-    ) {
-        OutlinedTextField(
-            value = first,
-            onValueChange = onFirst,
-            label = { Text("Nome") },
-            modifier = Modifier.fillMaxSize(fraction = 1f)
-        )
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = last,
-            onValueChange = onLast,
-            label = { Text("Cognome") },
-            modifier = Modifier.fillMaxSize(fraction = 1f)
-        )
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = phone,
-            onValueChange = onPhone,
-            label = { Text("Telefono (opzionale)") },
-            modifier = Modifier.fillMaxSize(fraction = 1f)
-        )
     }
 }
