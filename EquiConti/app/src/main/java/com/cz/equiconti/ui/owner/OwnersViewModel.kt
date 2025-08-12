@@ -7,22 +7,27 @@ import com.cz.equiconti.data.Repo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class OwnersViewModel @Inject constructor(
-    repo: Repo
+    private val repo: Repo
 ) : ViewModel() {
 
-    // Flusso osservabile dei proprietari usato dalla lista
     val owners: StateFlow<List<Owner>> =
         repo.observeOwners()
-            .map { it }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = emptyList()
-            )
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun saveOwner(owner: Owner, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            repo.upsertOwner(owner)
+            onDone()
+        }
+    }
+
+    fun deleteOwner(owner: Owner) {
+        viewModelScope.launch { repo.deleteOwner(owner) }
+    }
 }
