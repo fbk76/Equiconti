@@ -6,9 +6,9 @@ import com.cz.equiconti.data.Owner
 import com.cz.equiconti.data.Repo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,32 +17,32 @@ class OwnersViewModel @Inject constructor(
     private val repo: Repo
 ) : ViewModel() {
 
-    // Lista proprietari osservabile dalla UI
-    val owners: StateFlow<List<Owner>> =
-        repo.observeOwners()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val _owners = MutableStateFlow<List<Owner>>(emptyList())
+    val owners: StateFlow<List<Owner>> = _owners.asStateFlow()
 
-    // Dettaglio proprietario corrente (per schermata dettaglio/edit)
-    private val _currentOwner = MutableStateFlow<Owner?>(null)
-    val currentOwner: StateFlow<Owner?> get() = _currentOwner
-
-    fun loadOwner(id: Long) {
+    init {
         viewModelScope.launch {
-            _currentOwner.value = repo.getOwnerById(id)
+            repo.observeOwners().collectLatest { list ->
+                _owners.value = list
+            }
         }
     }
 
-    fun upsert(owner: Owner, onDone: (Long) -> Unit = {}) {
+    /** Ritorna l’owner corrente (snapshot) se presente */
+    fun getOwnerById(id: Long): Owner? = _owners.value.firstOrNull { it.id == id }
+
+    /** Inserisce/aggiorna un owner */
+    fun saveOwner(owner: Owner) {
         viewModelScope.launch {
-            val id = repo.upsertOwner(owner)
-            onDone(id)
+            repo.upsertOwner(owner)
         }
     }
 
-    fun delete(owner: Owner, onDone: () -> Unit = {}) {
+    /** Elimina un owner */
+    fun removeOwner(ownerId: Long) {
+        val owner = getOwnerById(ownerId) ?: return
         viewModelScope.launch {
             repo.deleteOwner(owner)
-            onDone()
         }
     }
 }
