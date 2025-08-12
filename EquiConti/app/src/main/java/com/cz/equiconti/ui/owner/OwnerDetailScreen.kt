@@ -5,96 +5,59 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.cz.equiconti.data.Owner
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnerDetailScreen(
-    ownerId: Long,
+    ownerFlow: Flow<Owner?>,
     onBack: () -> Unit,
-    onDelete: () -> Unit,
-    vm: OwnersViewModel
+    onEdit: (Owner) -> Unit,
+    onDelete: (Owner) -> Unit,
+    onOpenHorses: () -> Unit,
+    onOpenTxns: () -> Unit
 ) {
-    val current = vm.getOwnerById(ownerId)
+    var owner by remember { mutableStateOf<Owner?>(null) }
 
-    if (current == null) {
-        Scaffold(
-            topBar = { TopAppBar(title = { Text("Dettagli") }) }
-        ) { inner ->
-            Column(
-                modifier = Modifier
-                    .padding(inner)
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text("Proprietario non trovato.")
-                TextButton(onClick = onBack) { Text("Indietro") }
-            }
-        }
-        return
+    LaunchedEffect(Unit) {
+        ownerFlow.collectLatest { owner = it }
     }
-
-    var firstName by remember(current.id) { mutableStateOf(current.firstName) }
-    var lastName  by remember(current.id) { mutableStateOf(current.lastName) }
-    var phone     by remember(current.id) { mutableStateOf(current.phone ?: "") }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Dettagli proprietario") },
+            SmallTopAppBar(
+                title = { Text("Dettagli") },
                 navigationIcon = {
                     TextButton(onClick = onBack) { Text("Indietro") }
-                },
-                actions = {
-                    TextButton(
-                        enabled = firstName.isNotBlank() && lastName.isNotBlank(),
-                        onClick = {
-                            vm.saveOwner(
-                                current.copy(
-                                    firstName = firstName.trim(),
-                                    lastName = lastName.trim(),
-                                    phone = phone.trim().ifBlank { null }
-                                )
-                            )
-                            onBack()
-                        }
-                    ) { Text("Salva") }
-
-                    TextButton(
-                        onClick = {
-                            vm.removeOwner(current.id)
-                            onDelete()
-                        }
-                    ) { Text("Elimina") }
                 }
             )
         }
-    ) { inner ->
-        Column(
-            modifier = Modifier
-                .padding(inner)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
-                label = { Text("Nome") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
-                label = { Text("Cognome") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Telefono (opz.)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+    ) { pad ->
+        Column(Modifier.padding(pad).padding(16.dp)) {
+            if (owner == null) {
+                Text("Proprietario non trovato.")
+                return@Column
+            }
+            val o = owner!!
+            Text("${o.firstName} ${o.lastName}", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(8.dp))
+            Text("Telefono: ${o.phone ?: "-"}")
+
+            Spacer(Modifier.height(24.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onOpenHorses) { Text("Cavalli") }
+                Button(onClick = onOpenTxns) { Text("Movimenti") }
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = { onEdit(o) }) { Text("Modifica") }
+                OutlinedButton(
+                    onClick = { onDelete(o) },
+                    colors = ButtonDefaults.outlinedButtonColors()
+                ) { Text("Elimina") }
+            }
         }
     }
 }
