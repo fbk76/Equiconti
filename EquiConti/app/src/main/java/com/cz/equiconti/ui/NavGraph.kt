@@ -1,8 +1,6 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -26,50 +24,38 @@ fun AppNavGraph(
         startDestination = startDestination
     ) {
 
-        // Lista proprietari
         composable("owners") {
-            val owners = vm.owners.collectAsState().value
             OwnersScreen(
-                owners = owners,
+                owners = vm.owners,
                 onOwnerClick = { id -> navController.navigate("owner/$id") },
                 onAddOwner = { navController.navigate("addOwner") }
             )
         }
 
-        // Aggiunta proprietario
         composable("addOwner") {
             AddOwnerScreen(
                 onSave = { owner ->
                     vm.saveOwner(owner)
-                    navController.popBackStack() // torna alla lista
+                    navController.popBackStack()
                 },
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // Dettaglio proprietario
         composable(
-            route = "owner/{id}",
-            arguments = listOf(
-                navArgument("id") { type = NavType.LongType }
-            )
+            route = "owner/{ownerId}",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getLong("id") ?: return@composable
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: return@composable
 
-            // carica il proprietario selezionato nel VM e osservalo
-            LaunchedEffect(id) { vm.loadOwner(id) }
-            val owner = vm.owner.collectAsState().value
-
-            owner?.let { current ->
-                OwnerDetailScreen(
-                    owner = current,
-                    onBack = { navController.popBackStack() },
-                    onDelete = {
-                        vm.removeOwner(current.id)
-                        navController.popBackStack()
-                    }
-                )
-            }
+            OwnerDetailScreen(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onDelete = {
+                    vm.removeOwner(ownerId)
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
