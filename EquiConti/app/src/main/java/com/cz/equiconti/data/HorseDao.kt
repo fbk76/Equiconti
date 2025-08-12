@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HorseDao {
 
-    // Usato da Repo.observeHorses(ownerId)
+    // Stesso nome usato in Repo
     @Query("SELECT * FROM Horse WHERE ownerId = :ownerId ORDER BY name")
-    fun observeByOwner(ownerId: Long): Flow<List<Horse>>
+    fun observeHorses(ownerId: Long): Flow<List<Horse>>
 
     @Insert
     suspend fun insert(horse: Horse): Long
