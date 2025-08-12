@@ -19,10 +19,7 @@ fun AppNavGraph(
 ) {
     val vm: OwnersViewModel = hiltViewModel()
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
+    NavHost(navController = navController, startDestination = startDestination) {
 
         composable("owners") {
             OwnersScreen(
