@@ -1,75 +1,73 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.cz.equiconti.data.Owner
+import androidx.navigation.NavHostController
+import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import com.cz.equiconti.ui.owner.AddOwnerScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.owner.OwnersViewModel
 
-/**
- * Rotte usate nell’app
- */
-private object Routes {
-    const val OWNERS = "owners"
-    const val OWNER_ADD = "owner/add"
-    const val OWNER_DETAIL = "owner/{ownerId}"
-    fun ownerDetail(ownerId: Long) = "owner/$ownerId"
+object Routes {
+    const val Owners = "owners"
+    const val AddOwner = "owner/add"
+    const val OwnerDetail = "owner/{ownerId}"
+    fun ownerDetail(id: Long) = "owner/$id"
 }
 
 @Composable
 fun AppNavGraph(
-    navController: NavController = rememberNavController()
+    navController: NavHostController = rememberNavController()
 ) {
+    // ViewModel condiviso per la lista proprietari
+    val vm: OwnersViewModel = hiltViewModel()
+    val owners by vm.owners.collectAsState()
+    val scope = rememberCoroutineScope()
+
     NavHost(
         navController = navController,
-        startDestination = Routes.OWNERS
+        startDestination = Routes.Owners
     ) {
         // Lista proprietari
-        composable(Routes.OWNERS) {
+        composable(Routes.Owners) {
             OwnersScreen(
-                onOwnerClick = { id ->
-                    navController.navigate(Routes.ownerDetail(id))
-                },
-                onAddOwner = {
-                    navController.navigate(Routes.OWNER_ADD)
-                }
+                owners = owners,
+                onAddOwner = { navController.navigate(Routes.AddOwner) },
+                onOwnerClick = { id -> navController.navigate(Routes.ownerDetail(id)) }
             )
         }
 
-        // Aggiunta/edizione proprietario
-        composable(Routes.OWNER_ADD) {
-            val vm: OwnersViewModel = hiltViewModel()
-
+        // Aggiungi/Modifica proprietario
+        composable(Routes.AddOwner) {
             AddOwnerScreen(
-                nav = navController,
-                onSave = { owner: Owner ->
-                    // Chiama il metodo del ViewModel e torna indietro.
-                    // Assicurati che OwnersViewModel esponga questa funzione.
-                    vm.upsertOwner(owner)
-                    navController.popBackStack()
+                onSave = { owner ->
+                    scope.launch {
+                        vm.upsert(owner)
+                        navController.popBackStack() // torna alla lista
+                    }
                 }
             )
         }
 
         // Dettaglio proprietario
         composable(
-            route = Routes.OWNER_DETAIL,
+            route = Routes.OwnerDetail,
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { backStack ->
-            val ownerId = backStack.arguments?.getLong("ownerId") ?: 0L
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(
-                onBack = { navController.popBackStack() },
-                onAddHorse = {
-                    // qui, se/quando servirà: navController.navigate("horse/add/$ownerId")
-                }
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() }
             )
         }
     }
