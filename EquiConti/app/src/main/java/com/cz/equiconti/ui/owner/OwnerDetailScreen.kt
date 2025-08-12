@@ -7,41 +7,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.cz.equiconti.data.Owner
-import kotlinx.coroutines.launch
 
 @Composable
 fun OwnerDetailScreen(
     nav: NavController,
     ownerId: Long,
-    onEdit: (Long) -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    var owner by remember { mutableStateOf<Owner?>(null) }
-    val scope = rememberCoroutineScope()
-
     LaunchedEffect(ownerId) {
-        owner = vm.getOwnerById(ownerId)
+        vm.loadOwner(ownerId)
     }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Dettaglio proprietario") }) }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            owner?.let { o ->
-                Text("Nome: ${o.firstName} ${o.lastName}", style = MaterialTheme.typography.titleLarge)
-                if (!o.phone.isNullOrBlank()) Text("Telefono: ${o.phone}")
+    val owner = vm.currentOwner.collectAsState().value
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { onEdit(o.id) }) { Text("Modifica") }
-                    OutlinedButton(onClick = {
-                        scope.launch {
-                            vm.deleteOwner(o)
-                            nav.popBackStack()
-                        }
-                    }) { Text("Elimina") }
-                }
-            } ?: Text("Caricamento…")
-        }
+    Column(Modifier.padding(16.dp)) {
+        owner?.let {
+            Text("Nome: ${it.firstName}")
+            Text("Cognome: ${it.lastName}")
+            Text("Telefono: ${it.phone ?: "-"}")
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { nav.navigate("editOwner/${it.id}") }) {
+                Text("Modifica")
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    vm.delete(it) { nav.popBackStack() }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Elimina")
+            }
+        } ?: Text("Proprietario non trovato")
     }
 }
