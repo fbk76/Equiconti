@@ -1,73 +1,53 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.NavHostController
-import dagger.hilt.android.lifecycle.HiltViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.launch
+import androidx.navigation.NavController
 import com.cz.equiconti.ui.owner.AddOwnerScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
-import com.cz.equiconti.ui.owner.OwnersViewModel
 
 object Routes {
-    const val Owners = "owners"
-    const val AddOwner = "owner/add"
-    const val OwnerDetail = "owner/{ownerId}"
-    fun ownerDetail(id: Long) = "owner/$id"
+    const val OWNERS = "owners"
+    const val OWNER_ADD = "owner/add"
+    const val OWNER_DETAIL = "owner/{id}"
 }
 
 @Composable
-fun AppNavGraph(
-    navController: NavHostController = rememberNavController()
-) {
-    // ViewModel condiviso per la lista proprietari
-    val vm: OwnersViewModel = hiltViewModel()
-    val owners by vm.owners.collectAsState()
-    val scope = rememberCoroutineScope()
+fun AppNavGraph() {
+    val nav = rememberNavController()
 
-    NavHost(
-        navController = navController,
-        startDestination = Routes.Owners
-    ) {
-        // Lista proprietari
-        composable(Routes.Owners) {
+    NavHost(navController = nav, startDestination = Routes.OWNERS) {
+
+        composable(Routes.OWNERS) {
             OwnersScreen(
-                owners = owners,
-                onAddOwner = { navController.navigate(Routes.AddOwner) },
-                onOwnerClick = { id -> navController.navigate(Routes.ownerDetail(id)) }
+                nav = nav,
+                onOwnerClick = { ownerId -> nav.navigate("owner/$ownerId") },
+                onAddOwner = { nav.navigate(Routes.OWNER_ADD) }
             )
         }
 
-        // Aggiungi/Modifica proprietario
-        composable(Routes.AddOwner) {
+        composable(Routes.OWNER_ADD) {
             AddOwnerScreen(
-                onSave = { owner ->
-                    scope.launch {
-                        vm.upsert(owner)
-                        navController.popBackStack() // torna alla lista
-                    }
-                }
+                nav = nav,
+                ownerId = null,
+                onSaved = { savedId -> nav.navigate("owner/$savedId") { popUpTo(Routes.OWNERS) { inclusive = false } } }
             )
         }
 
-        // Dettaglio proprietario
         composable(
-            route = Routes.OwnerDetail,
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            route = Routes.OWNER_DETAIL,
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { backStack ->
+            val id = backStack.arguments?.getLong("id") ?: 0L
             OwnerDetailScreen(
-                ownerId = ownerId,
-                onBack = { navController.popBackStack() }
+                nav = nav,
+                ownerId = id,
+                onEdit = { nav.navigate(Routes.OWNER_ADD) }
             )
         }
     }
