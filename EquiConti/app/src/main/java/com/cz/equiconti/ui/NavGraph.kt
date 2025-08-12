@@ -21,7 +21,7 @@ private object Routes {
     const val OWNER_DETAIL = "owner/{ownerId}"
     const val OWNER_HORSES = "owner/{ownerId}/horses"
     const val HORSE_ADD = "owner/{ownerId}/horse/add"
-    const val OWNER_TXN = "owner/{ownerId}/txn"
+    const val OWNER_TXNS = "owner/{ownerId}/txns"
     const val ARG_ID = "ownerId"
 }
 
@@ -32,38 +32,29 @@ fun AppNavGraph() {
 
     NavHost(navController = nav, startDestination = Routes.OWNERS) {
 
-        // ── Lista proprietari
+        // Lista proprietari
         composable(Routes.OWNERS) {
-            OwnersScreen(
-                navController = nav,
-                vm = vm
-            )
+            OwnersScreen(navController = nav, vm = vm)
         }
 
-        // ── Aggiungi proprietario
+        // Aggiungi proprietario
         composable(Routes.OWNER_ADD) {
             AddOwnerScreen(
-                onSave = { owner ->
-                    vm.upsertOwner(owner)
-                    nav.popBackStack()
-                },
+                onSave = { owner -> vm.upsertOwner(owner); nav.popBackStack() },
                 onBack = { nav.popBackStack() }
             )
         }
 
-        // ── Dettaglio proprietario
+        // Dettaglio proprietario
         composable(
             route = Routes.OWNER_DETAIL,
             arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
         ) { backStack ->
             val ownerId = backStack.arguments!!.getLong(Routes.ARG_ID)
-            OwnerDetailScreen(
-                ownerId = ownerId,
-                nav = nav
-            )
+            OwnerDetailScreen(ownerId = ownerId, nav = nav)
         }
 
-        // ── Lista cavalli del proprietario
+        // Cavalli del proprietario
         composable(
             route = Routes.OWNER_HORSES,
             arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
@@ -76,7 +67,7 @@ fun AppNavGraph() {
             )
         }
 
-        // ── Aggiungi cavallo
+        // Aggiungi cavallo
         composable(
             route = Routes.HORSE_ADD,
             arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
@@ -89,9 +80,9 @@ fun AppNavGraph() {
             )
         }
 
-        // ── Movimenti (entrate/uscite) del proprietario
+        // Movimenti (entrate/uscite) del proprietario
         composable(
-            route = Routes.OWNER_TXN,
+            route = Routes.OWNER_TXNS,
             arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
         ) { backStack ->
             val ownerId = backStack.arguments!!.getLong(Routes.ARG_ID)
