@@ -1,6 +1,7 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -8,78 +9,34 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.AddOwnerScreen
+import com.cz.equiconti.ui.owner.HorsesScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
-import com.cz.equiconti.ui.owner.HorsesScreen
-import com.cz.equiconti.ui.owner.TxnScreen
 import com.cz.equiconti.ui.owner.OwnersViewModel
+import com.cz.equiconti.ui.txn.TxnScreen
+
+object Routes {
+    const val OWNERS = "owners"
+    const val OWNER_ADD = "owner/add"
+    const val OWNER_DETAIL = "owner/{ownerId}"
+    const val OWNER_HORSES = "owner/{ownerId}/horses"
+    const val OWNER_TXNS = "owner/{ownerId}/txns"
+}
 
 @Composable
-fun AppNavGraph() {
-    val nav = rememberNavController()
-    NavHost(navController = nav, startDestination = "owners") {
+fun AppNavGraph(
+    modifier: Modifier = Modifier,
+    startDestination: String = Routes.OWNERS,
+) {
+    val navController = rememberNavController()
+    val vm: OwnersViewModel = hiltViewModel()
 
-        composable("owners") {
-            val vm = hiltViewModel<OwnersViewModel>()
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
+        // Lista proprietari
+        composable(Routes.OWNERS) {
             OwnersScreen(
-                owners = vm.owners,
-                onOwnerClick = { id -> nav.navigate("owner/$id") },
-                onAddOwner = { nav.navigate("owner/new") }
-            )
-        }
-
-        composable("owner/new") {
-            val vm = hiltViewModel<OwnersViewModel>()
-            AddOwnerScreen(
-                onSave = { owner ->
-                    vm.upsertOwner(owner)
-                    nav.popBackStack()
-                },
-                onBack = { nav.popBackStack() }
-            )
-        }
-
-        composable(
-            route = "owner/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.LongType })
-        ) { backStack ->
-            val vm = hiltViewModel<OwnersViewModel>()
-            val id = backStack.arguments?.getLong("id") ?: 0L
-            OwnerDetailScreen(
-                ownerFlow = vm.ownerFlow(id),
-                onBack = { nav.popBackStack() },
-                onEdit = { nav.navigate("owner/new") }, // semplice: riusa form “new” per ora
-                onDelete = {
-                    vm.deleteOwner(it)
-                    nav.popBackStack()
-                },
-                onOpenHorses = { nav.navigate("owner/$id/horses") },
-                onOpenTxns = { nav.navigate("owner/$id/txns") }
-            )
-        }
-
-        composable(
-            route = "owner/{id}/horses",
-            arguments = listOf(navArgument("id") { type = NavType.LongType })
-        ) { backStack ->
-            val vm = hiltViewModel<OwnersViewModel>()
-            val ownerId = backStack.arguments?.getLong("id") ?: 0L
-            HorsesScreen(
-                horsesFlow = vm.horses(ownerId),
-                onBack = { nav.popBackStack() }
-            )
-        }
-
-        composable(
-            route = "owner/{id}/txns",
-            arguments = listOf(navArgument("id") { type = NavType.LongType })
-        ) { backStack ->
-            val vm = hiltViewModel<OwnersViewModel>()
-            val ownerId = backStack.arguments?.getLong("id") ?: 0L
-            TxnScreen(
-                txnsFlow = vm.txns(ownerId),
-                onBack = { nav.popBackStack() }
-            )
-        }
-    }
-}
+                onOwnerClick
