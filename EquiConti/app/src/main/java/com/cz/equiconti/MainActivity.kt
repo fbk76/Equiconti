@@ -12,12 +12,12 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            // Uso direttamente MaterialTheme per evitare riferimenti a temi custom mancanti
-            MaterialTheme {
-                Surface {
-                    AppNavGraph()
-                }
+       setContent {
+    // Se hai un tema app, lascialo attivo. Esempio:
+    // EquiContiTheme {
+    AppNavGraph()
+    // }
+} 
             }
         }
     }
