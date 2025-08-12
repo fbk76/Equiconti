@@ -4,11 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cz.equiconti.data.Owner
 import com.cz.equiconti.data.Repo
+import com.cz.equiconti.data.Horse
+import com.cz.equiconti.data.Txn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,32 +16,27 @@ class OwnersViewModel @Inject constructor(
     private val repo: Repo
 ) : ViewModel() {
 
-    private val _owners = MutableStateFlow<List<Owner>>(emptyList())
-    val owners: StateFlow<List<Owner>> = _owners.asStateFlow()
+    // elenco proprietari
+    val owners: StateFlow<List<Owner>> =
+        repo.observeOwners()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    init {
-        viewModelScope.launch {
-            repo.observeOwners().collectLatest { list ->
-                _owners.value = list
-            }
-        }
+    // flusso del singolo owner
+    fun ownerFlow(id: Long): Flow<Owner?> = flow {
+        emit(repo.getOwnerById(id))
     }
 
-    /** Ritorna l’owner corrente (snapshot) se presente */
-    fun getOwnerById(id: Long): Owner? = _owners.value.firstOrNull { it.id == id }
-
-    /** Inserisce/aggiorna un owner */
-    fun saveOwner(owner: Owner) {
-        viewModelScope.launch {
-            repo.upsertOwner(owner)
-        }
+    fun upsertOwner(owner: Owner) {
+        viewModelScope.launch { repo.upsertOwner(owner) }
     }
 
-    /** Elimina un owner */
-    fun removeOwner(ownerId: Long) {
-        val owner = getOwnerById(ownerId) ?: return
-        viewModelScope.launch {
-            repo.deleteOwner(owner)
-        }
+    fun deleteOwner(owner: Owner) {
+        viewModelScope.launch { repo.deleteOwner(owner) }
     }
+
+    // cavalli per owner
+    fun horses(ownerId: Long): Flow<List<Horse>> = repo.observeHorses(ownerId)
+
+    // movimenti per owner
+    fun txns(ownerId: Long): Flow<List<Txn>> = repo.observeTxns(ownerId)
 }
