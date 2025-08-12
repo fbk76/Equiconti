@@ -9,17 +9,15 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TxnDao {
 
-    // Usato da Repo.observeTxns(ownerId)
+    // Stesso nome usato in Repo
     @Query("SELECT * FROM Txn WHERE ownerId = :ownerId ORDER BY dateMillis DESC, txnId DESC")
-    fun listByOwner(ownerId: Long): Flow<List<Txn>>
+    fun observeTxns(ownerId: Long): Flow<List<Txn>>
 
     @Insert
     suspend fun insert(txn: Txn): Long
 
     @Delete
     suspend fun delete(txn: Txn)
-
-    /* ---- Opzionali utili (se farai report/filtri) ---- */
 
     @Query("""
         SELECT * FROM Txn
