@@ -1,9 +1,13 @@
 package com.cz.equiconti.ui.txn
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -11,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Txn
 import com.cz.equiconti.ui.owner.OwnersViewModel
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
@@ -19,61 +25,84 @@ fun TxnScreen(
     onBack: () -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    var description by remember { mutableStateOf("") }
+    val txns = vm.txns(ownerId).collectAsState(initial = emptyList()).value
+    val balance = txns.sumOf { it.incomeCents - it.expenseCents }
+    val nf = remember { NumberFormat.getCurrencyInstance() }
+
+    var operation by remember { mutableStateOf("") }
     var income by remember { mutableStateOf("") }
     var expense by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Movimento")
+        Text("Movimenti", style = MaterialTheme.typography.headlineSmall)
+        Text("Saldo: ${nf.format(balance / 100.0)}")
 
-        OutlinedTextField(
-            value = description,
-            onValueChange = { description = it },
-            label = { Text("Descrizione") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Lista movimenti
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+            items(txns, key = { it.txnId }) { t ->
+                TxnRow(t)
+                Divider()
+            }
+        }
 
+        // Inserimento rapido
         OutlinedTextField(
-            value = income,
-            onValueChange = { income = it.filter { ch -> ch.isDigit() } },
-            label = { Text("Entrata (€)") },
-            keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
+            value = operation, onValueChange = { operation = it },
+            label = { Text("Operazione/Descrizione") }, modifier = Modifier.fillMaxWidth()
         )
-
-        OutlinedTextField(
-            value = expense,
-            onValueChange = { expense = it.filter { ch -> ch.isDigit() } },
-            label = { Text("Uscita (€)") },
-            keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(
+                value = income, onValueChange = { income = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' } },
+                label = { Text("Entrata (€)") },
+                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = expense, onValueChange = { expense = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' } },
+                label = { Text("Uscita (€)") },
+                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(onClick = onBack) { Text("Indietro") }
             Button(
+                enabled = operation.isNotBlank(),
                 onClick = {
-                    // NB: qui trasformo euro interi in centesimi; adatta se usi decimali
-                    val incomeCents = income.toLongOrNull()?.times(100) ?: 0L
-                    val expenseCents = expense.toLongOrNull()?.times(100) ?: 0L
-
+                    val inc = ((income.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
+                    val exp = ((expense.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
                     val txn = Txn(
-                        txnId = 0L, // autoGenerate
+                        txnId = 0L,
                         ownerId = ownerId,
+                        horseId = null,
                         dateMillis = System.currentTimeMillis(),
-                        description = if (description.isBlank()) null else description,
-                        incomeCents = incomeCents,
-                        expenseCents = expenseCents
+                        operation = operation.trim(),
+                        incomeCents = inc,
+                        expenseCents = exp,
+                        note = null
                     )
                     vm.addTxn(txn)
-                    onBack()
+                    operation = ""; income = ""; expense = ""
                 }
             ) { Text("Salva") }
         }
+    }
+}
+
+@Composable
+private fun TxnRow(t: Txn) {
+    val nf = remember { NumberFormat.getCurrencyInstance() }
+    val df = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val amount = (t.incomeCents - t.expenseCents) / 100.0
+    Column {
+        Text(df.format(Date(t.dateMillis)), style = MaterialTheme.typography.labelMedium)
+        Text(t.operation, style = MaterialTheme.typography.titleMedium)
+        Text(nf.format(amount), style = MaterialTheme.typography.bodyLarge)
     }
 }
