@@ -1,7 +1,6 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,19 +23,73 @@ object Routes {
 }
 
 @Composable
-fun AppNavGraph(
-    modifier: Modifier = Modifier,
-    startDestination: String = Routes.OWNERS,
-) {
-    val navController = rememberNavController()
+fun AppNavGraph() {
+    val nav = rememberNavController()
     val vm: OwnersViewModel = hiltViewModel()
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        modifier = modifier
-    ) {
+    NavHost(navController = nav, startDestination = Routes.OWNERS) {
+
         // Lista proprietari
         composable(Routes.OWNERS) {
+            // Versione della tua OwnersScreen che prende navController e vm
             OwnersScreen(
-                onOwnerClick
+                navController = nav,
+                vm = vm
+            )
+        }
+
+        // Aggiungi proprietario
+        composable(Routes.OWNER_ADD) {
+            AddOwnerScreen(
+                onSave = { owner ->
+                    vm.upsertOwner(owner)
+                    nav.popBackStack()
+                },
+                onBack = { nav.popBackStack() }
+            )
+        }
+
+        // Dettaglio proprietario
+        composable(
+            route = Routes.OWNER_DETAIL,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
+            OwnerDetailScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onEdit = { /* se vuoi una schermata edit dedicata, portalo a OWNER_ADD o ad una rotta /edit */ nav.navigate(Routes.OWNER_ADD) },
+                onOpenHorses = { id -> nav.navigate("owner/$id/horses") },
+                onOpenTxns =   { id -> nav.navigate("owner/$id/txns") },
+                onDeleted = { nav.popBackStack() }
+            )
+        }
+
+        // Cavalli del proprietario
+        composable(
+            route = Routes.OWNER_HORSES,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
+            HorsesScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onAddHorse = { id -> nav.navigate("owner/$id/addHorse") }, // opzionale se creerai la rotta di aggiunta cavallo
+                onHorseClick = { /* opzionale: dettaglio cavallo */ }
+            )
+        }
+
+        // Movimenti del proprietario
+        composable(
+            route = Routes.OWNER_TXNS,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
+            TxnScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onAddTxn = { /* opzionale: rotta per aggiungere nuovo movimento */ }
+            )
+        }
+    }
+}
