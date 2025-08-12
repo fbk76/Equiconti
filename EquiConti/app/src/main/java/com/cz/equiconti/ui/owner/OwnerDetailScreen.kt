@@ -1,6 +1,9 @@
 package com.cz.equiconti.ui.owner
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,24 +20,23 @@ fun OwnerDetailScreen(
     onDelete: () -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    // carica l'owner dal VM
-    val owner = remember(ownerId, vm.owners) {
-        vm.owners.firstOrNull { it.id == ownerId }
-    }
+    // Carica l'owner dal ViewModel
+    val owner: Owner? = vm.owners.firstOrNull { it.id == ownerId }
 
-    var firstName by remember(owner) { mutableStateOf(TextFieldValue(owner?.firstName.orEmpty())) }
-    var lastName  by remember(owner) { mutableStateOf(TextFieldValue(owner?.lastName.orEmpty())) }
-    var phone     by remember(owner) { mutableStateOf(TextFieldValue(owner?.phone.orEmpty())) }
+    var firstName by remember(owner) { mutableStateOf(TextFieldValue(owner?.firstName ?: "")) }
+    var lastName by remember(owner) { mutableStateOf(TextFieldValue(owner?.lastName ?: "")) }
+    var phone by remember(owner) { mutableStateOf(TextFieldValue(owner?.phone ?: "")) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Proprietario") },
+                title = { Text("Dettaglio proprietario") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Indietro") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
+                    }
                 },
                 actions = {
-                    // Salva
                     TextButton(
                         enabled = firstName.text.isNotBlank() && lastName.text.isNotBlank(),
                         onClick = {
@@ -49,35 +51,42 @@ fun OwnerDetailScreen(
                         }
                     ) { Text("Salva") }
 
-                    // Elimina
                     IconButton(
                         onClick = {
                             vm.removeOwner(ownerId)
                             onDelete()
                         }
-                    ) { Icon(Icons.Default.Delete, contentDescription = "Elimina") }
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Elimina")
+                    }
                 }
             )
         }
-    ) { inner ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(inner)
+                .padding(innerPadding)
                 .padding(16.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
-                value = firstName, onValueChange = { firstName = it },
-                label = { Text("Nome") }, modifier = Modifier.fillMaxWidth()
+                value = firstName,
+                onValueChange = { firstName = it },
+                label = { Text("Nome") },
+                modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = lastName, onValueChange = { lastName = it },
-                label = { Text("Cognome") }, modifier = Modifier.fillMaxWidth()
+                value = lastName,
+                onValueChange = { lastName = it },
+                label = { Text("Cognome") },
+                modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = phone, onValueChange = { phone = it },
-                label = { Text("Telefono (opz.)") }, modifier = Modifier.fillMaxWidth()
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Telefono (opzionale)") },
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
