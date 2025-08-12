@@ -8,56 +8,69 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cz.equiconti.data.Owner
-import kotlinx.coroutines.launch
 
 @Composable
 fun AddOwnerScreen(
     nav: NavController,
-    ownerId: Long? = null,             // se in futuro vorrai “modifica”
-    onSaved: (Long) -> Unit,
+    ownerId: Long? = null,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    val scope = rememberCoroutineScope()
-
-    var first by remember { mutableStateOf("") }
-    var last by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
-    // se passi un id per edit, puoi caricare i dati
+    // Se è edit, carica i dati
     LaunchedEffect(ownerId) {
-        if (ownerId != null && ownerId != 0L) {
-            vm.getOwnerById(ownerId)?.let {
-                first = it.firstName
-                last = it.lastName
-                phone = it.phone.orEmpty()
-            }
+        if (ownerId != null) {
+            vm.loadOwner(ownerId)
         }
     }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Nuovo proprietario") }) }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(first, { first = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(last, { last = it }, label = { Text("Cognome") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(phone, { phone = it }, label = { Text("Telefono (opz.)") }, modifier = Modifier.fillMaxWidth())
+    val current = vm.currentOwner.collectAsState().value
+    LaunchedEffect(current) {
+        current?.let {
+            firstName = it.firstName
+            lastName = it.lastName
+            phone = it.phone ?: ""
+        }
+    }
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        val id = vm.upsertOwner(
-                            Owner(
-                                id = ownerId ?: 0L,
-                                firstName = first.trim(),
-                                lastName = last.trim(),
-                                phone = phone.ifBlank { null }
-                            )
-                        )
-                        onSaved(id)
-                    }
-                },
-                enabled = first.isNotBlank() && last.isNotBlank()
-            ) { Text("Salva") }
+    Column(Modifier.padding(16.dp)) {
+        OutlinedTextField(
+            value = firstName,
+            onValueChange = { firstName = it },
+            label = { Text("Nome") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = lastName,
+            onValueChange = { lastName = it },
+            label = { Text("Cognome") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Telefono") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(16.dp))
+        Button(
+            onClick = {
+                vm.upsert(
+                    Owner(
+                        id = current?.id ?: 0L,
+                        firstName = firstName,
+                        lastName = lastName,
+                        phone = phone.ifBlank { null }
+                    )
+                ) {
+                    nav.popBackStack()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Salva")
         }
     }
 }
