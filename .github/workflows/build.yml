@@ -2,65 +2,89 @@ name: Build APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main, master ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
-    defaults:
-      run:
-        working-directory: EquiConti
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: 'temurin'
+          java-version: '17'
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install SDK packages (API 34 + build-tools)
+      # Installa i pacchetti SDK a mano (con retry)
+      - name: Install Android SDK packages (with retry)
+        shell: bash
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          set -e
+          SDKMGR="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMGR" ]; then
+            echo "sdkmanager non trovato in $SDKMGR"
+            ls -la "$ANDROID_SDK_ROOT/cmdline-tools" || true
+            exit 1
+          fi
 
-      - name: Generate debug keystore (used for debug & release)
-        run: |
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -alias androiddebugkey \
-            -storepass android \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          PKGS=(
+            "platform-tools"
+            "platforms;android-34"
+            "build-tools;34.0.0"
+          )
+
+          # Accetta le licenze
+          yes | "$SDKMGR" --licenses || true
+
+          # Funzione di retry
+          install_with_retry () {
+            local pkg="$1"
+            for i in 1 2 3; do
+              echo ">> Installo $pkg (tentativo $i/3)"
+              if yes | "$SDKMGR" "$pkg"; then
+                echo "OK $pkg"
+                return 0
+              fi
+              echo "Fallito $pkg, retry tra 5s..."
+              sleep 5
+            done
+            echo "ERRORE: impossibile installare $pkg"
+            return 1
+          }
+
+          for p in "${PKGS[@]}"; do
+            install_with_retry "$p"
+          done
+
+          echo "SDK installato:"
+          ls -R "$ANDROID_SDK_ROOT/platforms" || true
+          ls -R "$ANDROID_SDK_ROOT/build-tools" || true
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew --no-daemon assembleDebug
+      # Build Debug e Release (firma debug)
+      - name: Assemble Debug
+        run: ./gradlew :app:assembleDebug --stacktrace
 
-      - name: Build Release APK
-        run: ./gradlew --no-daemon assembleRelease
+      - name: Assemble Release (debug-signed)
+        run: ./gradlew :app:assembleRelease --stacktrace
 
-      - name: Upload Debug APK
+      # Carica gli artifact
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: EquiConti/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release.apk
-          path: EquiConti/app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
+          name: app-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
