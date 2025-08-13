@@ -42,7 +42,7 @@ fun TxnScreen(
                     setNote("")
                 }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Aggiungi movimento")
+                Icon(Icons.Filled.Add, contentDescription = "Aggiungi movimento")
             }
         }
     ) { inner ->
