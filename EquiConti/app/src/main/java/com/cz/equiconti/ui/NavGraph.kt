@@ -1,5 +1,3 @@
-// 2) NavGraph.kt — Navigazione minimale che COMPILA con le nuove firme
-
 package com.cz.equiconti.ui
 
 import androidx.compose.material3.Text
@@ -22,47 +20,33 @@ fun AppNavGraph(navController: NavHostController) {
         composable("horses") {
             HorsesScreen(
                 onAddHorse = { navController.navigate("addHorse") },
-                content = {
-                    // TODO: sostituisci con la tua lista cavalli
-                    Text("Lista cavalli")
-                }
+                content = { Text("Lista cavalli") }
             )
         }
 
         composable("addHorse") {
             AddHorseScreen(
-                onSave = { name, ageText ->
-                    // TODO: salva cavallo (name, ageText.toIntOrNull())
-                    navController.popBackStack()
-                },
+                onSave = { _, _ -> navController.popBackStack() },
                 onCancel = { navController.popBackStack() }
             )
         }
 
         composable("ownerDetail") {
             OwnerDetailScreen(
-                onSave = { name, phone ->
-                    // TODO: salva proprietario
-                    navController.popBackStack()
-                }
+                onSave = { _, _ -> navController.popBackStack() }
             )
         }
 
         composable("addOwner") {
             AddOwnerScreen(
-                onSave = { name, phone ->
-                    // TODO: salva nuovo proprietario
-                    navController.popBackStack()
-                },
+                onSave = { _, _ -> navController.popBackStack() },
                 onCancel = { navController.popBackStack() }
             )
         }
 
         composable("txn") {
             TxnScreen(
-                onAddTxn = { amount, note ->
-                    // TODO: salva movimento
-                }
+                onAddTxn = { _, _ -> /* TODO: salva movimento */ }
             )
         }
     }
