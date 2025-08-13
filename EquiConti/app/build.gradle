@@ -47,7 +47,7 @@ android {
         compose true
     }
 
-    // ✅ Opt-in globale alle API sperimentali Material/Material3 + JVM 17
+    // ✅ Opt-in globale alle API sperimentali + JVM 17
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs += [
@@ -74,6 +74,7 @@ kapt {
 }
 
 dependencies {
+    // Compose BOM
     implementation platform("androidx.compose:compose-bom:2025.01.01")
     androidTestImplementation platform("androidx.compose:compose-bom:2025.01.01")
 
@@ -82,11 +83,16 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4"
 
+    // Compose UI + Material 3
     implementation "androidx.compose.ui:ui"
     implementation "androidx.compose.ui:ui-tooling-preview"
     debugImplementation "androidx.compose.ui:ui-tooling"
     implementation "androidx.compose.material3:material3"
 
+    // 👇 Necessario per Icons.Filled / Icons.Default (Add, Save, ecc.)
+    implementation "androidx.compose.material:material-icons-extended"
+
+    // (Facoltativo) Material Components (view system). Lascialo se lo usi in qualche Activity/View.
     implementation "com.google.android.material:material:1.12.0"
 
     // Room
