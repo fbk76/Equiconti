@@ -1,16 +1,17 @@
 package com.cz.equiconti.ui.owner
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,22 +24,20 @@ fun HorsesScreen(
 ) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = { Text("Cavalli") },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onAddHorse,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Nuovo cavallo") }
-            )
+            FloatingActionButton(onClick = onAddHorse) {
+                Icon(Icons.Default.Add, contentDescription = "Nuovo cavallo")
+            }
         }
     ) { inner ->
-        androidx.compose.foundation.layout.Box(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(inner)
