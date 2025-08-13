@@ -6,19 +6,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: EquiConti
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -28,11 +25,13 @@ jobs:
             platforms;android-34
             build-tools;34.0.0
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      - name: Build Debug
-        run: ./gradlew assembleDebug
+      # Esegue Gradle SENZA wrapper e lancia il build dalla cartella EquiConti
+      - name: Build Debug (no wrapper)
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.7
+          build-root-directory: EquiConti
+          arguments: assembleDebug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
