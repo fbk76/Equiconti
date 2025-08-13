@@ -1,136 +1,80 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.cz.equiconti.data.Owner
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnerDetailScreen(
-    ownerId: Long,
-    nav: NavController,
-    vm: OwnersViewModel = hiltViewModel()
+    initialName: String = "",
+    initialPhone: String = "",
+    onSave: (name: String, phone: String) -> Unit,
 ) {
-    // osserva il proprietario
-    val owner by vm.ownerFlow(ownerId).collectAsState(initial = null)
-
-    // campi editabili (si riempiono quando arriva l'owner)
-    var firstName by rememberSaveable { mutableStateOf("") }
-    var lastName  by rememberSaveable { mutableStateOf("") }
-    var phone     by rememberSaveable { mutableStateOf("") }
-
-    LaunchedEffect(owner?.id) {
-        owner?.let {
-            firstName = it.firstName
-            lastName  = it.lastName
-            phone     = it.phone.orEmpty()
-        }
-    }
-
-    val canSave = firstName.isNotBlank() && lastName.isNotBlank()
+    val (name, setName) = remember { mutableStateOf(initialName) }
+    val (phone, setPhone) = remember { mutableStateOf(initialPhone) }
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(title = { Text("Dettagli proprietario") })
+            CenterAlignedTopAppBar(
+                title = { Text("Dettaglio Proprietario") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
         }
-    ) { padding ->
+    ) { inner ->
         Column(
-            Modifier
-                .padding(padding)
+            modifier = Modifier
+                .padding(inner)
                 .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (owner == null) {
-                Text("Proprietario non trovato.")
-            } else {
-                Text(
-                    text = "${owner!!.lastName} ${owner!!.firstName}",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                if (!owner!!.phone.isNullOrBlank()) {
-                    Text("Tel: ${owner!!.phone}")
-                }
-            }
-
-            // Pulsanti navigazione funzioni
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = { nav.navigate("owner/$ownerId/horses") }) { Text("Cavalli") }
-                Button(onClick = { nav.navigate("owner/$ownerId/txn") }) { Text("Movimenti") }
-            }
-
-            Divider(Modifier.padding(vertical = 8.dp))
-
-            // Modulo modifica dati
             OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
+                value = name,
+                onValueChange = setName,
                 label = { Text("Nome") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words
-                )
-            )
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
-                label = { Text("Cognome") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words
-                )
-            )
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Telefono (opz.)") },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+            OutlinedTextField(
+                value = phone,
+                onValueChange = setPhone,
+                label = { Text("Telefono") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = { onSave(name, phone) },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = {
-                        val toSave = Owner(
-                            id = owner?.id ?: ownerId,
-                            firstName = firstName.trim(),
-                            lastName = lastName.trim(),
-                            phone = phone.trim().ifBlank { null }
-                        )
-                        vm.upsertOwner(toSave)
-                        nav.popBackStack()
-                    },
-                    enabled = canSave
-                ) { Text("Salva") }
-
-                Button(
-                    onClick = {
-                        owner?.let {
-                            vm.deleteOwner(it)
-                            nav.popBackStack()
-                        }
-                    },
-                    enabled = owner != null
-                ) { Text("Elimina") }
-
-                Spacer(Modifier.weight(1f))
-                OutlinedButton(onClick = { nav.popBackStack() }) { Text("Indietro") }
+                Icon(Icons.Default.Save, contentDescription = null)
+                Spacer(Modifier.height(0.dp)) // mantiene layout semplice
+                Text("Salva")
             }
         }
     }
