@@ -25,31 +25,40 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      # Installa i componenti Android SDK minimi (con retry)
+      # Installa i componenti Android SDK minimi con retry
       - name: Install Android SDK packages (with retry)
         shell: bash
         run: |
           set -e
+
           SDKMGR="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMGR" ]; then
-            echo "sdkmanager non trovato in $SDKMGR"
+            echo ">> cmdline-tools 'latest' non presente, elenco disponibili:"
             ls -la "$ANDROID_SDK_ROOT/cmdline-tools" || true
+            echo ">> Provo a usare 'bin/sdkmanager' classico se presente..."
+          fi
+
+          # Accetta licenze (non fallire se ci sono warning di rete)
+          if [ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          elif [ -x "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" ]; then
+            yes | "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --licenses || true
+          else
+            echo "ERRORE: sdkmanager non trovato. Verifica immagine runner o path SDK."
             exit 1
           fi
 
-          PKGS=(
-            "platform-tools"
-            "platforms;android-34"
-            "build-tools;34.0.0"
-          )
-
-          yes | "$SDKMGR" --licenses || true
-
           install_with_retry () {
             local pkg="$1"
+            local mgr=""
+            if [ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+              mgr="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+            else
+              mgr="$ANDROID_SDK_ROOT/tools/bin/sdkmanager"
+            fi
             for i in 1 2 3; do
               echo ">> Installo $pkg (tentativo $i/3)"
-              if yes | "$SDKMGR" "$pkg"; then
+              if yes | "$mgr" "$pkg"; then
                 echo "OK $pkg"
                 return 0
               fi
@@ -60,23 +69,25 @@ jobs:
             return 1
           }
 
-          for p in "${PKGS[@]}"; do
-            install_with_retry "$p"
-          done
+          install_with_retry "platform-tools"
+          install_with_retry "platforms;android-34"
+          install_with_retry "build-tools;34.0.0"
 
-          echo "SDK installato."
+          echo ">> SDK installato:"
           ls -R "$ANDROID_SDK_ROOT/platforms" || true
           ls -R "$ANDROID_SDK_ROOT/build-tools" || true
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # Compila APK Debug e Release (firmata debug, come concordato)
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --stacktrace
 
       - name: Assemble Release (debug-signed)
         run: ./gradlew :app:assembleRelease --stacktrace
 
+      # Carica gli artifact (APK pronti da scaricare)
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
