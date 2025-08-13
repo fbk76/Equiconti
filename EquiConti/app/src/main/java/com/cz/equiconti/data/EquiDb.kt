@@ -7,18 +7,16 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Owner::class, Horse::class, Txn::class],
-    version = 2,                 // manteniamo la tua versione attuale
+    version = 2,
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
-
     abstract fun ownerDao(): OwnerDao
     abstract fun horseDao(): HorseDao
     abstract fun txnDao(): TxnDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: EquiDb? = null
+        @Volatile private var INSTANCE: EquiDb? = null
 
         fun get(context: Context): EquiDb =
             INSTANCE ?: synchronized(this) {
@@ -27,10 +25,9 @@ abstract class EquiDb : RoomDatabase() {
                     EquiDb::class.java,
                     "equiconti.db"
                 )
-                // In caso di variazione schema senza migrazioni, cancella e ricrea il DB
                 .fallbackToDestructiveMigration()
                 .build()
-                    .also { INSTANCE = it }
+                .also { INSTANCE = it }
             }
     }
 }
