@@ -1,5 +1,3 @@
-// 5) AddOwnerScreen.kt — sostituisce SmallTopAppBar con TopAppBar (compatibilità)
-
 package com.cz.equiconti.ui.owner
 
 import androidx.compose.foundation.layout.Column
@@ -18,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+// IMPORT per tastiera (risolvono gli errori del log)
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
