@@ -17,25 +17,30 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # Installa gli strumenti SDK Android necessari
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-34
-            build-tools;34.0.0
 
-      # Esegue Gradle SENZA wrapper e lancia il build dalla cartella EquiConti
-      - name: Build Debug (no wrapper)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.7
-          build-root-directory: EquiConti
-          arguments: assembleDebug
+      - name: Install Android packages
+        run: |
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "cmdline-tools;latest"
+          yes | sdkmanager --licenses
+
+      # Qui diciamo esplicitamente che i comandi vanno lanciati in EquiConti/
+      - name: Make gradlew executable
+        working-directory: EquiConti
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        working-directory: EquiConti
+        run: ./gradlew clean assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: EquiConti-debug-apk
           path: EquiConti/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
