@@ -2,17 +2,10 @@ name: Build APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
-
-    env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      ANDROID_HOME: /usr/local/lib/android/sdk
-      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -21,77 +14,61 @@ jobs:
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
-          cache: gradle
 
-      # Installa i componenti Android SDK minimi con retry
-      - name: Install Android SDK packages (with retry)
-        shell: bash
-        run: |
-          set -e
-
-          SDKMGR="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKMGR" ]; then
-            echo ">> cmdline-tools 'latest' non presente, elenco disponibili:"
-            ls -la "$ANDROID_SDK_ROOT/cmdline-tools" || true
-            echo ">> Provo a usare 'bin/sdkmanager' classico se presente..."
-          fi
-
-          # Accetta licenze (non fallire se ci sono warning di rete)
-          if [ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
-            yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          elif [ -x "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" ]; then
-            yes | "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --licenses || true
-          else
-            echo "ERRORE: sdkmanager non trovato. Verifica immagine runner o path SDK."
-            exit 1
-          fi
-
-          install_with_retry () {
-            local pkg="$1"
-            local mgr=""
-            if [ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
-              mgr="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-            else
-              mgr="$ANDROID_SDK_ROOT/tools/bin/sdkmanager"
-            fi
-            for i in 1 2 3; do
-              echo ">> Installo $pkg (tentativo $i/3)"
-              if yes | "$mgr" "$pkg"; then
-                echo "OK $pkg"
-                return 0
-              fi
-              echo "Fallito $pkg, retry tra 5s..."
-              sleep 5
-            done
-            echo "ERRORE: impossibile installare $pkg"
-            return 1
-          }
-
-          install_with_retry "platform-tools"
-          install_with_retry "platforms;android-34"
-          install_with_retry "build-tools;34.0.0"
-
-          echo ">> SDK installato:"
-          ls -R "$ANDROID_SDK_ROOT/platforms" || true
-          ls -R "$ANDROID_SDK_ROOT/build-tools" || true
+      # Installa cmdline-tools e imposta ANDROID_SDK_ROOT
+      - name: Set up Android SDK (cmdline-tools)
+        uses: android-actions/setup-android@v3
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # Compila APK Debug e Release (firmata debug, come concordato)
+      # --- FIX: installazione SDK con retry e versioni "pinnate" ---
+      - name: Install Android SDK packages (with retry)
+        shell: bash
+        run: |
+          set -e
+          retry() {
+            local n=0
+            local try=$1
+            local cmd="${@:2}"
+            until [ $n -ge $try ]
+            do
+              echo "▶️  $cmd (tentativo $((n+1))/$try)"
+              if eval "$cmd"; then
+                echo "✅ ok"
+                return 0
+              fi
+              n=$((n+1))
+              echo "⚠️  fallito, attendo 15s e riprovo…"
+              sleep 15
+            done
+            echo "❌ esauriti i tentativi"
+            return 1
+          }
+
+          yes | sdkmanager --licenses || true
+
+          # Pinna le versioni per evitare update ballerini
+          retry 3 yes \| sdkmanager "platform-tools"
+          retry 3 yes \| sdkmanager "platforms;android-33"
+          retry 3 yes \| sdkmanager "build-tools;33.0.2"
+
+      # Cache Gradle (accelera le build)
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Assemble Debug
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Assemble Release (debug-signed)
-        run: ./gradlew :app:assembleRelease --stacktrace
+      - name: Assemble Release (unsigned)
+        run: ./gradlew :app:assembleRelease --no-daemon
 
-      # Carica gli artifact (APK pronti da scaricare)
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: app-apks
+          name: apks
           path: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/**/**/*.apk
+          if-no-files-found: warn
