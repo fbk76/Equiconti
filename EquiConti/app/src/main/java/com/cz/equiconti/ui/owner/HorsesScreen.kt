@@ -1,69 +1,49 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallTopAppBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.cz.equiconti.data.Horse
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HorsesScreen(
-    ownerId: Long,
-    onBack: () -> Unit,
-    onAddHorse: (Long) -> Unit,
-    vm: OwnersViewModel = hiltViewModel()
+    onAddHorse: () -> Unit,
+    content: @Composable () -> Unit
 ) {
-    val horses = vm.horses(ownerId).collectAsState(initial = emptyList()).value
-
     Scaffold(
-        topBar = { SmallTopAppBar(title = { Text("Cavalli") }) }
-    ) { pad ->
-        Column(
-            Modifier
-                .padding(pad)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Cavalli") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onAddHorse,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Nuovo cavallo") }
+            )
+        }
+    ) { inner ->
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inner)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = onBack) { Text("Indietro") }
-                Button(onClick = { onAddHorse(ownerId) }) { Text("Nuovo cavallo") }
-            }
-
-            if (horses.isEmpty()) {
-                Text("Nessun cavallo registrato.", style = MaterialTheme.typography.bodyLarge)
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(horses, key = { it.id }) { h ->
-                        HorseRow(h)
-                        Divider()
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HorseRow(h: Horse) {
-    Column {
-        Text(h.name, style = MaterialTheme.typography.titleMedium)
-        if (!h.notes.isNullOrBlank()) {
-            Text(h.notes!!, style = MaterialTheme.typography.bodySmall)
-        }
-        if (h.monthlyFeeCents > 0) {
-            val euro = (h.monthlyFeeCents / 100.0)
-            Text("Quota mensile: €%.2f".format(euro), style = MaterialTheme.typography.bodySmall)
+            content()
         }
     }
 }
