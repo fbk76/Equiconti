@@ -4,72 +4,93 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.cz.equiconti.data.Owner
 
 @Composable
 fun OwnersScreen(
-    navController: NavController,
-    vm: OwnersViewModel = hiltViewModel()
+    owners: List<Owner>,
+    onOwnerClick: (Owner) -> Unit,
+    onAddOwner: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val owners by vm.owners.collectAsState()
-
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Proprietari") }) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = { Text("Nuovo") },
-                onClick = { navController.navigate("owner/add") }
-            )
+            FloatingActionButton(onClick = onAddOwner) {
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "Aggiungi proprietario")
+            }
         }
-    ) { pad ->
+    ) { inner ->
         if (owners.isEmpty()) {
-            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Nessun proprietario ancora.")
-            }
+            EmptyOwners(modifier = modifier.padding(inner))
         } else {
-            LazyColumn(
-                modifier = Modifier.padding(pad).fillMaxSize(),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(owners, key = { it.id }) { owner ->
-                    OwnerRow(owner) { navController.navigate("owner/${owner.id}") }
-                }
-            }
+            OwnersList(
+                owners = owners,
+                onOwnerClick = onOwnerClick,
+                modifier = modifier.padding(inner)
+            )
         }
     }
 }
 
 @Composable
-private fun OwnerRow(owner: Owner, onClick: () -> Unit) {
+private fun OwnersList(
+    owners: List<Owner>,
+    onOwnerClick: (Owner) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 8.dp)
+    ) {
+        items(owners, key = { it.id }) { owner ->
+            OwnerRow(
+                owner = owner,
+                onClick = { onOwnerClick(owner) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Divider()
+        }
+    }
+}
+
+@Composable
+private fun OwnerRow(
+    owner: Owner,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .clickable(onClick = onClick)
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = "${owner.lastName} ${owner.firstName}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            owner.phone?.let {
-                Spacer(Modifier.height(2.dp))
-                Text(text = it, style = MaterialTheme.typography.bodySmall)
-            }
-        }
+        Text(
+            text = listOfNotNull(owner.firstName?.trim(), owner.lastName?.trim())
+                .filter { it.isNotEmpty() }
+                .joinToString(" "),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+        )
+    }
+}
+
+@Composable
+private fun EmptyOwners(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Nessun proprietario.\nTocca + per aggiungerne uno.",
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
