@@ -1,75 +1,103 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.cz.equiconti.data.Owner
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnerDetailScreen(
-    initialName: String = "",
-    initialPhone: String = "",
-    onSave: (name: String, phone: String) -> Unit,
+    ownerId: Long,
+    nav: NavController,
+    vm: OwnersViewModel = hiltViewModel()
 ) {
-    val (name, setName) = remember { mutableStateOf(initialName) }
-    val (phone, setPhone) = remember { mutableStateOf(initialPhone) }
+    val owner by vm.ownerFlow(ownerId).collectAsState(initial = null)
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Dettaglio Proprietario") }) }
-    ) { inner ->
+    var firstName by rememberSaveable { mutableStateOf("") }
+    var lastName  by rememberSaveable { mutableStateOf("") }
+    var phone     by rememberSaveable { mutableStateOf("") }
+
+    LaunchedEffect(owner?.id) {
+        owner?.let {
+            firstName = it.firstName
+            lastName  = it.lastName
+            phone     = it.phone.orEmpty()
+        }
+    }
+
+    Scaffold(topBar = { SmallTopAppBar(title = { Text("Dettagli proprietario") }) }) { pad ->
         Column(
-            modifier = Modifier
-                .padding(inner)
-                .padding(16.dp)
+            Modifier.padding(pad).padding(16.dp).fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (owner == null) {
+                Text("Proprietario non trovato.")
+            } else {
+                Text("${owner!!.lastName} ${owner!!.firstName}", style = MaterialTheme.typography.titleLarge)
+                if (!owner!!.phone.isNullOrBlank()) Text("Tel: ${owner!!.phone}")
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = { nav.navigate("owner/$ownerId/horses") }) { Text("Cavalli") }
+                Button(onClick = { nav.navigate("owner/$ownerId/txns") }) { Text("Movimenti") }
+            }
+
+            Divider(Modifier.padding(vertical = 8.dp))
+
             OutlinedTextField(
-                value = name,
-                onValueChange = setName,
-                label = { Text("Nome") },
-                modifier = Modifier.fillMaxWidth()
+                value = firstName, onValueChange = { firstName = it },
+                label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words
+                )
+            )
+            OutlinedTextField(
+                value = lastName, onValueChange = { lastName = it },
+                label = { Text("Cognome") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words
+                )
+            )
+            OutlinedTextField(
+                value = phone, onValueChange = { phone = it },
+                label = { Text("Telefono (opz.)") }, singleLine = true, modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = phone,
-                onValueChange = setPhone,
-                label = { Text("Telefono") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { onSave(name, phone) },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row {
-                    Icon(Icons.Filled.Save, contentDescription = "Salva")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Salva")
-                }
+                Button(
+                    onClick = {
+                        val toSave = Owner(
+                            id = owner?.id ?: ownerId,
+                            firstName = firstName.trim(),
+                            lastName = lastName.trim(),
+                            phone = phone.trim().ifBlank { null }
+                        )
+                        vm.upsertOwner(toSave)
+                        nav.popBackStack()
+                    },
+                    enabled = firstName.isNotBlank() && lastName.isNotBlank()
+                ) { Text("Salva") }
+
+                Button(
+                    onClick = {
+                        owner?.let { vm.deleteOwner(it); nav.popBackStack() }
+                    },
+                    enabled = owner != null
+                ) { Text("Elimina") }
+
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(onClick = { nav.popBackStack() }) { Text("Indietro") }
             }
         }
     }
