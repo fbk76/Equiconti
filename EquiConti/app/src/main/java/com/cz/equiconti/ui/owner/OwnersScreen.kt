@@ -4,11 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,26 +33,17 @@ fun OwnersScreen(
         }
     ) { pad ->
         if (owners.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Nessun proprietario ancora.")
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
+                modifier = Modifier.padding(pad).fillMaxSize(),
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(owners, key = { it.id }) { owner ->
-                    OwnerRow(owner = owner) {
-                        navController.navigate("owner/${owner.id}")
-                    }
+                    OwnerRow(owner) { navController.navigate("owner/${owner.id}") }
                 }
             }
         }
