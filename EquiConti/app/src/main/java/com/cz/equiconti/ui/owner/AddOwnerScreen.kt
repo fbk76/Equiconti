@@ -65,7 +65,7 @@ fun AddOwnerScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row {
-                    Icon(Icons.Default.Save, contentDescription = "Salva")
+                    Icon(Icons.Filled.Save, contentDescription = "Salva")
                     Spacer(Modifier.width(8.dp))
                     Text("Salva")
                 }
