@@ -1,43 +1,81 @@
+// 5) AddOwnerScreen.kt — sostituisce SmallTopAppBar con TopAppBar (compatibilità)
+
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.cz.equiconti.data.Owner
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOwnerScreen(
-    onSave: (Owner) -> Unit,
-    onBack: () -> Unit
+    onSave: (name: String, phone: String) -> Unit,
+    onCancel: () -> Unit
 ) {
-    var first by remember { mutableStateOf("") }
-    var last by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
+    val (name, setName) = remember { mutableStateOf("") }
+    val (phone, setPhone) = remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
-                title = { Text("Nuovo proprietario") },
-                navigationIcon = {
-                    TextButton(onClick = onBack) { Text("Indietro") }
-                },
-                actions = {
-                    TextButton(
-                        enabled = first.isNotBlank() && last.isNotBlank(),
-                        onClick = {
-                            onSave(Owner(firstName = first, lastName = last, phone = phone.ifBlank { null }))
-                        }
-                    ) { Text("Salva") }
-                }
+            TopAppBar(
+                title = { Text("Nuovo proprietario") }
             )
         }
-    ) { pad ->
-        Column(Modifier.padding(pad).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(value = first, onValueChange = { first = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = last,  onValueChange = { last  = it }, label = { Text("Cognome") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Telefono") }, modifier = Modifier.fillMaxWidth())
+    ) { inner ->
+        Column(
+            modifier = Modifier
+                .padding(inner)
+                .padding(16.dp)
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = setName,
+                label = { Text("Nome") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = phone,
+                onValueChange = setPhone,
+                label = { Text("Telefono") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = { onSave(name, phone) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Salva")
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Annulla")
+            }
         }
     }
 }
