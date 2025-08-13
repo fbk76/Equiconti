@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HorseDao {
-
     @Query("SELECT * FROM Horse WHERE ownerId = :ownerId ORDER BY name")
     fun observeHorses(ownerId: Long): Flow<List<Horse>>
 
