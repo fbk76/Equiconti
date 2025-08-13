@@ -1,67 +1,81 @@
+// 6) AddHorseScreen.kt — include gli import per la tastiera
+
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.cz.equiconti.data.Horse
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddHorseScreen(
-    ownerId: Long,
-    onBack: () -> Unit,
-    onSaved: () -> Unit,
-    vm: OwnersViewModel = hiltViewModel()
+    onSave: (name: String, ageText: String) -> Unit,
+    onCancel: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
-    var fee by remember { mutableStateOf("") } // euro
+    val (name, setName) = remember { mutableStateOf("") }
+    val (age, setAge) = remember { mutableStateOf("") }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Nuovo cavallo")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Nuovo cavallo") }
+            )
+        }
+    ) { inner ->
+        Column(
+            modifier = Modifier
+                .padding(inner)
+                .padding(16.dp)
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = setName,
+                label = { Text("Nome cavallo") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        OutlinedTextField(
-            value = name, onValueChange = { name = it },
-            label = { Text("Nome") }, modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = notes, onValueChange = { notes = it },
-            label = { Text("Note (opz.)") }, modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = fee, onValueChange = { fee = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' } },
-            label = { Text("Quota mensile (€)") },
-            keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
-        )
+            Spacer(Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onBack) { Text("Annulla") }
+            OutlinedTextField(
+                value = age,
+                onValueChange = setAge,
+                label = { Text("Età") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
             Button(
-                enabled = name.isNotBlank(),
-                onClick = {
-                    val cents = ((fee.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
-                    val horse = Horse(
-                        id = 0L,
-                        ownerId = ownerId,
-                        name = name.trim(),
-                        monthlyFeeCents = cents,
-                        notes = notes.trim().ifBlank { null }
-                    )
-                    vm.upsertHorse(horse)
-                    onSaved()
-                }
-            ) { Text("Salva") }
+                onClick = { onSave(name, age) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Salva")
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Annulla")
+            }
         }
     }
 }
