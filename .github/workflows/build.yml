@@ -1,7 +1,7 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -15,40 +15,44 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
+          cache: 'gradle'
 
-      - name: Set up Android SDK (cmdline-tools)
+      # Installa Android SDK + cmdline-tools e imposta ANDROID_SDK_ROOT
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
+      # Accetta le licenze e installa i pacchetti SDK necessari.
+      # Se il tuo project usa un'altra compileSdk/buildTools, cambia le versioni qui sotto.
+      - name: Install SDK packages
         shell: bash
         run: |
-          sdkmanager --install "platform-tools" \
-                               "platforms;android-34" \
-                               "build-tools;34.0.0" \
-                               "platforms;android-33" || true
           yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      # Usa Gradle senza wrapper (specificando la versione da usare)
+      # Fornisce il comando "gradle" senza bisogno del wrapper nella repo
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v3
         with:
-          gradle-version: 8.6   # Se il tuo progetto richiede un'altra versione, dimmelo
+          gradle-version: '8.7'
 
-      - name: Build Debug
-        run: gradle assembleDebug
+      - name: Assemble Debug
+        run: gradle :app:assembleDebug
 
-      - name: Build Release (unsigned)
-        run: gradle assembleRelease
+      # Se non hai keystore, verrà generato un APK non firmato (va bene per test)
+      - name: Assemble Release
+        run: gradle :app:assembleRelease
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
+          name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
+          name: app-release-apk
           path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
