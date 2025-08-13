@@ -1,5 +1,3 @@
-// 7) TxnScreen.kt — versione compatibilità 100%
-
 package com.cz.equiconti.ui.txn
 
 import androidx.compose.foundation.layout.Column
@@ -19,6 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+// IMPORT per tastiera (risolvono gli errori del log)
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
@@ -37,7 +37,7 @@ fun TxnScreen(
             )
         },
         floatingActionButton = {
-            // Niente icone per evitare dipendenze extra
+            // FAB minimale senza icone (compat)
             FloatingActionButton(
                 onClick = {
                     val value = amountText.toDoubleOrNull() ?: 0.0
