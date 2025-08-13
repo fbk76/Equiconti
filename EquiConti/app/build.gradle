@@ -18,24 +18,16 @@ android {
         versionName "1.0.0"
     }
 
-    // Keystore di debug usato anche per la release di test (generato dal workflow)
-    signingConfigs {
-        debug {
-            storeFile file("$rootDir/debug.keystore")
-            storePassword "android"
-            keyAlias "androiddebugkey"
-            keyPassword "android"
-        }
-    }
+    // ❌ RIMOSSO signingConfigs: il runner userà la debug key di default
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            // ❌ RIMOSSA la riga: signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }
         release {
-            signingConfig signingConfigs.debug
+            // ❌ RIMOSSA la riga: signingConfig signingConfigs.debug
             minifyEnabled true
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -47,7 +39,7 @@ android {
         compose true
     }
 
-    // ✅ Opt-in globale alle API sperimentali + JVM 17
+    // JVM 17 + opt-in alle API sperimentali di Compose dove servono
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs += [
@@ -68,7 +60,6 @@ android {
     }
 }
 
-// Facoltativo ma utile con Hilt/KAPT
 kapt {
     correctErrorTypes = true
 }
@@ -89,10 +80,10 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling"
     implementation "androidx.compose.material3:material3"
 
-    // 👇 Necessario per Icons.Filled / Icons.Default (Add, Save, ecc.)
+    // Icons (Filled/Default) per Add/Save ecc.
     implementation "androidx.compose.material:material-icons-extended"
 
-    // (Facoltativo) Material Components (view system). Lascialo se lo usi in qualche Activity/View.
+    // (Facoltativo) Material Components (view system)
     implementation "com.google.android.material:material:1.12.0"
 
     // Room
