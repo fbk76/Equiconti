@@ -1,53 +1,84 @@
 package com.cz.equiconti.ui
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.cz.equiconti.ui.owner.AddHorseScreen
+import com.cz.equiconti.ui.owner.AddOwnerScreen
 import com.cz.equiconti.ui.owner.HorsesScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
-import com.cz.equiconti.ui.owner.AddOwnerScreen
-import com.cz.equiconti.ui.owner.AddHorseScreen
+import com.cz.equiconti.ui.owner.OwnersScreen
+import com.cz.equiconti.ui.owner.OwnersViewModel
 import com.cz.equiconti.ui.txn.TxnScreen
 
+private object Routes {
+    const val OWNERS = "owners"
+    const val OWNER_ADD = "owner/add"
+    const val OWNER_DETAIL = "owner/{ownerId}"
+    const val OWNER_HORSES = "owner/{ownerId}/horses"
+    const val HORSE_ADD = "owner/{ownerId}/horse/add"
+    const val OWNER_TXNS = "owner/{ownerId}/txns"
+    const val ARG_ID = "ownerId"
+}
+
 @Composable
-fun AppNavGraph(navController: NavHostController) {
-    NavHost(
-        navController = navController,
-        startDestination = "horses"
-    ) {
-        composable("horses") {
-            HorsesScreen(
-                onAddHorse = { navController.navigate("addHorse") },
-                content = { Text("Lista cavalli") }
-            )
-        }
+fun AppNavGraph() {
+    val nav = rememberNavController()
+    val vm: OwnersViewModel = hiltViewModel()
 
-        composable("addHorse") {
-            AddHorseScreen(
-                onSave = { _, _ -> navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
-            )
-        }
+    NavHost(navController = nav, startDestination = Routes.OWNERS) {
 
-        composable("ownerDetail") {
-            OwnerDetailScreen(
-                onSave = { _, _ -> navController.popBackStack() }
-            )
-        }
+        composable(Routes.OWNERS) { OwnersScreen(navController = nav, vm = vm) }
 
-        composable("addOwner") {
+        composable(Routes.OWNER_ADD) {
             AddOwnerScreen(
-                onSave = { _, _ -> navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
+                onSave = { owner -> vm.upsertOwner(owner); nav.popBackStack() },
+                onBack = { nav.popBackStack() }
             )
         }
 
-        composable("txn") {
-            TxnScreen(
-                onAddTxn = { _, _ -> /* TODO: salva movimento */ }
+        composable(
+            route = Routes.OWNER_DETAIL,
+            arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong(Routes.ARG_ID)
+            OwnerDetailScreen(ownerId = ownerId, nav = nav)
+        }
+
+        composable(
+            route = Routes.OWNER_HORSES,
+            arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong(Routes.ARG_ID)
+            HorsesScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onAddHorse = { id -> nav.navigate("owner/$id/horse/add") }
             )
+        }
+
+        composable(
+            route = Routes.HORSE_ADD,
+            arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong(Routes.ARG_ID)
+            AddHorseScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onSaved = { nav.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.OWNER_TXNS,
+            arguments = listOf(navArgument(Routes.ARG_ID) { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong(Routes.ARG_ID)
+            TxnScreen(ownerId = ownerId, onBack = { nav.popBackStack() })
         }
     }
 }
