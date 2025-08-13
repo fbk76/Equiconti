@@ -1,5 +1,3 @@
-// 3) TxnScreen.kt — versione compatibile con import tastiera
-
 package com.cz.equiconti.ui.txn
 
 import androidx.compose.foundation.layout.Column
@@ -8,8 +6,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,8 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-// IMPORT tastiera
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
@@ -33,11 +32,7 @@ fun TxnScreen(
     val (note, setNote) = remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Movimenti") }
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Movimenti") }) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -46,7 +41,9 @@ fun TxnScreen(
                     setAmountText("")
                     setNote("")
                 }
-            ) { Text("+") }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Aggiungi movimento")
+            }
         }
     ) { inner ->
         Column(
