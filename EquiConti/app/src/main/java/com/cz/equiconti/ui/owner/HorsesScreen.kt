@@ -21,12 +21,10 @@ fun HorsesScreen(
     content: @Composable () -> Unit
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Cavalli") })
-        },
+        topBar = { TopAppBar(title = { Text("Cavalli") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddHorse) {
-                Icon(Icons.Default.Add, contentDescription = "Nuovo cavallo")
+                Icon(Icons.Filled.Add, contentDescription = "Nuovo cavallo")
             }
         }
     ) { inner ->
