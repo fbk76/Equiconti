@@ -12,12 +12,10 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,10 +37,7 @@ fun OwnerDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dettaglio Proprietario") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                title = { Text("Dettaglio Proprietario") }
             )
         }
     ) { inner ->
@@ -75,7 +70,7 @@ fun OwnerDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row {
-                    Icon(Icons.Default.Save, contentDescription = null)
+                    Icon(Icons.Default.Save, contentDescription = "Salva")
                     Spacer(Modifier.width(8.dp))
                     Text("Salva")
                 }
