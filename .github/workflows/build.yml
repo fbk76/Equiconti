@@ -16,16 +16,15 @@ jobs:
 
     steps:
       - name: Checkout
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
           cache: gradle
 
-      # Installa i pacchetti SDK a mano (con retry)
       - name: Install Android SDK packages (with retry)
         shell: bash
         run: |
@@ -36,51 +35,34 @@ jobs:
             ls -la "$ANDROID_SDK_ROOT/cmdline-tools" || true
             exit 1
           fi
-
           PKGS=(
             "platform-tools"
             "platforms;android-34"
             "build-tools;34.0.0"
           )
-
-          # Accetta le licenze
           yes | "$SDKMGR" --licenses || true
-
-          # Funzione di retry
           install_with_retry () {
             local pkg="$1"
             for i in 1 2 3; do
               echo ">> Installo $pkg (tentativo $i/3)"
               if yes | "$SDKMGR" "$pkg"; then
-                echo "OK $pkg"
-                return 0
+                echo "OK $pkg"; return 0
               fi
-              echo "Fallito $pkg, retry tra 5s..."
-              sleep 5
+              echo "Fallito $pkg, retry tra 5s..."; sleep 5
             done
-            echo "ERRORE: impossibile installare $pkg"
-            return 1
+            echo "ERRORE: impossibile installare $pkg"; return 1
           }
-
-          for p in "${PKGS[@]}"; do
-            install_with_retry "$p"
-          done
-
-          echo "SDK installato:"
-          ls -R "$ANDROID_SDK_ROOT/platforms" || true
-          ls -R "$ANDROID_SDK_ROOT/build-tools" || true
+          for p in "${PKGS[@]}"; do install_with_retry "$p"; done
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # Build Debug e Release (firma debug)
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --stacktrace
 
       - name: Assemble Release (debug-signed)
         run: ./gradlew :app:assembleRelease --stacktrace
 
-      # Carica gli artifact
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
