@@ -17,9 +17,9 @@ fun AddHorseScreen(
     onBack: () -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    var name by remember { mutableStateOf("") }
+    var name    by remember { mutableStateOf("") }
     var feeEuro by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    var notes   by remember { mutableStateOf("") }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Nuovo cavallo") }) }) { padding ->
         Column(
@@ -32,8 +32,8 @@ fun AddHorseScreen(
                 value = feeEuro,
                 onValueChange = { feeEuro = it },
                 label = { Text("Quota mensile (€)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(notes, { notes = it }, label = { Text("Note") }, modifier = Modifier.fillMaxWidth())
