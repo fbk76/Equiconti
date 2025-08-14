@@ -1,53 +1,83 @@
 name: Build APK
 
 on:
-  workflow_dispatch:   # <— avvio manuale
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- Debug: mostra dove siamo e cosa c'è dentro ---
-      - name: Show workspace layout
-        run: |
-          echo "PWD=$(pwd)"
-          echo "Repo tree (top level):"
-          ls -la
-          echo "Search for gradlew:"
-          (set -x; find . -maxdepth 3 -name gradlew || true)
-
+      # 2) Java 17 con cache Gradle
       - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
           cache: gradle
 
+      # 3) Android SDK (cmdline-tools + ANDROID_HOME)
       - name: Setup Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
 
-      - name: Accept Android SDK licenses
-        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
+      # 4) Accetta licenze + installa i pacchetti necessari
+      - name: Accept Android SDK licenses & install packages
+        shell: bash
+        run: |
+          sdkmanager --licenses <<EOF
+          y
+          y
+          y
+          y
+          y
+          EOF
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Make gradlew executable
-        run: chmod +x Equiconti/gradlew
+      # 5) Mostra struttura (debug)
+      - name: Show workspace layout
+        shell: bash
+        run: |
+          echo "PWD: $(pwd)"
+          echo "--- top level ---"
+          ls -la
+          echo "--- find gradlew (maxdepth 4) ---"
+          find . -maxdepth 4 -name gradlew -type f || true
 
+      # 6) Trova automaticamente gradlew e rendilo eseguibile
+      - name: Locate gradlew
+        id: gradlepath
+        shell: bash
+        run: |
+          set -e
+          GRADLEW=$(find . -name gradlew -type f | head -n1 || true)
+          if [ -z "$GRADLEW" ]; then
+            echo "Gradle wrapper not found in repo."
+            exit 1
+          fi
+          echo "Found gradlew at: $GRADLEW"
+          chmod +x "$GRADLEW"
+          echo "GRADLEW=$GRADLEW" >> "$GITHUB_ENV"
+
+      # 7) Versione Gradle (utile nei log)
       - name: Gradle version
-        run: Equiconti/gradlew -v
+        shell: bash
+        run: |
+          "$GRADLEW" -v
 
+      # 8) Build Debug APK
       - name: Assemble Debug
-        run: Equiconti/gradlew :app:assembleDebug
+        shell: bash
+        run: |
+          "$GRADLEW" :app:assembleDebug
 
+      # 9) Carica l’APK come artifact
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: Equiconti/app/build/outputs/apk/debug/app-debug.apk
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
