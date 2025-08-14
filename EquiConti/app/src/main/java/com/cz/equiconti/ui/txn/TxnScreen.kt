@@ -13,10 +13,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
-/**
- * Schermata di inserimento movimento.
- * Non aggancia ancora il DB: espone onSave che puoi collegare al Repo/VM dal NavGraph.
- */
 @Composable
 fun TxnScreen(
     nav: NavController,
@@ -26,12 +22,10 @@ fun TxnScreen(
 ) {
     var amountText by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var isIncome by remember { mutableStateOf(true) } // true=Entrata, false=Uscita
+    var isIncome by remember { mutableStateOf(true) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
         Text("Nuovo movimento", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
