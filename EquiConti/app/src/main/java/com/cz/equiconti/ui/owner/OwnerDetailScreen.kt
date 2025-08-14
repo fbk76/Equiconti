@@ -3,8 +3,6 @@ package com.cz.equiconti.ui.owner
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -27,9 +25,7 @@ fun OwnerDetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text(owner?.let { "${it.firstName} ${it.lastName}".trim() } ?: "Dettaglio") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Filled.Add, contentDescription = null) } // (usa una icona back se la hai)
-                },
+                navigationIcon = { IconButton(onClick = onBack) { Text("←") } },
                 actions = {
                     TextButton(onClick = onOpenTxns) { Text("Movimenti") }
                     TextButton(onClick = onAddHorse) { Text("Cavallo +") }
@@ -47,7 +43,7 @@ fun OwnerDetailScreen(
             Spacer(Modifier.height(8.dp))
             Text("Nome: ${owner!!.firstName}")
             Text("Cognome: ${owner!!.lastName}")
-            if (!owner!!.phone.isNullOrBlank()) Text("Telefono: ${owner!!.phone}")
+            owner!!.phone?.let { if (it.isNotBlank()) Text("Telefono: $it") }
 
             Spacer(Modifier.height(16.dp))
             Text("Cavalli", style = MaterialTheme.typography.titleMedium)
@@ -62,7 +58,7 @@ fun OwnerDetailScreen(
                             Column(Modifier.padding(12.dp)) {
                                 Text(h.name, style = MaterialTheme.typography.titleMedium)
                                 if (h.monthlyFeeCents > 0) {
-                                    Text("Quota mensile: € ${"%.2f".format(h.monthlyFeeCents / 100.0)}")
+                                    Text("Quota: € ${"%.2f".format(h.monthlyFeeCents / 100.0)}")
                                 }
                                 if (!h.notes.isNullOrBlank()) Text("Note: ${h.notes}")
                             }
