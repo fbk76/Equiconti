@@ -6,78 +6,65 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      # 1) Checkout
+      # 1) Codice
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Java 17 con cache Gradle
+      # 2) JDK 17 con cache Gradle
       - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
           cache: gradle
 
-      # 3) Android SDK (cmdline-tools + ANDROID_HOME)
+      # 3) Android SDK (cmdline-tools + componenti base)
       - name: Setup Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
 
-      # 4) Accetta licenze + installa i pacchetti necessari
-      - name: Accept Android SDK licenses & install packages
-        shell: bash
-        run: |
-          sdkmanager --licenses <<EOF
-          y
-          y
-          y
-          y
-          y
-          EOF
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-      # 5) Mostra struttura (debug)
-      - name: Show workspace layout
-        shell: bash
-        run: |
-          echo "PWD: $(pwd)"
-          echo "--- top level ---"
-          ls -la
-          echo "--- find gradlew (maxdepth 4) ---"
-          find . -maxdepth 4 -name gradlew -type f || true
-
-      # 6) Trova automaticamente gradlew e rendilo eseguibile
+      # 4) Trova automaticamente lo script gradlew
       - name: Locate gradlew
-        id: gradlepath
+        id: find_gradle
         shell: bash
         run: |
-          set -e
-          GRADLEW=$(find . -name gradlew -type f | head -n1 || true)
-          if [ -z "$GRADLEW" ]; then
-            echo "Gradle wrapper not found in repo."
+          set -euo pipefail
+          GRADLEW=$(git ls-files | grep -E '/gradlew$|^gradlew$' | head -n1 || true)
+          if [ -z "${GRADLEW}" ]; then
+            echo "❌ gradlew non trovato nel repository." >&2
             exit 1
           fi
-          echo "Found gradlew at: $GRADLEW"
-          chmod +x "$GRADLEW"
-          echo "GRADLEW=$GRADLEW" >> "$GITHUB_ENV"
+          echo "gradlew=${GRADLEW}" >> "$GITHUB_OUTPUT"
+          echo "gradle_dir=$(dirname "${GRADLEW}")" >> "$GITHUB_OUTPUT"
+          echo "✅ Trovato gradlew in: ${GRADLEW}"
 
-      # 7) Versione Gradle (utile nei log)
-      - name: Gradle version
-        shell: bash
+      # (Facoltativo) stampa albero repo per debug rapido
+      - name: Show workspace layout
         run: |
-          "$GRADLEW" -v
+          echo "PWD=$(pwd)"
+          echo "gradle_dir=${{ steps.find_gradle.outputs.gradle_dir }}"
+          ls -la
+          (command -v tree >/dev/null && tree -L 2) || true
 
-      # 8) Build Debug APK
+      # 5) Permessi esecuzione
+      - name: Make gradlew executable
+        run: chmod +x "${{ steps.find_gradle.outputs.gradle_dir }}/gradlew"
+
+      # 6) Build Debug APK (entra nella cartella dove c'è gradlew)
       - name: Assemble Debug
-        shell: bash
-        run: |
-          "$GRADLEW" :app:assembleDebug
+        working-directory: ${{ steps.find_gradle.outputs.gradle_dir }}
+        run: ./gradlew :app:assembleDebug
 
-      # 9) Carica l’APK come artifact
+      # 7) Carica gli artefatti (APK/AAB) dal modulo app
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-debug
+          path: |
+            ${{ steps.find_gradle.outputs.gradle_dir }}/app/build/outputs/apk/debug/*.apk
+            ${{ steps.find_gradle.outputs.gradle_dir }}/app/build/outputs/apk/debug/*.aab
           if-no-files-found: error
