@@ -1,5 +1,7 @@
 package com.cz.equiconti.ui.txn
 
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 import android.content.Context
 import android.content.Intent
 import android.graphics.pdf.PdfDocument
