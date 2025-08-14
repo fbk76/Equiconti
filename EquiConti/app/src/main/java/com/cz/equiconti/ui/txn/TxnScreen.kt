@@ -45,6 +45,7 @@ fun TxnScreen(
     val zone = ZoneId.systemDefault()
     val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
+   val context = LocalContext.current 
     val filtered = remember(txns, from, to) {
         val fromMs = from.atStartOfDay(zone).toInstant().toEpochMilli()
         val toMs = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
