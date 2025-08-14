@@ -9,11 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
-    # Tutti i comandi verranno eseguiti nella root del repo: Equiconti
-    defaults:
-      run:
-        working-directory: Equiconti
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,20 +25,17 @@ jobs:
         with:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: true
-          # installiamo tool di base; i pacchetti specifici li gestiamo nello step successivo
           packages: tools platform-tools
 
-      # >>> FIX LICENZE + PACCHETTI SDK <<<
       - name: Accept licenses and install SDK packages
+        working-directory: Equiconti
         shell: bash
         run: |
           set -euo pipefail
           echo "Android SDK root: ${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
 
-          # assicuriamoci di avere il binario sdkmanager
           SDKMGR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMGR" ]; then
-            # su alcune immagini il path è cmdline-tools/16.0
             SDKMGR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/16.0/bin/sdkmanager"
           fi
 
@@ -56,18 +48,19 @@ jobs:
             "platforms;android-34"
 
       - name: Make gradlew executable
+        working-directory: Equiconti
         run: chmod +x ./gradlew
 
-      # (facoltativo) stampa versione Gradle
       - name: Gradle version
+        working-directory: Equiconti
         run: ./gradlew --version
 
-      # Build veloce per vedere errori Kotlin in chiaro (non obbligatorio)
       - name: Compile debug (first error)
+        working-directory: Equiconti
         run: ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace
 
-      # Build APK debug
       - name: Assemble Debug
+        working-directory: Equiconti
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
