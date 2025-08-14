@@ -1,71 +1,42 @@
 package com.cz.equiconti.ui.txn
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+// ——— Compose base ———
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+
+// ——— Material / UI ———
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.FloatingActionButton
+
+// ——— Layout ———
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+
+// ✅ Import mancanti che causavano il fallimento
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+
+// ——— (Se usi Navigation) ———
 import androidx.navigation.NavController
 
-@Composable
-fun TxnScreen(
-    nav: NavController,
-    ownerId: Long,
-    onSave: ((amount: Double, description: String, isIncome: Boolean) -> Unit)? = null,
-    onBack: () -> Unit = { nav.popBackStack() }
-) {
-    var amountText by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var isIncome by remember { mutableStateOf(true) }
+// ——— Se nel file fai anteprime ———
+import androidx.compose.ui.tooling.preview.Preview
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp)
-    ) {
-        Text("Nuovo movimento", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(16.dp))
-
-        ElevatedCard(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp)) {
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = { amountText = it },
-                    label = { Text("Importo") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Descrizione") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(12.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { isIncome = true }, enabled = !isIncome) { Text("Entrata") }
-                    Button(onClick = { isIncome = false }, enabled = isIncome) { Text("Uscita") }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Indietro") }
-            Button(
-                onClick = {
-                    val amount = amountText.replace(',', '.').toDoubleOrNull() ?: 0.0
-                    onSave?.invoke(amount, description.trim(), isIncome)
-                    onBack()
-                },
-                modifier = Modifier.weight(1f)
-            ) { Text("Salva") }
-        }
-    }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// DA QUI IN GIÙ lascia il tuo contenuto invariato (fun TxnScreen(..) ecc.)
+// Ho incluso alcuni import “Material3” e layout comuni. Se qualcuno non serve,
+// il compilatore lo segnalerà come “unused import”: puoi rimuoverlo senza problemi.
+// ─────────────────────────────────────────────────────────────────────────────
