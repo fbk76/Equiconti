@@ -14,15 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 /**
- * Schermata inserimento/modifica movimento (entrata/uscita).
- *
- * Non dipende dal ViewModel: espone solo due callback opzionali.
- * Così non devi toccare NavGraph o Repo per compilare.
- *
- * - nav: usato per tornare indietro (firma coerente con il resto)
- * - ownerId: ID del proprietario a cui associare il movimento (se serve)
- * - onSave: callback facoltativa per salvare (amount, descrizione, isIncome)
- * - onBack: callback per tornare; di default fa nav.popBackStack()
+ * Schermata di inserimento movimento.
+ * Non aggancia ancora il DB: espone onSave che puoi collegare al Repo/VM dal NavGraph.
  */
 @Composable
 fun TxnScreen(
@@ -33,7 +26,7 @@ fun TxnScreen(
 ) {
     var amountText by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var isIncome by remember { mutableStateOf(true) } // true = Entrata, false = Uscita
+    var isIncome by remember { mutableStateOf(true) } // true=Entrata, false=Uscita
 
     Column(
         modifier = Modifier
@@ -41,7 +34,6 @@ fun TxnScreen(
             .padding(16.dp)
     ) {
         Text("Nuovo movimento", style = MaterialTheme.typography.titleLarge)
-
         Spacer(Modifier.height(16.dp))
 
         ElevatedCard(Modifier.fillMaxWidth()) {
@@ -53,43 +45,25 @@ fun TxnScreen(
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
-
                 Spacer(Modifier.height(12.dp))
-
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descrizione") },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 Spacer(Modifier.height(12.dp))
-
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { isIncome = true },
-                        enabled = !isIncome
-                    ) { Text("Entrata") }
-
-                    Button(
-                        onClick = { isIncome = false },
-                        enabled = isIncome
-                    ) { Text("Uscita") }
+                    Button(onClick = { isIncome = true }, enabled = !isIncome) { Text("Entrata") }
+                    Button(onClick = { isIncome = false }, enabled = isIncome) { Text("Uscita") }
                 }
             }
         }
 
         Spacer(Modifier.height(20.dp))
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = onBack,
-                modifier = Modifier.weight(1f)
-            ) { Text("Indietro") }
-
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Indietro") }
             Button(
                 onClick = {
                     val amount = amountText.replace(',', '.').toDoubleOrNull() ?: 0.0
