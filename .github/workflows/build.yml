@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Tutti i comandi run partiranno dentro la cartella del progetto Android
+    # Tutti i comandi "run" partono dentro la cartella del progetto Android
     defaults:
       run:
         working-directory: EquiConti
@@ -23,11 +23,10 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # Installa Android SDK + cmdline tools
-      - name: Set up Android SDK
+      - name: Set up Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
 
-      # Installazione pacchetti SDK con retry per evitare "Broken pipe"
+      # Installazione SDK con retry per evitare errori di rete (Broken pipe)
       - name: Install Android SDK packages (with retry)
         shell: bash
         run: |
@@ -50,23 +49,18 @@ jobs:
           retry 3 yes \| sdkmanager "platforms;android-34"
           retry 3 yes \| sdkmanager "build-tools;34.0.0"
 
-      # Rende eseguibile il wrapper nella cartella EquiConti
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # (Facoltativo: utile per capire i moduli disponibili)
-      - name: List Gradle projects
+      - name: List Gradle projects (debug)
         run: ./gradlew projects
 
-      # Build Debug (non richiede keystore custom)
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
-      # Mostra dove sono gli APK
-      - name: Show APK outputs
+      - name: Show APK outputs (debug)
         run: ls -R app/build/outputs/apk || true
 
-      # Carica l'APK di debug come artifact
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
