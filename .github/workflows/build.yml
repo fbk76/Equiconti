@@ -1,11 +1,16 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # Tutti i comandi run partiranno dentro la cartella del progetto Android
+    defaults:
+      run:
+        working-directory: EquiConti
 
     steps:
       - name: Checkout
@@ -16,31 +21,55 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: 'gradle'
 
-      # Installa gli strumenti SDK Android necessari
+      # Installa Android SDK + cmdline tools
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android packages
+      # Installazione pacchetti SDK con retry per evitare "Broken pipe"
+      - name: Install Android SDK packages (with retry)
+        shell: bash
         run: |
-          sdkmanager --install \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "cmdline-tools;latest"
-          yes | sdkmanager --licenses
+          set -e
+          retry() {
+            local tries=$1; shift
+            local n=0
+            until [ $n -ge $tries ]; do
+              echo "▶️  Tentativo $((n+1))/$tries: $*"
+              if eval "$@"; then echo "✅ OK"; return 0; fi
+              n=$((n+1))
+              echo "⚠️  Fallito, riprovo tra 15s…"
+              sleep 15
+            done
+            echo "❌ Esauriti i tentativi"; return 1
+          }
 
-      # Qui diciamo esplicitamente che i comandi vanno lanciati in EquiConti/
+          yes | sdkmanager --licenses || true
+          retry 3 yes \| sdkmanager "platform-tools"
+          retry 3 yes \| sdkmanager "platforms;android-34"
+          retry 3 yes \| sdkmanager "build-tools;34.0.0"
+
+      # Rende eseguibile il wrapper nella cartella EquiConti
       - name: Make gradlew executable
-        working-directory: EquiConti
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        working-directory: EquiConti
-        run: ./gradlew clean assembleDebug --no-daemon --stacktrace
+      # (Facoltativo: utile per capire i moduli disponibili)
+      - name: List Gradle projects
+        run: ./gradlew projects
 
+      # Build Debug (non richiede keystore custom)
+      - name: Assemble Debug
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      # Mostra dove sono gli APK
+      - name: Show APK outputs
+        run: ls -R app/build/outputs/apk || true
+
+      # Carica l'APK di debug come artifact
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: EquiConti-debug-apk
-          path: EquiConti/app/build/outputs/apk/debug/*.apk
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
