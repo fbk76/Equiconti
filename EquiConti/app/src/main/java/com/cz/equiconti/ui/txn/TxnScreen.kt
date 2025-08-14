@@ -9,7 +9,6 @@ import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.cz.equiconti.data.Txn
 import com.cz.equiconti.ui.owner.OwnersViewModel
 import java.time.LocalDate
@@ -21,10 +20,10 @@ fun TxnScreen(
     onBack: () -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    var amount by remember { mutableStateOf("") }
+    var amount   by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(true) }
     var dateText by remember { mutableStateOf(LocalDate.now().toString()) }
-    var note by remember { mutableStateOf("") }
+    var note     by remember { mutableStateOf("") }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Nuovo movimento") }) }) { padding ->
         Column(
@@ -40,8 +39,8 @@ fun TxnScreen(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilterChip(selected = isIncome, onClick = { isIncome = true }, label = { Text("Entrata") })
-                FilterChip(selected = !isIncome, onClick = { isIncome = false }, label = { Text("Uscita") })
+                FilterChip(selected = isIncome,     onClick = { isIncome = true  }, label = { Text("Entrata") })
+                FilterChip(selected = !isIncome,    onClick = { isIncome = false }, label = { Text("Uscita")  })
             }
 
             OutlinedTextField(
@@ -62,11 +61,11 @@ fun TxnScreen(
                 OutlinedButton(onClick = onBack) { Text("Annulla") }
                 Button(
                     onClick = {
-                        val amountVal = amount.replace(',', '.').toDoubleOrNull() ?: 0.0
-                        val date = runCatching { LocalDate.parse(dateText) }.getOrNull() ?: LocalDate.now()
+                        val amountVal  = amount.replace(',', '.').toDoubleOrNull() ?: 0.0
+                        val date       = runCatching { LocalDate.parse(dateText) }.getOrNull() ?: LocalDate.now()
                         val dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        val incCents = if (isIncome) (amountVal * 100).toLong() else 0L
-                        val expCents = if (!isIncome) (amountVal * 100).toLong() else 0L
+                        val incCents   = if (isIncome) (amountVal * 100).toLong() else 0L
+                        val expCents   = if (!isIncome) (amountVal * 100).toLong() else 0L
 
                         val txn = Txn(
                             txnId = 0L,
