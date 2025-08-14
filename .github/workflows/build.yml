@@ -13,6 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Solo per vedere com'è fatta la repo sul runner
+      - name: Show repo tree (top level)
+        run: |
+          pwd
+          ls -la
+          echo "-----"
+          [ -d Equiconti ] && (cd Equiconti && pwd && ls -la) || true
+
       - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
         with:
@@ -27,45 +35,63 @@ jobs:
           log-accepted-android-sdk-licenses: true
           packages: tools platform-tools
 
+      # QUI NON METTIAMO working-directory (non serve)
       - name: Accept licenses and install SDK packages
-        working-directory: Equiconti
         shell: bash
         run: |
           set -euo pipefail
-          echo "Android SDK root: ${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
           SDKMGR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMGR" ]; then
+            # fallback ad una versione spesso presente
             SDKMGR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/16.0/bin/sdkmanager"
           fi
-
           yes | "$SDKMGR" --licenses || true
-
           yes | "$SDKMGR" \
             "platform-tools" \
             "cmdline-tools;latest" \
             "build-tools;34.0.0" \
             "platforms;android-34"
 
+      # Rileva automaticamente dove sta gradlew (root o Equiconti/)
+      - name: Locate project dir
+        id: locate
+        shell: bash
+        run: |
+          set -e
+          if [ -x ./gradlew ]; then
+            echo "proj=." >> "$GITHUB_ENV"
+            echo "Found gradlew in repo root"
+          elif [ -x Equiconti/gradlew ]; then
+            echo "proj=Equiconti" >> "$GITHUB_ENV"
+            echo "Found gradlew in Equiconti/"
+          else
+            echo "ERROR: gradlew not found in '.' nor 'Equiconti/'"
+            echo "Tree:"
+            ls -la
+            exit 1
+          fi
+
       - name: Make gradlew executable
-        working-directory: Equiconti
+        working-directory: ${{ env.proj }}
         run: chmod +x ./gradlew
 
       - name: Gradle version
-        working-directory: Equiconti
+        working-directory: ${{ env.proj }}
         run: ./gradlew --version
 
+      # Step veloce che si ferma al primo errore di compilazione Kotlin
       - name: Compile debug (first error)
-        working-directory: Equiconti
+        working-directory: ${{ env.proj }}
         run: ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace
 
       - name: Assemble Debug
-        working-directory: Equiconti
+        working-directory: ${{ env.proj }}
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: Equiconti/app/build/outputs/apk/debug/*.apk
+          path: ${{ env.proj }}/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
