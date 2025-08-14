@@ -12,33 +12,18 @@ import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.txn.TxnScreen
 
-/**
- * Rotte:
- *  - owners
- *  - owner/add
- *  - owner/{ownerId}
- *  - owner/{ownerId}/addHorse
- *  - owner/{ownerId}/txns
- */
 @Composable
 fun NavGraph(navController: NavHostController) {
-    NavHost(
-        navController = navController,
-        startDestination = "owners"
-    ) {
-        // Lista proprietari
+    NavHost(navController = navController, startDestination = "owners") {
+
         composable("owners") {
             OwnersScreen(nav = navController)
         }
 
-        // Aggiungi proprietario
         composable("owner/add") {
-            AddOwnerScreen(
-                onBack = { navController.popBackStack() }
-            )
+            AddOwnerScreen(onBack = { navController.popBackStack() })
         }
 
-        // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -52,20 +37,14 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiungi cavallo per proprietario
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            AddHorseScreen(
-                ownerId = ownerId,
-                onBack = { navController.popBackStack() }
-                // Se vuoi, puoi passare onSave = { horse -> vm.upsertHorse(horse) }
-            )
+            AddHorseScreen(ownerId = ownerId, onBack = { navController.popBackStack() })
         }
 
-        // Movimenti (entrate/uscite) del proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -73,14 +52,7 @@ fun NavGraph(navController: NavHostController) {
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             TxnScreen(
                 ownerId = ownerId,
-                onBack = { navController.popBackStack() },
-                onSave = { amount, isIncome, date, note ->
-                    // 👉 Qui puoi collegare il salvataggio reale con il tuo ViewModel/Repo.
-                    // Esempio (se hai un OwnersViewModel):
-                    // val vm: OwnersViewModel = hiltViewModel()
-                    // vm.addTxn(ownerId, amount, isIncome, date, note)
-                    navController.popBackStack()
-                }
+                onBack = { navController.popBackStack() }
             )
         }
     }
