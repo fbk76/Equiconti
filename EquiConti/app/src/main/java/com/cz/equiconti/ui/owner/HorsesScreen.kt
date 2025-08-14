@@ -1,103 +1,112 @@
 package com.cz.equiconti.ui.owner
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.cz.equiconti.data.Owner
+import com.cz.equiconti.data.Horse
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OwnerDetailScreen(
-    ownerId: Long,
-    nav: NavController,
-    vm: OwnersViewModel = hiltViewModel()
+fun HorsesScreen(
+    ownerName: String,
+    horses: List<Horse>,
+    onBack: () -> Unit,
+    onAddHorse: () -> Unit,
+    onOpenHorse: (Horse) -> Unit,
 ) {
-    val owner by vm.ownerFlow(ownerId).collectAsState(initial = null)
+    var query by rememberSaveable { mutableStateOf("") }
 
-    var firstName by rememberSaveable { mutableStateOf("") }
-    var lastName  by rememberSaveable { mutableStateOf("") }
-    var phone     by rememberSaveable { mutableStateOf("") }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Cavalli • $ownerName") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Indietro"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onAddHorse) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Aggiungi cavallo"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Cerca per nome") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words
+                )
+            )
 
-    LaunchedEffect(owner?.id) {
-        owner?.let {
-            firstName = it.firstName
-            lastName  = it.lastName
-            phone     = it.phone.orEmpty()
+            Spacer(Modifier.height(12.dp))
+
+            val filtered = remember(query, horses) {
+                if (query.isBlank()) horses
+                else horses.filter { it.name.contains(query, ignoreCase = true) }
+            }
+
+            if (filtered.isEmpty()) {
+                Text(
+                    text = if (horses.isEmpty()) "Nessun cavallo" else "Nessun risultato",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyColumn {
+                    items(filtered, key = { it.id }) { horse ->
+                        HorseRow(
+                            horse = horse,
+                            onClick = { onOpenHorse(horse) }
+                        )
+                        Divider()
+                    }
+                }
+            }
         }
     }
+}
 
-    Scaffold(topBar = { SmallTopAppBar(title = { Text("Dettagli proprietario") }) }) { pad ->
-        Column(
-            Modifier.padding(pad).padding(16.dp).fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (owner == null) {
-                Text("Proprietario non trovato.")
-            } else {
-                Text("${owner!!.lastName} ${owner!!.firstName}", style = MaterialTheme.typography.titleLarge)
-                if (!owner!!.phone.isNullOrBlank()) Text("Tel: ${owner!!.phone}")
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = { nav.navigate("owner/$ownerId/horses") }) { Text("Cavalli") }
-                Button(onClick = { nav.navigate("owner/$ownerId/txns") }) { Text("Movimenti") }
-            }
-
-            Divider(Modifier.padding(vertical = 8.dp))
-
-            OutlinedTextField(
-                value = firstName, onValueChange = { firstName = it },
-                label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words
-                )
-            )
-            OutlinedTextField(
-                value = lastName, onValueChange = { lastName = it },
-                label = { Text("Cognome") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words
-                )
-            )
-            OutlinedTextField(
-                value = phone, onValueChange = { phone = it },
-                label = { Text("Telefono (opz.)") }, singleLine = true, modifier = Modifier.fillMaxWidth()
-            )
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = {
-                        val toSave = Owner(
-                            id = owner?.id ?: ownerId,
-                            firstName = firstName.trim(),
-                            lastName = lastName.trim(),
-                            phone = phone.trim().ifBlank { null }
-                        )
-                        vm.upsertOwner(toSave)
-                        nav.popBackStack()
-                    },
-                    enabled = firstName.isNotBlank() && lastName.isNotBlank()
-                ) { Text("Salva") }
-
-                Button(
-                    onClick = {
-                        owner?.let { vm.deleteOwner(it); nav.popBackStack() }
-                    },
-                    enabled = owner != null
-                ) { Text("Elimina") }
-
-                Spacer(Modifier.weight(1f))
-                OutlinedButton(onClick = { nav.popBackStack() }) { Text("Indietro") }
+@Composable
+private fun HorseRow(
+    horse: Horse,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp)
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(text = horse.name, style = MaterialTheme.typography.titleMedium)
+            val subtitle = listOfNotNull(horse.breed, horse.color).filter { it.isNotBlank() }.joinToString(" • ")
+            if (subtitle.isNotBlank()) {
+                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
