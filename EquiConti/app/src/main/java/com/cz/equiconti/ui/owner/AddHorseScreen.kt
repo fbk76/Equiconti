@@ -1,72 +1,58 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallTopAppBar
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardOptions
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Horse
-import kotlinx.coroutines.flow.map
 
-/**
- * Schermata elenco cavalli per un proprietario.
- *
- * Requisiti:
- * - OwnersViewModel espone fun horses(ownerId: Long): Flow<List<Horse>>
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HorsesScreen(
+fun AddHorseScreen(
     ownerId: Long,
-    ownerName: String?,
     onBack: () -> Unit,
-    onAddHorse: () -> Unit,
-    onHorseClick: (Horse) -> Unit,
-    viewModel: OwnersViewModel = hiltViewModel()
+    onSave: (Horse) -> Unit,
 ) {
-    // Ricerca locale
-    var query by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
+    var breed by rememberSaveable { mutableStateOf("") }
+    var color by rememberSaveable { mutableStateOf("") }
+    var year by rememberSaveable { mutableStateOf("") }
+    var notes by rememberSaveable { mutableStateOf("") }
 
-    // Colleziona i cavalli dal VM e filtra in base alla query
-    val horses by viewModel
-        .horses(ownerId)
-        .map { list ->
-            if (query.isBlank()) list
-            else list.filter { h ->
-                h.name.contains(query, ignoreCase = true) ||
-                (h.notes?.contains(query, ignoreCase = true) == true)
-            }
-        }
-        .collectAsState(initial = emptyList())
+    val canSave = name.isNotBlank()
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
-                title = { Text(text = ownerName?.let { "Cavalli di $it" } ?: "Cavalli") },
+            TopAppBar(
+                title = { Text("Nuovo cavallo") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
                     }
                 },
                 actions = {
-                    IconButton(onClick = onAddHorse) {
-                        Icon(Icons.Filled.Add, contentDescription = "Nuovo cavallo")
+                    IconButton(onClick = {
+                        if (canSave) {
+                            val y = year.toIntOrNull()
+                            onSave(
+                                Horse(
+                                    id = 0,
+                                    ownerId = ownerId,
+                                    name = name.trim(),
+                                    breed = breed.trim(),
+                                    color = color.trim(),
+                                    year = y,
+                                    notes = notes.trim()
+                                )
+                            )
+                        }
+                    }, enabled = canSave) {
+                        Icon(Icons.Default.Save, contentDescription = "Salva")
                     }
                 }
             )
@@ -74,86 +60,82 @@ fun HorsesScreen(
     ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Campo ricerca (fix per KeyboardOptions)
-            TextField(
-                value = query,
-                onValueChange = { query = it },
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Nome *") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words
+                )
+            )
+
+            OutlinedTextField(
+                value = breed,
+                onValueChange = { breed = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Razza") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words
+                )
+            )
+
+            OutlinedTextField(
+                value = color,
+                onValueChange = { color = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Mantello") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words
+                )
+            )
+
+            OutlinedTextField(
+                value = year,
+                onValueChange = { year = it.filter { ch -> ch.isDigit() }.take(4) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Anno di nascita") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                placeholder = { Text("Cerca cavallo…") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search)
+                    .heightIn(min = 100.dp),
+                label = { Text("Note") }
             )
 
-            if (horses.isEmpty()) {
-                Text(
-                    text = "Nessun cavallo.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(horses) { horse ->
-                        HorseRow(horse = horse, onClick = { onHorseClick(horse) })
-                        Divider()
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HorseRow(
-    horse: Horse,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp)
-    ) {
-        Text(
-            text = horse.name,
-            style = MaterialTheme.typography.titleMedium
-        )
-        val subtitle = buildString {
-            horse.breed?.takeIf { it.isNotBlank() }?.let { append(it) }
-            if (isNotEmpty()) append(" · ")
-            horse.color?.takeIf { it.isNotBlank() }?.let { append(it) }
-        }
-        if (subtitle.isNotBlank()) {
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-/* ------- Preview di sicurezza (facoltativa) ------- */
-
-private val demoHorses = listOf(
-    Horse(id = 1, ownerId = 10, name = "Starlight", breed = "Sella Italiano", color = "Baio", notes = null),
-    Horse(id = 2, ownerId = 10, name = "Vortex", breed = "PSI", color = "Sauro", notes = "Salto ostacoli")
-)
-
-@Preview(showBackground = true)
-@Composable
-private fun HorsesScreenPreview() {
-    Scaffold { padding ->
-        Column(Modifier.padding(padding)) {
-            SmallTopAppBar(title = { Text("Cavalli di Rossi") })
-            LazyColumn(Modifier.padding(16.dp)) {
-                items(demoHorses) { h ->
-                    HorseRow(horse = h, onClick = {})
-                    Divider()
-                }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = {
+                    val y = year.toIntOrNull()
+                    onSave(
+                        Horse(
+                            id = 0,
+                            ownerId = ownerId,
+                            name = name.trim(),
+                            breed = breed.trim(),
+                            color = color.trim(),
+                            year = y,
+                            notes = notes.trim()
+                        )
+                    )
+                },
+                enabled = canSave,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Salva")
             }
         }
     }
