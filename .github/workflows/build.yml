@@ -1,92 +1,39 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # Avvio manuale da Actions
   push:
-    branches: [ main ]
+    branches: [ main ] # Avvio anche su push in main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_HOME: /usr/local/lib/android/sdk
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-
     steps:
-      - name: Checkout
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Java 17 (Temurin) + Gradle cache
-        uses: actions/setup-java@v4
+      - name: Setup Java 17 (Temurin)
+        uses: actions/setup-java@v3
         with:
-          distribution: temurin
           java-version: '17'
-          cache: gradle
+          distribution: 'temurin'
 
-      # --- Installazione Android SDK + licenze ---
-      - name: Install Android cmdline-tools
-        run: |
-          set -euo pipefail
-          sudo mkdir -p "$ANDROID_HOME/cmdline-tools"
-          curl -sSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
-          sudo unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
-          # rinomina in 'latest' per usare ${ANDROID_HOME}/cmdline-tools/latest/bin/*
-          sudo mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
 
-      - name: Accept licenses and install SDK packages
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses > /dev/null
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "patcher;v4"
+      - name: Accept licenses
+        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
 
-      # --- Keystore di debug nel root del progetto (== cartella Equiconti) ---
-      - name: Generate debug.keystore (if missing)
-        working-directory: Equiconti
-        run: |
-          if [ ! -f debug.keystore ]; then
-            keytool -genkeypair -v \
-              -keystore debug.keystore \
-              -storepass android \
-              -keypass android \
-              -alias androiddebugkey \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
-
-      # --- Gradle wrapper eseguibile + versione ---
       - name: Make gradlew executable
-        working-directory: Equiconti
         run: chmod +x ./gradlew
 
-      - name: Gradle version
-        working-directory: Equiconti
-        run: ./gradlew --version
+      - name: Build APK
+        run: ./gradlew assembleDebug
+        working-directory: app
 
-      # --- Build ---
-      - name: Assemble Debug
-        working-directory: Equiconti
-        run: ./gradlew :app:assembleDebug --stacktrace
-
-      - name: Assemble Release (unsigned, usa debug keystore come da tua config)
-        working-directory: Equiconti
-        run: ./gradlew :app:assembleRelease --stacktrace
-
-      # --- Upload APK ---
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
-          name: app-debug-apk
-          path: Equiconti/app/build/outputs/apk/debug/*.apk
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: Equiconti/app/build/outputs/apk/release/*.apk
+          name: app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
