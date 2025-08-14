@@ -1,59 +1,43 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout nella root del repo (Nessun "path:" -> niente duplicazioni)
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Java 17 + cache Gradle
       - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
-          cache: 'gradle'
+          distribution: 'temurin'
+          cache: gradle
 
-      # 3) Android SDK (cmdline-tools)
       - name: Setup Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
 
-      # (facoltativo ma utile per diagnosticare il path corrente)
-      - name: Show working dir & tree
-        run: |
-          pwd
-          ls -la
-          echo "---- Equiconti dir ----"
-          ls -la Equiconti || true
-
-      # 4) Accetta le licenze SDK
       - name: Accept Android SDK licenses
-        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
 
-      # 5) Rendi eseguibile gradlew (dentro Equiconti/)
       - name: Make gradlew executable
-        working-directory: Equiconti
-        run: chmod +x ./gradlew
+        run: chmod +x Equiconti/gradlew
 
-      # 6) Stampa versione Gradle (diagnostica)
       - name: Gradle version
-        working-directory: Equiconti
-        run: ./gradlew -v
+        run: Equiconti/gradlew -v
 
-      # 7) Assembla Debug
       - name: Assemble Debug
-        working-directory: Equiconti
-        run: ./gradlew :app:assembleDebug
+        run: Equiconti/gradlew :app:assembleDebug
 
-      # 8) Carica l’APK di debug come artifact
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
