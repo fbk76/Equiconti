@@ -1,60 +1,21 @@
 name: Build APK
 
 on:
+  workflow_dispatch:     # pulsante "Run workflow"
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [ main ]   # opzionale: parte anche ai push su main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      PROJECT_DIR: Equiconti
+    defaults:
+      run:
+        working-directory: Equiconti   # la tua directory di progetto
 
     steps:
-      - name: Set up job
-        run: echo "Starting build..."
-
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Java 17 (Temurin) + Gradle cache
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
-
-      - name: Setup Android SDK (cmdline-tools)
-        uses: android-actions/setup-android@v2
-
-      - name: Accept licenses and install SDK packages
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: |
-          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
-          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0"
-
-      - name: Make gradlew executable
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: chmod +x ./gradlew
-
-      - name: Gradle version
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: ./gradlew --version
-
-      - name: Assemble Debug
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: ./gradlew assembleDebug
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-debug.apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+      - name: Set up Java 17 (Temurin) + Gradle cache
+        uses
