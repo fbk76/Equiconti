@@ -26,16 +26,19 @@ fun NavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = "owners"
     ) {
+        // Lista proprietari
         composable("owners") {
             OwnersScreen(nav = navController)
         }
 
+        // Aggiungi proprietario
         composable("owner/add") {
             AddOwnerScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
+        // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -49,6 +52,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
+        // Aggiungi cavallo per proprietario
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -57,19 +61,26 @@ fun NavGraph(navController: NavHostController) {
             AddHorseScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() }
-                // onSave: puoi passarla se colleghi a Repo/VM
+                // Se vuoi, puoi passare onSave = { horse -> vm.upsertHorse(horse) }
             )
         }
 
+        // Movimenti (entrate/uscite) del proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             TxnScreen(
-                nav = navController,
-                ownerId = ownerId
-                // onSave: opzionale, collegabile a Repo/VM
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onSave = { amount, isIncome, date, note ->
+                    // 👉 Qui puoi collegare il salvataggio reale con il tuo ViewModel/Repo.
+                    // Esempio (se hai un OwnersViewModel):
+                    // val vm: OwnersViewModel = hiltViewModel()
+                    // vm.addTxn(ownerId, amount, isIncome, date, note)
+                    navController.popBackStack()
+                }
             )
         }
     }
