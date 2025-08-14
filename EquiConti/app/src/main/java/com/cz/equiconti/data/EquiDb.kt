@@ -17,17 +17,15 @@ abstract class EquiDb : RoomDatabase() {
     abstract fun txnDao(): TxnDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: EquiDb? = null
+        @Volatile private var INSTANCE: EquiDb? = null
 
-        fun get(context: Context): EquiDb {
-            return INSTANCE ?: synchronized(this) {
+        fun get(context: Context): EquiDb =
+            INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     EquiDb::class.java,
-                    "equidb"
+                    "equiconti.db"
                 ).build().also { INSTANCE = it }
             }
-        }
     }
 }
