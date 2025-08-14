@@ -73,20 +73,20 @@ jobs:
           fi
 
       - name: Make gradlew executable
-        working-directory: ${{ env.proj }}
+        working-directory: ./Equiconti
         run: chmod +x ./gradlew
 
       - name: Gradle version
-        working-directory: ${{ env.proj }}
+        working-directory: ./Equiconti
         run: ./gradlew --version
 
       # Step veloce che si ferma al primo errore di compilazione Kotlin
       - name: Compile debug (first error)
-        working-directory: ${{ env.proj }}
+        working-directory: ./Equiconti
         run: ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace
 
       - name: Assemble Debug
-        working-directory: ${{ env.proj }}
+       working-directory: ./Equiconti 
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK
