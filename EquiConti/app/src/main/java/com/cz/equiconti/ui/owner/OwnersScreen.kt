@@ -6,12 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,10 +17,8 @@ import androidx.navigation.NavController
 import com.cz.equiconti.data.Owner
 
 /**
- * Schermata elenco proprietari.
- *
- * Firma pensata per il tuo NavGraph: accetta il parametro 'nav'.
- * Non richiede modifiche altrove.
+ * Elenco proprietari.
+ * Firma compatibile con il tuo NavGraph: accetta NavController e usa OwnersViewModel via Hilt.
  */
 @Composable
 fun OwnersScreen(
@@ -37,9 +30,7 @@ fun OwnersScreen(
     Scaffold(
         topBar = { TopAppBar(title = { Text("Proprietari") }) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { nav.navigate("owner/add") }
-            ) {
+            FloatingActionButton(onClick = { nav.navigate("owner/add") }) {
                 Icon(Icons.Filled.Add, contentDescription = "Aggiungi")
             }
         }
@@ -49,9 +40,7 @@ fun OwnersScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(),
-            onClick = { ownerId ->
-                nav.navigate("owner/$ownerId")
-            }
+            onClick = { ownerId -> nav.navigate("owner/$ownerId") }
         )
     }
 }
@@ -85,6 +74,7 @@ private fun OwnersList(
                     )
                 }
             }
+            Divider()
         }
     }
 }
