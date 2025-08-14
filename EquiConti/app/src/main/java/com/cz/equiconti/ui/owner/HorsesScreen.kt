@@ -1,21 +1,16 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cz.equiconti.data.Horse
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,67 +18,84 @@ fun HorsesScreen(
     ownerName: String,
     horses: List<Horse>,
     onBack: () -> Unit,
-    onAddHorse: () -> Unit,
-    onOpenHorse: (Horse) -> Unit,
+    onAddHorse: (name: String, amountCents: Long) -> Unit
 ) {
-    var query by rememberSaveable { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
+
+    val totalCents = remember(horses) { horses.sumOf { it.monthlyFeeCents } }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = "Cavalli • $ownerName") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onAddHorse) {
-                        Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
+        topBar = { TopAppBar(title = { Text("Cavalli • $ownerName") }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Aggiungi cavallo")
+            }
+        }
+    ) { pad ->
+        Column(Modifier.padding(pad).padding(16.dp)) {
+            if (horses.isEmpty()) {
+                Text("Nessun cavallo", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(horses, key = { it.id }) { h ->
+                        Surface(tonalElevation = 1.dp) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(h.name, style = MaterialTheme.typography.titleMedium)
+                                Text(formatEuro(h.monthlyFeeCents))
+                            }
+                        }
                     }
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Cerca per nome") },
-                singleLine = true
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            val filtered = if (query.isBlank()) horses
-            else horses.filter { it.name.contains(query, ignoreCase = true) }
-
-            if (filtered.isEmpty()) {
-                Text("Nessun cavallo", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                LazyColumn {
-                    items(filtered, key = { it.id }) { horse ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onOpenHorse(horse) }
-                                .padding(vertical = 12.dp)
-                        ) {
-                            Text(
-                                text = horse.name,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                        Divider()
-                    }
+                Spacer(Modifier.height(12.dp))
+                Divider()
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Totale importi", style = MaterialTheme.typography.titleMedium)
+                    Text(formatEuro(totalCents), style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
     }
+
+    if (showDialog) AddHorseDialog(
+        onDismiss = { showDialog = false },
+        onSave = { name, euro ->
+            val cents = (euro * 100).roundToLong()
+            onAddHorse(name, cents)
+            showDialog = false
+        }
+    )
+}
+
+@Composable
+private fun AddHorseDialog(
+    onDismiss: () -> Unit,
+    onSave: (name: String, amountEuro: Double) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(name.trim(), amount.toDoubleOrNull() ?: 0.0) },
+                enabled = name.isNotBlank()
+            ) { Text("Salva") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
+        title = { Text("Nuovo cavallo") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(name, { name = it }, label = { Text("Nome cavallo") })
+                OutlinedTextField(amount, { amount = it }, label = { Text("Importo (€)") })
+            }
+        }
+    )
+}
+
+private fun formatEuro(cents: Long): String {
+    val s = cents / 100.0
+    return "€ " + String.format("%.2f", s)
 }
