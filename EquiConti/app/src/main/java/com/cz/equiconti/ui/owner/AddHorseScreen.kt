@@ -4,52 +4,62 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Horse
+import kotlin.math.roundToLong
 
 @Composable
 fun AddHorseScreen(
     ownerId: Long,
     onBack: () -> Unit,
-    onSaved: () -> Unit,
-    vm: OwnersViewModel = hiltViewModel()
+    onSave: ((Horse) -> Unit)? = null
 ) {
     var name by remember { mutableStateOf("") }
+    var feeEuro by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
-    var fee by remember { mutableStateOf("") } // euro
 
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Nuovo cavallo")
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Nuovo cavallo") }) }
+    ) { padding ->
+        Column(
+            Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(name, { name = it }, label = { Text("Nome cavallo") }, modifier = Modifier.fillMaxWidth())
 
-        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Note (opz.)") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(
-            value = fee, onValueChange = { fee = it.filter { ch -> ch.isDigit() || ch == ',' || ch == '.' } },
-            label = { Text("Quota mensile (€)") },
-            keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
-        )
+            OutlinedTextField(
+                value = feeEuro,
+                onValueChange = { feeEuro = it },
+                label = { Text("Quota mensile (€)") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onBack) { Text("Annulla") }
-            Button(
-                enabled = name.isNotBlank(),
-                onClick = {
-                    val cents = ((fee.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).toLong()
-                    vm.upsertHorse(
-                        Horse(
+            OutlinedTextField(notes, { notes = it }, label = { Text("Note") }, modifier = Modifier.fillMaxWidth())
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onBack) { Text("Annulla") }
+                Button(
+                    onClick = {
+                        val cents = ((feeEuro.replace(',', '.').toDoubleOrNull() ?: 0.0) * 100).roundToLong()
+                        val horse = Horse(
                             id = 0L,
                             ownerId = ownerId,
                             name = name.trim(),
                             monthlyFeeCents = cents,
                             notes = notes.trim().ifBlank { null }
                         )
-                    )
-                    onSaved()
-                }
-            ) { Text("Salva") }
+                        onSave?.invoke(horse)
+                        onBack()
+                    },
+                    enabled = name.isNotBlank()
+                ) { Text("Salva") }
+            }
         }
     }
 }
