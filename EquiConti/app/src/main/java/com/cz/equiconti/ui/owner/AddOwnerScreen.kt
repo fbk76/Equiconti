@@ -1,83 +1,52 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
+import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.cz.equiconti.data.Owner
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOwnerScreen(
-    onSave: (name: String, phone: String) -> Unit,
-    onCancel: () -> Unit
+    onBack: () -> Unit,
+    vm: OwnersViewModel = hiltViewModel()
 ) {
-    val (name, setName) = remember { mutableStateOf("") }
-    val (phone, setPhone) = remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Nuovo proprietario") }) }
-    ) { inner ->
+    ) { padding ->
         Column(
-            modifier = Modifier
-                .padding(inner)
+            Modifier
+                .padding(padding)
                 .padding(16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = setName,
-                label = { Text("Nome") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OutlinedTextField(firstName, { firstName = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(lastName, { lastName = it }, label = { Text("Cognome") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(phone, { phone = it }, label = { Text("Telefono") }, modifier = Modifier.fillMaxWidth())
 
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = phone,
-                onValueChange = setPhone,
-                label = { Text("Telefono") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { onSave(name, phone) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row {
-                    Icon(Icons.Filled.Save, contentDescription = "Salva")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Salva")
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Button(
-                onClick = onCancel,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Annulla")
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onBack) { Text("Annulla") }
+                Button(
+                    onClick = {
+                        val o = Owner(
+                            id = 0L,
+                            firstName = firstName.trim(),
+                            lastName = lastName.trim(),
+                            phone = phone.trim().ifBlank { null }
+                        )
+                        vm.upsertOwner(o)
+                        onBack()
+                    },
+                    enabled = lastName.isNotBlank() || firstName.isNotBlank()
+                ) { Text("Salva") }
             }
         }
     }
