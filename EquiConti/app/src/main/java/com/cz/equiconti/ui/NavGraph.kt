@@ -33,7 +33,7 @@ fun NavGraph(navController: NavHostController) {
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
                 onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
-                onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
+                onOpenTxns  = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
