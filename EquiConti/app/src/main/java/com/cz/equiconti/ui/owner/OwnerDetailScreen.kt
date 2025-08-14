@@ -18,8 +18,8 @@ fun OwnerDetailScreen(
     onOpenTxns: () -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    val owner by remember(ownerId) { vm.ownerFlow(ownerId) }.collectAsState(initial = null)
-    val horses by remember(ownerId) { vm.horses(ownerId) }.collectAsState(initial = emptyList())
+    val owner  by remember(ownerId) { vm.ownerFlow(ownerId) }.collectAsState(initial = null)
+    val horses by remember(ownerId) { vm.horses(ownerId)     }.collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
