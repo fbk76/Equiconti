@@ -13,13 +13,12 @@ import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.txn.TxnScreen
 
 /**
- * Grafo di navigazione principale.
  * Rotte:
- *  - owners                     (lista proprietari)
- *  - owner/add                  (aggiungi proprietario)
- *  - owner/{ownerId}            (dettaglio proprietario)
- *  - owner/{ownerId}/addHorse   (aggiungi cavallo)
- *  - owner/{ownerId}/txns       (movimenti proprietario)
+ *  - owners
+ *  - owner/add
+ *  - owner/{ownerId}
+ *  - owner/{ownerId}/addHorse
+ *  - owner/{ownerId}/txns
  */
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -27,35 +26,29 @@ fun NavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = "owners"
     ) {
-        // Lista proprietari
         composable("owners") {
-            // OwnersScreen usa Hilt per il suo ViewModel internamente
             OwnersScreen(nav = navController)
         }
 
-        // Aggiungi proprietario
         composable("owner/add") {
-            // Schermata di aggiunta; quando termina, torna indietro
             AddOwnerScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             OwnerDetailScreen(
+                ownerId = ownerId,
                 onBack = { navController.popBackStack() },
                 onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
-                onOpenTxns = { navController.navigate("owner/$ownerId/txns") },
-                ownerId = ownerId
+                onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
-        // Aggiungi cavallo per proprietario
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -64,20 +57,19 @@ fun NavGraph(navController: NavHostController) {
             AddHorseScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() }
+                // onSave: puoi passarla se colleghi a Repo/VM
             )
         }
 
-        // Movimenti (entrate/uscite) del proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            // la nostra TxnScreen espone onSave opzionale; per ora navBack dopo Salva
             TxnScreen(
                 nav = navController,
-                ownerId = ownerId,
-                onSave = { _, _, _ -> /* collega al Repo/VM quando vuoi */ }
+                ownerId = ownerId
+                // onSave: opzionale, collegabile a Repo/VM
             )
         }
     }
