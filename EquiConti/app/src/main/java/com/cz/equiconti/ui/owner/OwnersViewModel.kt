@@ -13,16 +13,19 @@ class OwnersViewModel @Inject constructor(
     private val repo: Repo
 ) : ViewModel() {
 
-    /* === Flussi per la UI === */
+    // Lista proprietari in StateFlow per Compose
     val owners: StateFlow<List<Owner>> =
-        repo.observeOwners().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        repo.observeOwners()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // Owner singolo (one-shot; se vuoi live, serve un DAO per id)
     fun ownerFlow(id: Long): Flow<Owner?> = flow { emit(repo.getOwnerById(id)) }
 
+    // Flussi cavalli e movimenti per proprietario
     fun horses(ownerId: Long): Flow<List<Horse>> = repo.observeHorses(ownerId)
-    fun txns(ownerId: Long): Flow<List<Txn>> = repo.observeTxns(ownerId)
+    fun txns(ownerId: Long): Flow<List<Txn>>   = repo.observeTxns(ownerId)
 
-    /* === Operazioni === */
+    // CRUD
     fun upsertOwner(owner: Owner) = viewModelScope.launch { repo.upsertOwner(owner) }
     fun deleteOwner(owner: Owner) = viewModelScope.launch { repo.deleteOwner(owner) }
 
