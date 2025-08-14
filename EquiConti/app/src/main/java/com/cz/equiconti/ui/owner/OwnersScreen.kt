@@ -16,10 +16,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.cz.equiconti.data.Owner
 
-/**
- * Elenco proprietari.
- * Firma compatibile con il tuo NavGraph: accetta NavController e usa OwnersViewModel via Hilt.
- */
 @Composable
 fun OwnersScreen(
     nav: NavController,
@@ -35,46 +31,33 @@ fun OwnersScreen(
             }
         }
     ) { padding ->
-        OwnersList(
-            owners = owners,
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            onClick = { ownerId -> nav.navigate("owner/$ownerId") }
-        )
-    }
-}
-
-@Composable
-private fun OwnersList(
-    owners: List<Owner>,
-    modifier: Modifier = Modifier,
-    onClick: (Long) -> Unit
-) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(vertical = 12.dp)
-    ) {
-        items(owners, key = { it.id }) { o ->
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onClick(o.id) }
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
+        if (owners.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("Nessun proprietario.\nTocca + per aggiungerne uno.")
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                Text(
-                    text = "${o.firstName} ${o.lastName}".trim(),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                if (!o.phone.isNullOrBlank()) {
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = o.phone!!,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                items(owners, key = { it.id }) { o ->
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { nav.navigate("owner/${o.id}") }
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text("${o.firstName} ${o.lastName}".trim(), style = MaterialTheme.typography.titleMedium)
+                        if (!o.phone.isNullOrBlank()) {
+                            Spacer(Modifier.height(2.dp))
+                            Text(o.phone!!, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Divider()
                 }
             }
-            Divider()
         }
     }
 }
