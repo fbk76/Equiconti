@@ -1,9 +1,9 @@
 name: Build APK
 
 on:
-  workflow_dispatch:   # Avvio manuale da Actions
+  workflow_dispatch:
   push:
-    branches: [ main ] # Avvio anche su push in main
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,29 +11,36 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        # Nessun "path:" qui!
 
       - name: Setup Java 17 (Temurin)
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
 
-      - name: Accept licenses
-        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
 
+      # --- da qui, lavoriamo nella sottocartella Equiconti ---
       - name: Make gradlew executable
+        working-directory: Equiconti
         run: chmod +x ./gradlew
 
-      - name: Build APK
-        run: ./gradlew assembleDebug
-        working-directory: app
+      - name: Gradle version
+        working-directory: Equiconti
+        run: ./gradlew -v
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
+      - name: Assemble Debug
+        working-directory: Equiconti
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: Equiconti/app/build/outputs/apk/debug/app-debug.apk
