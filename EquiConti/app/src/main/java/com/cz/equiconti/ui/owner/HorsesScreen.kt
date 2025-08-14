@@ -4,12 +4,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.cz.equiconti.data.Horse
 
@@ -30,18 +34,12 @@ fun HorsesScreen(
                 title = { Text(text = "Cavalli • $ownerName") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Indietro"
-                        )
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro")
                     }
                 },
                 actions = {
                     IconButton(onClick = onAddHorse) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Aggiungi cavallo"
-                        )
+                        Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
                     }
                 }
             )
@@ -58,55 +56,33 @@ fun HorsesScreen(
                 onValueChange = { query = it },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Cerca per nome") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words
-                )
+                singleLine = true
             )
 
             Spacer(Modifier.height(12.dp))
 
-            val filtered = remember(query, horses) {
-                if (query.isBlank()) horses
-                else horses.filter { it.name.contains(query, ignoreCase = true) }
-            }
+            val filtered = if (query.isBlank()) horses
+            else horses.filter { it.name.contains(query, ignoreCase = true) }
 
             if (filtered.isEmpty()) {
-                Text(
-                    text = if (horses.isEmpty()) "Nessun cavallo" else "Nessun risultato",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text("Nessun cavallo", style = MaterialTheme.typography.bodyMedium)
             } else {
                 LazyColumn {
                     items(filtered, key = { it.id }) { horse ->
-                        HorseRow(
-                            horse = horse,
-                            onClick = { onOpenHorse(horse) }
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenHorse(horse) }
+                                .padding(vertical = 12.dp)
+                        ) {
+                            Text(
+                                text = horse.name,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                         Divider()
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HorseRow(
-    horse: Horse,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp)
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(text = horse.name, style = MaterialTheme.typography.titleMedium)
-            val subtitle = listOfNotNull(horse.breed, horse.color).filter { it.isNotBlank() }.joinToString(" • ")
-            if (subtitle.isNotBlank()) {
-                Text(text = subtitle, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
