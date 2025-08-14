@@ -1,71 +1,78 @@
-name: Build APK (debug-first-error)
+name: Build APK
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
+    # Tutti i comandi verranno eseguiti nella root del repo: Equiconti
     defaults:
       run:
-        working-directory: EquiConti   # <-- usa ESATTAMENTE questo path/case
+        working-directory: Equiconti
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
           cache: gradle
 
-      - name: Set up Android SDK
+      - name: Setup Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: true
+          # installiamo tool di base; i pacchetti specifici li gestiamo nello step successivo
+          packages: tools platform-tools
 
-      - name: Install Android SDK packages (with retry)
+      # >>> FIX LICENZE + PACCHETTI SDK <<<
+      - name: Accept licenses and install SDK packages
         shell: bash
         run: |
-          set -e
-          retry() { n=0; until [ $n -ge $1 ]; do shift; echo "▶️  $* (try $((++n)))"; eval "$@" && break || { echo "sleep 10s"; sleep 10; }; done; }
-          yes | sdkmanager --licenses || true
-          retry 3 yes \| sdkmanager "platform-tools"
-          retry 3 yes \| sdkmanager "platforms;android-34"
-          retry 3 yes \| sdkmanager "build-tools;34.0.0"
+          set -euo pipefail
+          echo "Android SDK root: ${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+
+          # assicuriamoci di avere il binario sdkmanager
+          SDKMGR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMGR" ]; then
+            # su alcune immagini il path è cmdline-tools/16.0
+            SDKMGR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/16.0/bin/sdkmanager"
+          fi
+
+          yes | "$SDKMGR" --licenses || true
+
+          yes | "$SDKMGR" \
+            "platform-tools" \
+            "cmdline-tools;latest" \
+            "build-tools;34.0.0" \
+            "platforms;android-34"
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: List Gradle projects
-        run: ./gradlew projects
+      # (facoltativo) stampa versione Gradle
+      - name: Gradle version
+        run: ./gradlew --version
 
-      # ✅ COMPILA SOLO KOTLIN per far emergere SUBITO il primo errore leggibile
-      - name: Compile debug Kotlin only (capture log)
-        run: |
-          ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace | tee compile-log.txt
-          echo "------ LAST 200 LINES (compile-log.txt) ------"
-          tail -n 200 compile-log.txt
-        continue-on-error: true
+      # Build veloce per vedere errori Kotlin in chiaro (non obbligatorio)
+      - name: Compile debug (first error)
+        run: ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace
 
-      - name: Fail early if compile failed
-        run: |
-          if grep -q "BUILD FAILED" compile-log.txt; then
-            echo "❌ Compilazione fallita. Sopra trovi il PRIMO errore (file:riga:messaggio)."
-            exit 1
-          fi
-
-      # Solo se la compilazione è ok, costruiamo l'APK
+      # Build APK debug
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
-
-      - name: Show APK outputs
-        run: ls -R app/build/outputs/apk || true
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: Equiconti/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
