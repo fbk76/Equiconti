@@ -1,12 +1,11 @@
 name: Build APK
 
 on:
+  workflow_dispatch:   # <— avvio manuale
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
@@ -15,6 +14,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # --- Debug: mostra dove siamo e cosa c'è dentro ---
+      - name: Show workspace layout
+        run: |
+          echo "PWD=$(pwd)"
+          echo "Repo tree (top level):"
+          ls -la
+          echo "Search for gradlew:"
+          (set -x; find . -maxdepth 3 -name gradlew || true)
 
       - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
