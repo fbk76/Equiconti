@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK (debug-first-error)
 
 on:
   workflow_dispatch: {}
@@ -9,7 +9,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: EquiConti   # <-- usa il nome/case ESATTO della cartella
+        working-directory: EquiConti   # <-- usa ESATTAMENTE questo path/case
 
     steps:
       - name: Checkout
@@ -20,16 +20,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: 'gradle'
+          cache: gradle
 
-      - name: Set up Android SDK (cmdline-tools)
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK packages (with retry)
         shell: bash
         run: |
           set -e
-          retry() { n=0; until [ $n -ge $1 ]; do shift; echo "▶️  $* (try $((++n)))"; eval "$@" && break || { echo "sleep 12s"; sleep 12; }; done; }
+          retry() { n=0; until [ $n -ge $1 ]; do shift; echo "▶️  $* (try $((++n)))"; eval "$@" && break || { echo "sleep 10s"; sleep 10; }; done; }
           yes | sdkmanager --licenses || true
           retry 3 yes \| sdkmanager "platform-tools"
           retry 3 yes \| sdkmanager "platforms;android-34"
@@ -38,26 +38,25 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: List Gradle projects (sanity check)
+      - name: List Gradle projects
         run: ./gradlew projects
 
-      # ✅ Step di COMPILAZIONE SOLA per vedere subito gli errori Kotlin/Compose
-      - name: Compile debug Kotlin only (show first errors clearly)
+      # ✅ COMPILA SOLO KOTLIN per far emergere SUBITO il primo errore leggibile
+      - name: Compile debug Kotlin only (capture log)
         run: |
           ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace | tee compile-log.txt
-          echo "------ LAST 200 LINES ------"
+          echo "------ LAST 200 LINES (compile-log.txt) ------"
           tail -n 200 compile-log.txt
         continue-on-error: true
 
-      # Se la compilazione è fallita, falliamo esplicitamente prima di assemblare
-      - name: Fail if compile failed
+      - name: Fail early if compile failed
         run: |
           if grep -q "BUILD FAILED" compile-log.txt; then
-            echo "❌ Compilazione fallita. Vedi le righe sopra per il PRIMO errore (file:riga)."
+            echo "❌ Compilazione fallita. Sopra trovi il PRIMO errore (file:riga:messaggio)."
             exit 1
           fi
 
-      # Solo se la compilazione è OK, costruiamo l'APK
+      # Solo se la compilazione è ok, costruiamo l'APK
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
