@@ -13,45 +13,22 @@ class OwnersViewModel @Inject constructor(
     private val repo: Repo
 ) : ViewModel() {
 
-    /* ======== FLOWS PER LA UI ======== */
-
-    // elenco proprietari (Flow -> StateFlow per Compose)
+    /* === Flussi per la UI === */
     val owners: StateFlow<List<Owner>> =
-        repo.observeOwners()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        repo.observeOwners().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // singolo owner (usa una one-shot emit; se vuoi live updates, crea un DAO che osserva per id)
-    fun ownerFlow(id: Long): Flow<Owner?> = flow {
-        emit(repo.getOwnerById(id))
-    }
+    fun ownerFlow(id: Long): Flow<Owner?> = flow { emit(repo.getOwnerById(id)) }
 
-    // cavalli/txns per owner
     fun horses(ownerId: Long): Flow<List<Horse>> = repo.observeHorses(ownerId)
     fun txns(ownerId: Long): Flow<List<Txn>> = repo.observeTxns(ownerId)
 
-    /* ======== OPERAZIONI ======== */
+    /* === Operazioni === */
+    fun upsertOwner(owner: Owner) = viewModelScope.launch { repo.upsertOwner(owner) }
+    fun deleteOwner(owner: Owner) = viewModelScope.launch { repo.deleteOwner(owner) }
 
-    fun upsertOwner(owner: Owner) = viewModelScope.launch {
-        repo.upsertOwner(owner)
-    }
+    fun upsertHorse(horse: Horse) = viewModelScope.launch { repo.upsertHorse(horse) }
+    fun deleteHorse(horse: Horse) = viewModelScope.launch { repo.deleteHorse(horse) }
 
-    fun deleteOwner(owner: Owner) = viewModelScope.launch {
-        repo.deleteOwner(owner)
-    }
-
-    fun upsertHorse(horse: Horse) = viewModelScope.launch {
-        repo.upsertHorse(horse)
-    }
-
-    fun deleteHorse(horse: Horse) = viewModelScope.launch {
-        repo.deleteHorse(horse)
-    }
-
-    fun upsertTxn(txn: Txn) = viewModelScope.launch {
-        repo.upsertTxn(txn)
-    }
-
-    fun deleteTxn(txn: Txn) = viewModelScope.launch {
-        repo.deleteTxn(txn)
-    }
+    fun upsertTxn(txn: Txn) = viewModelScope.launch { repo.upsertTxn(txn) }
+    fun deleteTxn(txn: Txn) = viewModelScope.launch { repo.deleteTxn(txn) }
 }
