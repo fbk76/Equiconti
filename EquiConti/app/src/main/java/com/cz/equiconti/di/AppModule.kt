@@ -14,11 +14,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @Provides
-    @Singleton
+    @Provides @Singleton
     fun provideDb(@ApplicationContext ctx: Context) = EquiDb.get(ctx)
 
-    @Provides
-    @Singleton
+    @Provides @Singleton
     fun provideRepo(db: EquiDb) = Repo(db)
 }
