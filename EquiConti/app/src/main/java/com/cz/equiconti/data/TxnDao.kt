@@ -23,11 +23,4 @@ interface TxnDao {
 
     @Query("SELECT COALESCE(SUM(incomeCents - expenseCents), 0) FROM Txn WHERE ownerId = :ownerId AND dateMillis < :before")
     suspend fun balanceBefore(ownerId: Long, before: Long): Long
-
-    @Query("""
-        SELECT * FROM Txn
-        WHERE ownerId = :ownerId AND dateMillis BETWEEN :from AND :to
-        ORDER BY dateMillis, txnId
-    """)
-    fun observeInRange(ownerId: Long, from: Long, to: Long): Flow<List<Txn>>
 }
