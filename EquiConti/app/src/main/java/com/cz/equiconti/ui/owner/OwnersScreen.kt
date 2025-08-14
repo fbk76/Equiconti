@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.cz.equiconti.data.Owner
 
 @Composable
 fun OwnersScreen(
@@ -32,14 +31,12 @@ fun OwnersScreen(
         }
     ) { padding ->
         if (owners.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                Text("Nessun proprietario.\nTocca + per aggiungerne uno.")
+            Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("Nessun proprietario. Tocca + per aggiungere.")
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize(),
+                modifier = Modifier.padding(padding).fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(owners, key = { it.id }) { o ->
