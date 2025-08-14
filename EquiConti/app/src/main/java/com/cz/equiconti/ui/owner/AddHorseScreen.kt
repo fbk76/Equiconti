@@ -1,15 +1,14 @@
 package com.cz.equiconti.ui.owner
+package com.cz.equiconti.ui.owner
 
+import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.cz.equiconti.data.Horse
-import kotlin.math.roundToLong
+import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun AddHorseScreen(
