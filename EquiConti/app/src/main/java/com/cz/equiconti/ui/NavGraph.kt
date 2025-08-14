@@ -42,7 +42,11 @@ fun NavGraph(navController: NavHostController) {
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            AddHorseScreen(ownerId = ownerId, onBack = { navController.popBackStack() })
+            AddHorseScreen(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onSave = { navController.popBackStack() } // torna ai dettagli owner
+            )
         }
 
         composable(
