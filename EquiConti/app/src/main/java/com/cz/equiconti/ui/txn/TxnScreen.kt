@@ -1,86 +1,219 @@
 package com.cz.equiconti.ui.txn
 
+import android.content.Context
+import android.content.Intent
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
+import androidx.core.content.FileProvider
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cz.equiconti.data.Txn
+import java.io.File
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TxnScreen(
-    ownerId: Long,
-    onBack: () -> Unit
+    ownerName: String,
+    ownerHorses: List<String>,
+    txns: List<Txn>,
+    onAddTxn: (dateMillis: Long, operation: String, incomeCents: Long, expenseCents: Long) -> Unit,
 ) {
-    // Stati d’esempio per far compilare e poter testare la UI
-    var description by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
+    // Filtri data
+    var from by remember { mutableStateOf(LocalDate.now().withDayOfMonth(1)) } // 1° del mese
+    var to by remember { mutableStateOf(LocalDate.now()) }
+
+    // Dialog nuovo movimento
+    var showAdd by remember { mutableStateOf(false) }
+
+    val zone = ZoneId.systemDefault()
+    val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    val filtered = remember(txns, from, to) {
+        val fromMs = from.atStartOfDay(zone).toInstant().toEpochMilli()
+        val toMs = to.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+        txns.filter { it.dateMillis in fromMs..toMs }.sortedBy { it.dateMillis }
+    }
+
+    val running = mutableListOf<Long>()
+    var acc = 0L
+    filtered.forEach { t ->
+        acc += t.incomeCents - t.expenseCents
+        running.add(acc)
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Movimenti proprietario #$ownerId") }
-            )
+            TopAppBar(title = { Text("Movimenti • $ownerName") },
+                actions = {
+                    IconButton(onClick = {
+                        // stampa/esporta PDF
+                        // NB: serve un FileProvider nel Manifest con authority = ${applicationId}.provider
+                    }) { Icon(Icons.Default.PictureAsPdf, contentDescription = "Stampa/Esporta") }
+                })
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAdd = true }) {
+                Icon(Icons.Default.Save, contentDescription = "Aggiungi")
+            }
         }
-    ) { inner ->
-        Column(
-            modifier = Modifier
-                .padding(inner)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-            TextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Descrizione") },
-                modifier = Modifier.fillMaxWidth(),
-                // opzionale, ma compila anche senza
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next
+    ) { pad ->
+        Column(Modifier.padding(pad).padding(12.dp)) {
+            // Cavalli posseduti
+            if (ownerHorses.isNotEmpty()) {
+                Text("Cavalli: " + ownerHorses.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // Filtri date
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = from.format(fmt),
+                    onValueChange = { runCatching { from = LocalDate.parse(it, fmt) } },
+                    label = { Text("Da (yyyy-MM-dd)") },
+                    modifier = Modifier.weight(1f)
                 )
-            )
+                OutlinedTextField(
+                    value = to.format(fmt),
+                    onValueChange = { runCatching { to = LocalDate.parse(it, fmt) } },
+                    label = { Text("A (yyyy-MM-dd)") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 
-            TextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("Importo") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                )
-            )
-
-            Spacer(Modifier.height(16.dp))
-            Divider()
-            Spacer(Modifier.height(16.dp))
-
+            // Header tabella
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(onClick = onBack) {
-                    Text("Indietro")
+                HeaderCell("Data", 1.0f)
+                HeaderCell("Movimento", 2.2f)
+                HeaderCell("Entrate", 1.0f)
+                HeaderCell("Uscite", 1.0f)
+                HeaderCell("Saldo", 1.0f)
+            }
+            Divider()
+
+            // Righe
+            LazyColumn {
+                items(filtered.indices) { idx ->
+                    val t = filtered[idx]
+                    val saldo = running[idx]
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        BodyCell(formatDate(t.dateMillis), 1.0f)
+                        BodyCell(t.operation, 2.2f)
+                        BodyCell(formatEuro(t.incomeCents), 1.0f)
+                        BodyCell(formatEuro(t.expenseCents), 1.0f)
+                        BodyCell(formatEuro(saldo), 1.0f, bold = true)
+                    }
+                    Divider()
                 }
-                Button(onClick = {
-                    // TODO: salva movimento (placeholder)
-                }) {
-                    Text("Salva")
-                }
+            }
+
+            // Totali
+            Spacer(Modifier.height(12.dp))
+            val totIn = filtered.sumOf { it.incomeCents }
+            val totOut = filtered.sumOf { it.expenseCents }
+            val saldoFin = running.lastOrNull() ?: 0L
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Totale Entrate: ${formatEuro(totIn)}")
+                Text("Totale Uscite: ${formatEuro(totOut)}")
+                Text("Saldo Finale: ${formatEuro(saldoFin)}", fontWeight = FontWeight.SemiBold)
             }
         }
     }
+
+    if (showAdd) AddTxnDialog(
+        onDismiss = { showAdd = false },
+        onSave = { dateStr, descr, incEuro, expEuro ->
+            val dateMs = LocalDate.parse(dateStr, fmt).atStartOfDay(zone).toInstant().toEpochMilli()
+            val inc = (incEuro * 100).roundToLong()
+            val exp = (expEuro * 100).roundToLong()
+            onAddTxn(dateMs, descr, inc, exp)
+            showAdd = false
+        }
+    )
+}
+
+@Composable
+private fun HeaderCell(text: String, weight: Float) {
+    Text(text, modifier = Modifier.weight(weight), fontWeight = FontWeight.SemiBold)
+}
+
+@Composable
+private fun BodyCell(text: String, weight: Float, bold: Boolean = false) {
+    Text(
+        text,
+        modifier = Modifier.weight(weight),
+        fontWeight = if (bold) FontWeight.SemiBold else FontWeight.Normal
+    )
+}
+
+@Composable
+private fun AddTxnDialog(
+    onDismiss: () -> Unit,
+    onSave: (date: String, descr: String, incEuro: Double, expEuro: Double) -> Unit
+) {
+    val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    var date by remember { mutableStateOf(LocalDate.now().format(fmt)) }
+    var descr by remember { mutableStateOf("") }
+    var inc by remember { mutableStateOf("") }
+    var exp by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(date, descr.trim(), inc.toDoubleOrNull() ?: 0.0, exp.toDoubleOrNull() ?: 0.0)
+                },
+                enabled = descr.isNotBlank()
+            ) { Text("Salva") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
+        title = { Text("Nuovo movimento") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Data (yyyy-MM-dd)") })
+                OutlinedTextField(value = descr, onValueChange = { descr = it }, label = { Text("Movimento") })
+                OutlinedTextField(value = inc, onValueChange = { inc = it }, label = { Text("Entrate (€)") })
+                OutlinedTextField(value = exp, onValueChange = { exp = it }, label = { Text("Uscite (€)") })
+            }
+        }
+    )
+}
+
+private fun formatDate(ms: Long): String {
+    val ld = LocalDate.ofEpochDay(ms / 86_400_000L) // giorno intero
+    return ld.toString()
+}
+
+private fun formatEuro(cents: Long): String {
+    val s = cents / 100.0
+    return "€ " + String.format("%.2f", s)
 }
