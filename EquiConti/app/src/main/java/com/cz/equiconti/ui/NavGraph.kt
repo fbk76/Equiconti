@@ -9,12 +9,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.cz.equiconti.data.Txn
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersListScreen
 import com.cz.equiconti.ui.owner.OwnersViewModel
 import com.cz.equiconti.ui.horse.HorseEditScreen
 import com.cz.equiconti.ui.txn.TxnScreen
-import com.cz.equiconti.data.Txn
 
 /**
  * Grafico di navigazione principale.
@@ -35,7 +35,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             val owners = vm.owners.collectAsState().value
             OwnersListScreen(
                 owners = owners,
-                onAddOwner = { nav.navigate("owner/new") },     // opzionale: schermata "nuovo"
+                onAddOwner = { nav.navigate("owner/new") }, // opzionale: schermata "nuovo"
                 onOpenOwner = { owner ->
                     // apri dettaglio passando ownerId
                     nav.navigate("owner/${owner.id}")
@@ -78,7 +78,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // Movimenti proprietario
+        // Movimenti (transazioni) del proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(
@@ -89,7 +89,8 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 ?: error("ownerId missing")
 
             // Dati live
-            val owner = vm.owners.collectAsState(emptyList()).value.firstOrNull { it.id == ownerId }
+            val owners = vm.owners.collectAsState(emptyList()).value
+            val owner = owners.firstOrNull { it.id == ownerId }
             val horses = vm.horses(ownerId).collectAsState(initial = emptyList()).value
             val txns = vm.txns(ownerId).collectAsState(initial = emptyList()).value
 
@@ -101,7 +102,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
                     vm.upsertTxn(
                         Txn(
                             id = 0L,
-                            ownerId = ownerId,
+                            ownerId = ownerId,          // <-- nome parametro corretto
                             dateMillis = dateMs,
                             operation = op,
                             incomeCents = inc,
