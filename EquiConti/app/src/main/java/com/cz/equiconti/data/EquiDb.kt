@@ -11,7 +11,6 @@ import androidx.room.RoomDatabase
     exportSchema = false
 )
 abstract class EquiDb : RoomDatabase() {
-
     abstract fun ownerDao(): OwnerDao
     abstract fun horseDao(): HorseDao
     abstract fun txnDao(): TxnDao
