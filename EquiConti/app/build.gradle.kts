@@ -20,7 +20,6 @@ android {
 
     buildFeatures { compose = true }
 
-    // Facoltativo con il plugin compose, ma lo lasciamo per chiarezza
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
@@ -33,21 +32,11 @@ android {
 }
 
 dependencies {
-    // Compose (usiamo il BOM per allineare le versioni)
+    // Compose
     implementation(platform("androidx.compose:compose-bom:2024.08.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
-
     implementation("androidx.activity:activity-compose:1.9.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
-}
-
-kapt {
-    correctErrorTypes = true
-}
+    implementation("androidx.lifecycle:lifecycle-runtime
