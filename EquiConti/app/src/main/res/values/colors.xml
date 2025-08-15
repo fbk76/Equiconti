@@ -1,6 +1,6 @@
+<!-- EquiConti/app/src/main/res/values/colors.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Palette minima Material 3 di esempio -->
     <color name="md_theme_primary">#6750A4</color>
     <color name="md_theme_primaryContainer">#EADDFF</color>
     <color name="md_theme_secondary">#625B71</color>
