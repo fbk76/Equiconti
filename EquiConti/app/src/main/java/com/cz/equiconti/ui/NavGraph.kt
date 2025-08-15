@@ -9,61 +9,111 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.cz.equiconti.ui.owner.HorsesScreen
+import com.cz.equiconti.data.Horse
+import com.cz.equiconti.data.Owner
+import com.cz.equiconti.data.Txn
+import com.cz.equiconti.ui.owner.AddHorseScreen
+import com.cz.equiconti.ui.owner.AddOwnerScreen
+import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
+import com.cz.equiconti.ui.owner.OwnersViewModel
 import com.cz.equiconti.ui.txn.TxnScreen
-import com.cz.equiconti.ui.owner.OwnersViewModel   // il tuo VM principale (adattalo se si chiama diverso)
+import java.time.ZoneId
+import kotlin.math.roundToLong
 
 @Composable
 fun NavGraph(navController: NavHostController) {
-    val vm = hiltViewModel<OwnersViewModel>()
+
+    val vm: OwnersViewModel = hiltViewModel()
 
     NavHost(navController = navController, startDestination = "owners") {
 
         composable("owners") {
-            val owners by vm.owners.collectAsState(initial = emptyList()) // Flow<List<Owner>>
-            OwnersScreen(
-                owners = owners,
-                onAddOwner = { ln, fn -> vm.upsertOwner(ln, fn) }, // <-- implementa in VM
-                onOpenOwner = { id -> navController.navigate("owner/$id") }
+            OwnersScreen(nav = navController)
+        }
+
+        // ── Nuovo proprietario
+        composable("owner/add") {
+            AddOwnerScreen(
+                onBack = { navController.popBackStack() },
+                onSave = { lastName: String, firstName: String ->
+                    vm.upsertOwner(
+                        Owner(
+                            id = 0L,
+                            lastName = lastName.trim(),
+                            firstName = firstName.trim()
+                        )
+                    )
+                    navController.popBackStack()
+                }
             )
         }
 
+        // ── Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            val owner by vm.owner(ownerId).collectAsState(initial = null)  // <-- implementa in VM
-            val horses by vm.horses(ownerId).collectAsState(initial = emptyList()) // <-- implementa in VM
-
-            val ownerName = owner?.let { "${it.lastName} ${it.firstName}" } ?: "Proprietario"
-
-            HorsesScreen(
-                ownerName = ownerName,
-                horses = horses,
+            OwnerDetailScreen(
+                ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onAddHorse = { name, amountCents -> vm.upsertHorse(ownerId, name, amountCents) } // <-- implementa in VM
+                onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
+                onOpenTxns  = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
+        // ── Aggiungi cavallo
+        composable(
+            route = "owner/{ownerId}/addHorse",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            AddHorseScreen(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onSave = { name: String, monthlyFeeEuro: Double ->
+                    vm.upsertHorse(
+                        Horse(
+                            id = 0L,
+                            ownerId = ownerId,
+                            name = name.trim(),
+                            monthlyFeeCents = (monthlyFeeEuro * 100).roundToLong()
+                        )
+                    )
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // ── Movimenti
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            val owner by vm.owner(ownerId).collectAsState(initial = null)
-            val horses by vm.horses(ownerId).collectAsState(initial = emptyList())
-            val txns by vm.txns(ownerId).collectAsState(initial = emptyList()) // <-- implementa in VM
 
-            val ownerName = owner?.let { "${it.lastName} ${it.firstName}" } ?: "#$ownerId"
-            val horseNames = horses.map { it.name }
+            // Dati osservati
+            val owner by vm.ownerFlow(ownerId).collectAsState(initial = null)
+            val horses by vm.horses(ownerId).collectAsState(initial = emptyList())
+            val txns by vm.txns(ownerId).collectAsState(initial = emptyList())
 
             TxnScreen(
-                ownerName = ownerName,
-                ownerHorses = horseNames,
+                ownerName = owner?.let { "${it.lastName} ${it.firstName}" } ?: "Proprietario",
+                ownerHorses = horses.map { it.name },
                 txns = txns,
-                onAddTxn = { dateMs, op, inc, exp -> vm.insertTxn(ownerId, dateMs, op, inc, exp) } // <-- implementa in VM
+                onAddTxn = { dateMillis: Long, op: String, inc: Long, exp: Long ->
+                    vm.upsertTxn(
+                        Txn(
+                            id = 0L,
+                            ownerId = ownerId,
+                            dateMillis = dateMillis,
+                            operation = op.trim(),
+                            incomeCents = inc,
+                            expenseCents = exp
+                        )
+                    )
+                }
             )
         }
     }
