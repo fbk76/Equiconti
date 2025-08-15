@@ -1,7 +1,11 @@
 package com.cz.equiconti.di
 
 import android.content.Context
+import androidx.room.Room
 import com.cz.equiconti.data.EquiDb
+import com.cz.equiconti.data.HorseDao
+import com.cz.equiconti.data.OwnerDao
+import com.cz.equiconti.data.TxnDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,12 +19,14 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDb(
-        @ApplicationContext context: Context
-    ): EquiDb = EquiDb.get(context)
+    fun provideEquiDb(@ApplicationContext context: Context): EquiDb =
+        Room.databaseBuilder(
+            context.applicationContext,
+            EquiDb::class.java,
+            "equiconti.db"
+        ).build()
 
-    // (se ti serve anche il DAO direttamente)
-    // @Provides fun provideOwnerDao(db: EquiDb) = db.ownerDao()
-    // @Provides fun provideHorseDao(db: EquiDb) = db.horseDao()
-    // @Provides fun provideTxnDao(db: EquiDb) = db.txnDao()
+    @Provides fun provideOwnerDao(db: EquiDb): OwnerDao = db.ownerDao()
+    @Provides fun provideHorseDao(db: EquiDb): HorseDao = db.horseDao()
+    @Provides fun provideTxnDao(db: EquiDb): TxnDao = db.txnDao()
 }
