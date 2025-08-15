@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // Se usi Hilt lascia questa riga, altrimenti puoi rimuoverla
+    id("org.jetbrains.kotlin.plugin.compose") // <— aggiunto per Kotlin 2.x + Compose
     // id("com.google.dagger.hilt.android")
     // id("kotlin-kapt")
 }
@@ -16,7 +16,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,24 +28,20 @@ android {
                 "proguard-rules.pro"
             )
         }
-        debug {
-            // niente di speciale
-        }
     }
 
     buildFeatures {
         compose = true
-        viewBinding = false
         buildConfig = true
     }
 
+    // Con Kotlin 2.x il plugin compose gestisce la versione del compiler extension;
+    // puoi lasciare o rimuovere questa riga. La lascio per compatibilità.
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
     packaging {
         resources {
@@ -59,12 +54,10 @@ android {
 }
 
 dependencies {
-    // Core AndroidX
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
-    // Compose BOM per allineare le versioni
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -75,11 +68,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-
-    // Navigation Compose (se la usi)
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // Hilt (solo se lo stai usando davvero)
+    // Hilt (se usi Hilt togli i commenti e lascialo anche nel root build.gradle.kts)
     // implementation("com.google.dagger:hilt-android:2.51.1")
     // kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     // implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
