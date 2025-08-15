@@ -32,11 +32,24 @@ android {
 }
 
 dependencies {
-    // Compose
+    // Compose (BOM gestisce le versioni delle lib compose)
     implementation(platform("androidx.compose:compose-bom:2024.08.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
+
     implementation("androidx.activity:activity-compose:1.9.1")
-    implementation("androidx.lifecycle:lifecycle-runtime
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+
+    // Material Components (per gli style XML, es. Theme.Material3.*)
+    implementation("com.google.android.material:material:1.12.0")
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+}
+
+kapt {
+    correctErrorTypes = true
+}
