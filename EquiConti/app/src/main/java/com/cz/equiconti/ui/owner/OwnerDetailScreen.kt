@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Horse
+import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
 fun OwnerDetailScreen(
@@ -18,51 +19,35 @@ fun OwnerDetailScreen(
     onOpenTxns: () -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
-    val owner  by remember(ownerId) { vm.ownerFlow(ownerId) }.collectAsState(initial = null)
-    val horses by remember(ownerId) { vm.horses(ownerId)     }.collectAsState(initial = emptyList())
+    val owner by vm.ownerFlow(ownerId).collectAsState(initial = null)
+    val horses by vm.horses(ownerId).collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(owner?.let { "${it.firstName} ${it.lastName}".trim() } ?: "Dettaglio") },
-                navigationIcon = { IconButton(onClick = onBack) { Text("←") } },
+                title = { Text(owner?.let { "${it.lastName} ${it.firstName}" } ?: "Proprietario") },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } },
                 actions = {
                     TextButton(onClick = onOpenTxns) { Text("Movimenti") }
                     TextButton(onClick = onAddHorse) { Text("Cavallo +") }
                 }
             )
         }
-    ) { padding ->
-        Column(Modifier.padding(padding).padding(16.dp)) {
-            if (owner == null) {
-                Text("Proprietario non trovato.")
-                return@Column
-            }
-
+    ) { pad ->
+        Column(Modifier.padding(pad).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Dati proprietario", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Text("Nome: ${owner!!.firstName}")
-            Text("Cognome: ${owner!!.lastName}")
-            owner!!.phone?.let { if (it.isNotBlank()) Text("Telefono: $it") }
+            Text("Cognome: ${owner?.lastName ?: "-"}")
+            Text("Nome: ${owner?.firstName ?: "-"}")
 
             Spacer(Modifier.height(16.dp))
             Text("Cavalli", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
 
             if (horses.isEmpty()) {
                 Text("Nessun cavallo. Tocca \"Cavallo +\" per aggiungerne uno.")
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(horses, key = { it.id }) { h: Horse ->
-                        ElevatedCard(Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(12.dp)) {
-                                Text(h.name, style = MaterialTheme.typography.titleMedium)
-                                if (h.monthlyFeeCents > 0) {
-                                    Text("Quota: € ${"%.2f".format(h.monthlyFeeCents / 100.0)}")
-                                }
-                                if (!h.notes.isNullOrBlank()) Text("Note: ${h.notes}")
-                            }
-                        }
+                    items(horses) { h: Horse ->
+                        Text("• ${h.name}  —  quota: € ${"%.2f".format(h.monthlyFeeCents/100.0)}")
                     }
                 }
             }
