@@ -1,23 +1,18 @@
 package com.cz.equiconti.data
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OwnerDao {
+    @Query("SELECT * FROM owners ORDER BY name")
+    fun getOwners(): Flow<List<Owner>>
 
-    @Query("SELECT * FROM Owner ORDER BY lastName, firstName")
-    fun observeAll(): Flow<List<Owner>>
-
-    @Query("SELECT * FROM Owner WHERE id = :id")
-    suspend fun getById(id: Long): Owner?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insert(owner: Owner): Long
 
-    @Update
-    suspend fun update(owner: Owner)
-
-    @Delete
-    suspend fun delete(owner: Owner)
+    @Query("SELECT * FROM owners WHERE id = :id")
+    fun getOwner(id: Long): Flow<Owner?>
 }
