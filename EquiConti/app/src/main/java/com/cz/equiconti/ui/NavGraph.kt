@@ -9,12 +9,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.cz.equiconti.data.Txn
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersListScreen
 import com.cz.equiconti.ui.owner.OwnersViewModel
 import com.cz.equiconti.ui.horse.HorseEditScreen
 import com.cz.equiconti.ui.txn.TxnScreen
+import com.cz.equiconti.data.Txn
 
 /**
  * Grafico di navigazione principale.
@@ -32,12 +32,12 @@ fun NavGraph(modifier: Modifier = Modifier) {
     ) {
         // Lista proprietari
         composable("owners") {
-            val owners = vm.owners.collectAsState().value
+            val owners = vm.owners.collectAsState(initial = emptyList()).value
             OwnersListScreen(
                 owners = owners,
-                onAddOwner = { nav.navigate("owner/new") }, // opzionale: schermata "nuovo"
+                onAddOwner = { /* opzionale: nav verso schermata "nuovo" se/quando la aggiungi */ },
                 onOpenOwner = { owner ->
-                    // apri dettaglio passando ownerId
+                    // Apri dettaglio passando ownerId
                     nav.navigate("owner/${owner.id}")
                 }
             )
@@ -78,7 +78,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // Movimenti (transazioni) del proprietario
+        // Movimenti proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(
@@ -89,10 +89,18 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 ?: error("ownerId missing")
 
             // Dati live
-            val owners = vm.owners.collectAsState(emptyList()).value
-            val owner = owners.firstOrNull { it.id == ownerId }
-            val horses = vm.horses(ownerId).collectAsState(initial = emptyList()).value
-            val txns = vm.txns(ownerId).collectAsState(initial = emptyList()).value
+            val owner = vm.owners
+                .collectAsState(initial = emptyList())
+                .value
+                .firstOrNull { it.id == ownerId }
+
+            val horses = vm.horses(ownerId)
+                .collectAsState(initial = emptyList())
+                .value
+
+            val txns = vm.txns(ownerId)
+                .collectAsState(initial = emptyList())
+                .value
 
             TxnScreen(
                 ownerName = owner?.let { "${it.lastName} ${it.firstName}" } ?: "Proprietario",
@@ -102,7 +110,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
                     vm.upsertTxn(
                         Txn(
                             id = 0L,
-                            ownerId = ownerId,          // <-- nome parametro corretto
+                            ownerId = ownerId,
                             dateMillis = dateMs,
                             operation = op,
                             incomeCents = inc,
