@@ -97,15 +97,15 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 ownerHorses = horses.map { it.name },
                 txns = txns,
                 onAddTxn = { dateMs, operation, incomeCents, expenseCents ->
-                    // <-- POSIZIONALE per evitare il nome del parametro (id/txnId/…)
                     vm.upsertTxn(
+                        // ORDINE CORRETTO: operation (String) PRIMA di dateMs (Long)
                         Txn(
-                            0L,                 // id/txnId/autogen
-                            ownerId,            // ownerId
-                            dateMs,             // dateMillis
-                            operation,          // operation
-                            incomeCents,        // incomeCents
-                            expenseCents        // expenseCents
+                            0L,          // id/txnId autogenerato
+                            ownerId,     // ownerId
+                            operation,   // operation (String)
+                            dateMs,      // dateMillis (Long)
+                            incomeCents, // incomeCents
+                            expenseCents // expenseCents
                         )
                     )
                 }
