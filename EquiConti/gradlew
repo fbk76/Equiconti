@@ -1,0 +1,25 @@
+#!/bin/sh
+##############################################################################
+##
+##  Gradle start up script for UN*X
+##
+##############################################################################
+
+# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+DEFAULT_JVM_OPTS=""
+
+APP_NAME="Gradle"
+APP_BASE_NAME=`basename "$0"`
+
+# Locate the java binary
+if [ -n "$JAVA_HOME" ] ; then
+    JAVA_HOME_BIN="$JAVA_HOME/bin"
+    JAVA_CMD="$JAVA_HOME_BIN/java"
+else
+    JAVA_CMD="java"
+fi
+
+# Collect all arguments for the java command, following the Gradle documentation
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+
+exec "$JAVA_CMD" $DEFAULT_JVM_OPTS -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
