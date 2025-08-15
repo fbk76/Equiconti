@@ -6,10 +6,10 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface HorseDao {
-    @Query("SELECT * FROM horses WHERE ownerId = :ownerId ORDER BY name")
-    fun getOwnerHorses(ownerId: Long): Flow<List<Horse>>
+interface TxnDao {
+    @Query("SELECT * FROM txns WHERE ownerId = :ownerId ORDER BY id DESC")
+    fun getOwnerTxns(ownerId: Long): Flow<List<Txn>>
 
     @Insert
-    suspend fun insert(horse: Horse): Long
+    suspend fun insert(txn: Txn): Long
 }
