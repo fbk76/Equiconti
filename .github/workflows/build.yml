@@ -6,65 +6,44 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-      # 1) Codice
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) JDK 17 con cache Gradle
       - name: Setup Java 17 (Temurin) + Gradle cache
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
           cache: gradle
 
-      # 3) Android SDK (cmdline-tools + componenti base)
       - name: Setup Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
+
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      # 4) Trova automaticamente lo script gradlew
-      - name: Locate gradlew
-        id: find_gradle
+      # Installiamo Gradle senza usare il wrapper
+      - name: Install SDKMAN! and Gradle 8.4
         shell: bash
         run: |
-          set -euo pipefail
-          GRADLEW=$(git ls-files | grep -E '/gradlew$|^gradlew$' | head -n1 || true)
-          if [ -z "${GRADLEW}" ]; then
-            echo "❌ gradlew non trovato nel repository." >&2
-            exit 1
-          fi
-          echo "gradlew=${GRADLEW}" >> "$GITHUB_OUTPUT"
-          echo "gradle_dir=$(dirname "${GRADLEW}")" >> "$GITHUB_OUTPUT"
-          echo "✅ Trovato gradlew in: ${GRADLEW}"
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install gradle 8.4
+          echo "$HOME/.sdkman/candidates/gradle/current/bin" >> $GITHUB_PATH
 
-      # (Facoltativo) stampa albero repo per debug rapido
       - name: Show workspace layout
+        run: ls -la
+
+      - name: Assemble Debug (no wrapper)
         run: |
-          echo "PWD=$(pwd)"
-          echo "gradle_dir=${{ steps.find_gradle.outputs.gradle_dir }}"
-          ls -la
-          (command -v tree >/dev/null && tree -L 2) || true
+          gradle -v
+          gradle :app:assembleDebug
 
-      # 5) Permessi esecuzione
-      - name: Make gradlew executable
-        run: chmod +x "${{ steps.find_gradle.outputs.gradle_dir }}/gradlew"
-
-      # 6) Build Debug APK (entra nella cartella dove c'è gradlew)
-      - name: Assemble Debug
-        working-directory: ${{ steps.find_gradle.outputs.gradle_dir }}
-        run: ./gradlew :app:assembleDebug
-
-      # 7) Carica gli artefatti (APK/AAB) dal modulo app
       - name: Upload Debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: |
-            ${{ steps.find_gradle.outputs.gradle_dir }}/app/build/outputs/apk/debug/*.apk
-            ${{ steps.find_gradle.outputs.gradle_dir }}/app/build/outputs/apk/debug/*.aab
-          if-no-files-found: error
+          path: app/build/outputs/apk/debug/*.apk
