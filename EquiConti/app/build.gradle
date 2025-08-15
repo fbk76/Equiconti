@@ -18,16 +18,12 @@ android {
         versionName "1.0.0"
     }
 
-    // ❌ RIMOSSO signingConfigs: il runner userà la debug key di default
-
     buildTypes {
         debug {
-            // ❌ RIMOSSA la riga: signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }
         release {
-            // ❌ RIMOSSA la riga: signingConfig signingConfigs.debug
             minifyEnabled true
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -39,12 +35,12 @@ android {
         compose true
     }
 
-    // JVM 17 + opt-in alle API sperimentali di Compose dove servono
+    // JVM 17 + opt-in corretti (usa -opt-in, non -Xopt-in)
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs += [
-            "-Xopt-in=androidx.compose.material.ExperimentalMaterialApi",
-            "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+                "-opt-in=kotlin.RequiresOptIn",
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
         ]
     }
 
@@ -79,6 +75,9 @@ dependencies {
     implementation "androidx.compose.ui:ui-tooling-preview"
     debugImplementation "androidx.compose.ui:ui-tooling"
     implementation "androidx.compose.material3:material3"
+
+    // (aggiungo anche Material 2 base per eventuali import M2 ancora presenti)
+    implementation "androidx.compose.material:material"
 
     // Icons (Filled/Default) per Add/Save ecc.
     implementation "androidx.compose.material:material-icons-extended"
