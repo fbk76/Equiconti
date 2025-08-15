@@ -35,9 +35,8 @@ fun NavGraph(modifier: Modifier = Modifier) {
             val owners = vm.owners.collectAsState(initial = emptyList()).value
             OwnersListScreen(
                 owners = owners,
-                onAddOwner = { nav.navigate("owner/new") }, // opzionale: schermata/draft "nuovo"
+                onAddOwner = { nav.navigate("owner/new") },
                 onOpenOwner = { owner ->
-                    // apri dettaglio passando ownerId
                     nav.navigate("owner/${owner.id}")
                 }
             )
@@ -88,7 +87,6 @@ fun NavGraph(modifier: Modifier = Modifier) {
             val ownerId = backStack.arguments?.getLong("ownerId")
                 ?: error("ownerId missing")
 
-            // Dati osservati
             val owners = vm.owners.collectAsState(initial = emptyList()).value
             val owner = owners.firstOrNull { it.id == ownerId }
             val horses = vm.horses(ownerId).collectAsState(initial = emptyList()).value
@@ -99,14 +97,15 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 ownerHorses = horses.map { it.name },
                 txns = txns,
                 onAddTxn = { dateMs, operation, incomeCents, expenseCents ->
+                    // <-- POSIZIONALE per evitare il nome del parametro (id/txnId/…)
                     vm.upsertTxn(
                         Txn(
-                            id = 0L,
-                            ownerId = ownerId,
-                            dateMillis = dateMs,
-                            operation = operation,
-                            incomeCents = incomeCents,
-                            expenseCents = expenseCents
+                            0L,                 // id/txnId/autogen
+                            ownerId,            // ownerId
+                            dateMs,             // dateMillis
+                            operation,          // operation
+                            incomeCents,        // incomeCents
+                            expenseCents        // expenseCents
                         )
                     )
                 }
