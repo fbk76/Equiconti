@@ -36,18 +36,14 @@ fun NavGraph(modifier: Modifier = Modifier) {
             OwnersListScreen(
                 owners = owners,
                 onAddOwner = { nav.navigate("owner/new") },
-                onOpenOwner = { owner ->
-                    nav.navigate("owner/${owner.id}")
-                }
+                onOpenOwner = { owner -> nav.navigate("owner/${owner.id}") }
             )
         }
 
         // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
-            arguments = listOf(
-                navArgument("ownerId") { type = NavType.LongType }
-            )
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStack ->
             val ownerId = backStack.arguments?.getLong("ownerId")
                 ?: error("ownerId missing")
@@ -63,9 +59,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
         // Aggiungi / modifica cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
-            arguments = listOf(
-                navArgument("ownerId") { type = NavType.LongType }
-            )
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStack ->
             val ownerId = backStack.arguments?.getLong("ownerId")
                 ?: error("ownerId missing")
@@ -80,9 +74,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
         // Movimenti del proprietario
         composable(
             route = "owner/{ownerId}/txns",
-            arguments = listOf(
-                navArgument("ownerId") { type = NavType.LongType }
-            )
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStack ->
             val ownerId = backStack.arguments?.getLong("ownerId")
                 ?: error("ownerId missing")
@@ -98,14 +90,14 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 txns = txns,
                 onAddTxn = { dateMs, operation, incomeCents, expenseCents ->
                     vm.upsertTxn(
-                        // ORDINE CORRETTO: operation (String) PRIMA di dateMs (Long)
+                        // ordine: id, ownerId, dateMillis, operation, income, expense
                         Txn(
-                            0L,          // id/txnId autogenerato
-                            ownerId,     // ownerId
-                            operation,   // operation (String)
-                            dateMs,      // dateMillis (Long)
-                            incomeCents, // incomeCents
-                            expenseCents // expenseCents
+                            0L,
+                            ownerId,
+                            dateMs,
+                            operation,
+                            incomeCents,
+                            expenseCents
                         )
                     )
                 }
