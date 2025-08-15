@@ -1,11 +1,7 @@
 package com.cz.equiconti.di
 
 import android.content.Context
-import androidx.room.Room
 import com.cz.equiconti.data.EquiDb
-import com.cz.equiconti.data.OwnerDao
-import com.cz.equiconti.data.HorseDao
-import com.cz.equiconti.data.TxnDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,18 +15,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext ctx: Context): EquiDb {
-        return Room.databaseBuilder(ctx, EquiDb::class.java, "equiconti.db")
-            .fallbackToDestructiveMigration() // opzionale ma utile in debug
-            .build()
-    }
+    fun provideDb(
+        @ApplicationContext context: Context
+    ): EquiDb = EquiDb.get(context)
 
-    @Provides
-    fun provideOwnerDao(db: EquiDb): OwnerDao = db.ownerDao()
-
-    @Provides
-    fun provideHorseDao(db: EquiDb): HorseDao = db.horseDao()
-
-    @Provides
-    fun provideTxnDao(db: EquiDb): TxnDao = db.txnDao()
+    // (se ti serve anche il DAO direttamente)
+    // @Provides fun provideOwnerDao(db: EquiDb) = db.ownerDao()
+    // @Provides fun provideHorseDao(db: EquiDb) = db.horseDao()
+    // @Provides fun provideTxnDao(db: EquiDb) = db.txnDao()
 }
