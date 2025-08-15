@@ -1,35 +1,23 @@
 package com.cz.equiconti.data
 
-import android.content.Context
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class Repo(private val db: EquiDb) {
+@Singleton
+class Repo @Inject constructor(private val db: EquiDb) {
 
-    companion object {
-        fun from(context: Context) = Repo(EquiDb.get(context))
-    }
+    // Owners
+    fun owners(): Flow<List<Owner>> = db.ownerDao().getOwners()
+    suspend fun addOwner(name: String): Long = db.ownerDao().insert(Owner(name = name))
 
-    /* ===== OWNERS ===== */
-    fun observeOwners() = db.ownerDao().observeAll()
-    suspend fun getOwnerById(id: Long) = db.ownerDao().getById(id)
+    // Owner detail
+    fun owner(ownerId: Long): Flow<Owner?> = db.ownerDao().getOwner(ownerId)
+    fun horses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getOwnerHorses(ownerId)
+    suspend fun addHorse(ownerId: Long, name: String): Long =
+        db.horseDao().insert(Horse(ownerId = ownerId, name = name))
 
-    suspend fun upsertOwner(owner: Owner): Long =
-        if (owner.id == 0L) db.ownerDao().insert(owner) else { db.ownerDao().update(owner); owner.id }
-
-    suspend fun deleteOwner(owner: Owner) = db.ownerDao().delete(owner)
-
-    /* ===== HORSES ===== */
-    fun observeHorses(ownerId: Long) = db.horseDao().observeByOwner(ownerId)
-
-    suspend fun upsertHorse(horse: Horse): Long =
-        if (horse.id == 0L) db.horseDao().insert(horse) else { db.horseDao().update(horse); horse.id }
-
-    suspend fun deleteHorse(horse: Horse) = db.horseDao().delete(horse)
-
-    /* ===== TXNS ===== */
-    fun observeTxns(ownerId: Long) = db.txnDao().observeByOwner(ownerId)
-
-    suspend fun upsertTxn(txn: Txn): Long =
-        if (txn.txnId == 0L) db.txnDao().insert(txn) else { db.txnDao().update(txn); txn.txnId }
-
-    suspend fun deleteTxn(txn: Txn) = db.txnDao().delete(txn)
+    fun txns(ownerId: Long): Flow<List<Txn>> = db.txnDao().getOwnerTxns(ownerId)
+    suspend fun addTxn(ownerId: Long, amount: Double, note: String?) =
+        db.txnDao().insert(Txn(ownerId = ownerId, amount = amount, note = note))
 }
