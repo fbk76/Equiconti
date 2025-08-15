@@ -9,12 +9,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.cz.equiconti.data.Txn
+import com.cz.equiconti.ui.horse.HorseEditScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersListScreen
 import com.cz.equiconti.ui.owner.OwnersViewModel
-import com.cz.equiconti.ui.horse.HorseEditScreen
 import com.cz.equiconti.ui.txn.TxnScreen
-import com.cz.equiconti.data.Txn
 
 /**
  * Grafico di navigazione principale.
@@ -35,9 +35,9 @@ fun NavGraph(modifier: Modifier = Modifier) {
             val owners = vm.owners.collectAsState(initial = emptyList()).value
             OwnersListScreen(
                 owners = owners,
-                onAddOwner = { /* opzionale: nav verso schermata "nuovo" se/quando la aggiungi */ },
+                onAddOwner = { nav.navigate("owner/new") }, // opzionale: schermata/draft "nuovo"
                 onOpenOwner = { owner ->
-                    // Apri dettaglio passando ownerId
+                    // apri dettaglio passando ownerId
                     nav.navigate("owner/${owner.id}")
                 }
             )
@@ -61,7 +61,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // Aggiungi/modifica cavallo
+        // Aggiungi / modifica cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(
@@ -78,7 +78,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // Movimenti proprietario
+        // Movimenti del proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(
@@ -88,33 +88,25 @@ fun NavGraph(modifier: Modifier = Modifier) {
             val ownerId = backStack.arguments?.getLong("ownerId")
                 ?: error("ownerId missing")
 
-            // Dati live
-            val owner = vm.owners
-                .collectAsState(initial = emptyList())
-                .value
-                .firstOrNull { it.id == ownerId }
-
-            val horses = vm.horses(ownerId)
-                .collectAsState(initial = emptyList())
-                .value
-
-            val txns = vm.txns(ownerId)
-                .collectAsState(initial = emptyList())
-                .value
+            // Dati osservati
+            val owners = vm.owners.collectAsState(initial = emptyList()).value
+            val owner = owners.firstOrNull { it.id == ownerId }
+            val horses = vm.horses(ownerId).collectAsState(initial = emptyList()).value
+            val txns = vm.txns(ownerId).collectAsState(initial = emptyList()).value
 
             TxnScreen(
                 ownerName = owner?.let { "${it.lastName} ${it.firstName}" } ?: "Proprietario",
                 ownerHorses = horses.map { it.name },
                 txns = txns,
-                onAddTxn = { dateMs, op, inc, exp ->
+                onAddTxn = { dateMs, operation, incomeCents, expenseCents ->
                     vm.upsertTxn(
                         Txn(
                             id = 0L,
                             ownerId = ownerId,
                             dateMillis = dateMs,
-                            operation = op,
-                            incomeCents = inc,
-                            expenseCents = exp
+                            operation = operation,
+                            incomeCents = incomeCents,
+                            expenseCents = expenseCents
                         )
                     )
                 }
