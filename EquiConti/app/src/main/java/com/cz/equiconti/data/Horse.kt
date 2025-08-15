@@ -1,26 +1,11 @@
 package com.cz.equiconti.data
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(
-    tableName = "Horse",
-    foreignKeys = [
-        ForeignKey(
-            entity = Owner::class,
-            parentColumns = ["id"],
-            childColumns = ["ownerId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index("ownerId")]
-)
+@Entity(tableName = "horses")
 data class Horse(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val ownerId: Long,
-    val name: String,
-    val monthlyFeeCents: Long = 0,
-    val notes: String? = null
+    val name: String
 )
