@@ -9,6 +9,7 @@ jobs:
 
     steps:
       - name: Checkout repository
+      # Scarica i sorgenti
         uses: actions/checkout@v4
 
       - name: Setup Java 17 (Temurin) + Gradle cache
@@ -24,26 +25,23 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      # Installiamo Gradle senza usare il wrapper
-      - name: Install SDKMAN! and Gradle 8.4
-        shell: bash
-        run: |
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install gradle 8.4
-          echo "$HOME/.sdkman/candidates/gradle/current/bin" >> $GITHUB_PATH
-
       - name: Show workspace layout
-        run: ls -la
+        run: |
+          echo "Repo root:"
+          ls -la
+          echo "== EquiConti directory =="
+          ls -la EquiConti
 
+      # 🔑 PASSO CHIAVE: esegui Gradle DENTRO la cartella EquiConti
       - name: Assemble Debug (no wrapper)
+        working-directory: EquiConti
         run: |
           gradle -v
-          gradle :app:assembleDebug
+          gradle :app:assembleDebug --stacktrace
 
       - name: Upload Debug APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: EquiConti/app/build/outputs/apk/debug/app-debug.apk
