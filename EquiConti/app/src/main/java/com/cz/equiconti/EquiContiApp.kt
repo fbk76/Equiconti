@@ -1,5 +1,12 @@
 package com.cz.equiconti
 
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation   // <-- questa abilita la funzione navigation{}
+
+import androidx.hilt.navigation.compose.hiltViewModel  // <-- per hiltViewModel()
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
