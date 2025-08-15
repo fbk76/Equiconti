@@ -9,9 +9,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.cz.equiconti.data.Horse
-import com.cz.equiconti.data.Owner
-import com.cz.equiconti.data.Txn
 import com.cz.equiconti.ui.owner.AddHorseScreen
 import com.cz.equiconti.ui.owner.AddOwnerScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
@@ -25,31 +22,27 @@ import kotlin.math.roundToLong
 fun NavGraph(navController: NavHostController) {
 
     val vm: OwnersViewModel = hiltViewModel()
+    val owners by vm.owners.collectAsState()
 
     NavHost(navController = navController, startDestination = "owners") {
 
+        // LISTA PROPRIETARI
         composable("owners") {
-            OwnersScreen(nav = navController)
-        }
-
-        // ── Nuovo proprietario
-        composable("owner/add") {
-            AddOwnerScreen(
-                onBack = { navController.popBackStack() },
-                onSave = { lastName: String, firstName: String ->
-                    vm.upsertOwner(
-                        Owner(
-                            id = 0L,
-                            lastName = lastName.trim(),
-                            firstName = firstName.trim()
-                        )
-                    )
-                    navController.popBackStack()
-                }
+            OwnersScreen(
+                owners = owners,
+                onAddOwner = { navController.navigate("owner/add") },
+                onOpenOwner = { owner -> navController.navigate("owner/${owner.ownerId}") }
             )
         }
 
-        // ── Dettaglio proprietario
+        // NUOVO PROPRIETARIO (lo screen salva da solo tramite VM)
+        composable("owner/add") {
+            AddOwnerScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // DETTAGLIO PROPRIETARIO
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -59,11 +52,11 @@ fun NavGraph(navController: NavHostController) {
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
                 onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
-                onOpenTxns  = { navController.navigate("owner/$ownerId/txns") }
+                onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
-        // ── Aggiungi cavallo
+        // NUOVO CAVALLO
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -72,28 +65,21 @@ fun NavGraph(navController: NavHostController) {
             AddHorseScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onSave = { name: String, monthlyFeeEuro: Double ->
-                    vm.upsertHorse(
-                        Horse(
-                            id = 0L,
-                            ownerId = ownerId,
-                            name = name.trim(),
-                            monthlyFeeCents = (monthlyFeeEuro * 100).roundToLong()
-                        )
-                    )
+                onSave = { horse ->
+                    // lo screen ci passa direttamente l'entity corretta
+                    vm.upsertHorse(horse)
                     navController.popBackStack()
                 }
             )
         }
 
-        // ── Movimenti
+        // MOVIMENTI
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
 
-            // Dati osservati
             val owner by vm.ownerFlow(ownerId).collectAsState(initial = null)
             val horses by vm.horses(ownerId).collectAsState(initial = emptyList())
             val txns by vm.txns(ownerId).collectAsState(initial = emptyList())
@@ -102,10 +88,10 @@ fun NavGraph(navController: NavHostController) {
                 ownerName = owner?.let { "${it.lastName} ${it.firstName}" } ?: "Proprietario",
                 ownerHorses = horses.map { it.name },
                 txns = txns,
-                onAddTxn = { dateMillis: Long, op: String, inc: Long, exp: Long ->
+                onAddTxn = { dateMillis, op, inc, exp ->
                     vm.upsertTxn(
-                        Txn(
-                            id = 0L,
+                        com.cz.equiconti.data.Txn(
+                            txnId = 0L,            // usa il nome del PK del tuo data class
                             ownerId = ownerId,
                             dateMillis = dateMillis,
                             operation = op.trim(),
