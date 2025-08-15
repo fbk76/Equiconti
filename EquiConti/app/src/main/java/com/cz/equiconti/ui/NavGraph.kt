@@ -90,13 +90,13 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 txns = txns,
                 onAddTxn = { dateMs, operation, incomeCents, expenseCents ->
                     vm.upsertTxn(
-                        // ordine: id, ownerId, dateMillis, operation, income, expense
+                        // ordine: id, ownerId, dateMillis, incomeCents, operation, expenseCents
                         Txn(
                             0L,
                             ownerId,
                             dateMs,
-                            operation,
                             incomeCents,
+                            operation,
                             expenseCents
                         )
                     )
