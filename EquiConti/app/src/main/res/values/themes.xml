@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Tema base dell’app. Usiamo Material3 DayNight -->
-    <style name="Theme.EquiConti" parent="Theme.Material3.DayNight">
-        <!-- Disattivo ActionBar e Title (NoActionBar) -->
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-
-        <!-- Colori di base: puoi aggiustarli più avanti -->
+    <!-- Tema Material3 DayNight senza ActionBar -->
+    <style name="Theme.EquiConti" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Colori base; puoi affinarli più avanti -->
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
         <item name="colorSecondary">@color/md_theme_secondary</item>
         <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+
+        <!-- Abilita edge-to-edge se vuoi (opzionale) -->
+        <!-- <item name="android:windowTranslucentStatus">true</item> -->
     </style>
 
 </resources>
