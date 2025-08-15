@@ -1,4 +1,5 @@
 package com.cz.equiconti
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
