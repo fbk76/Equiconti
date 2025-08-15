@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "txns")
 data class Txn(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val ownerId: Long,
-    val amount: Double,
-    val note: String? = null
+    val horseId: Long,
+    val amountCents: Long,
+    val note: String? = null,
+    val timestamp: Long = System.currentTimeMillis()
 )
