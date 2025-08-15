@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema applicazione: Material3 + niente ActionBar -->
-    <style name="Theme.Equiconti" parent="Theme.Material3.DayNight">
-        <!-- Rimuove title bar / action bar -->
-        <item name="android:windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
 
-        <!-- (opzionale) Colori dinamici su Android 12+ -->
-        <item name="android:forceDarkAllowed">true</item>
+    <!-- Tema principale dell'app -->
+    <style name="Theme.Equiconti" parent="Theme.Material3.DayNight">
+        <!-- Disattiva titolo e action bar di sistema -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+
+        <!-- (Opzionali) personalizzazioni M3: lascia pure così se non usi una palette custom -->
+        <!-- <item name="colorPrimary">@color/m3_ref_palette_dynamic_primary40</item> -->
     </style>
+
 </resources>
