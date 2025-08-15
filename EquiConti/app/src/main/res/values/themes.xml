@@ -1,16 +1,11 @@
+<!-- EquiConti/app/src/main/res/values/themes.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Tema Material3 DayNight senza ActionBar -->
     <style name="Theme.EquiConti" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Colori base; puoi affinarli più avanti -->
+        <!-- Colori M3 usati dal tema -->
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
         <item name="colorSecondary">@color/md_theme_secondary</item>
         <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
-
-        <!-- Abilita edge-to-edge se vuoi (opzionale) -->
-        <!-- <item name="android:windowTranslucentStatus">true</item> -->
     </style>
-
 </resources>
