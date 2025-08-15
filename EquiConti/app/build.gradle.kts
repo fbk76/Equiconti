@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") // <— aggiunto per Kotlin 2.x + Compose
+    id("org.jetbrains.kotlin.plugin.compose")
     // id("com.google.dagger.hilt.android")
     // id("kotlin-kapt")
 }
@@ -20,14 +20,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+    // 🔧 Allinea Java a 17
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    // (opzionale ma consigliato) forza il toolchain a 17
+    kotlin {
+        jvmToolchain(17)
     }
 
     buildFeatures {
@@ -35,13 +40,10 @@ android {
         buildConfig = true
     }
 
-    // Con Kotlin 2.x il plugin compose gestisce la versione del compiler extension;
-    // puoi lasciare o rimuovere questa riga. La lascio per compatibilità.
     composeOptions {
+        // con Kotlin 2.x il plugin compose gestisce la versione; tenerla non crea problemi
         kotlinCompilerExtensionVersion = "1.5.14"
     }
-
-    kotlinOptions { jvmTarget = "17" }
 
     packaging {
         resources {
@@ -70,7 +72,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // Hilt (se usi Hilt togli i commenti e lascialo anche nel root build.gradle.kts)
+    // Hilt (se lo usi, decommenta plugin e dipendenze)
     // implementation("com.google.dagger:hilt-android:2.51.1")
     // kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     // implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
