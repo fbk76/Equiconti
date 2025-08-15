@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class Horse(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val ownerId: Long,
-    val name: String
+    val name: String = "",
+    val breed: String? = null
 )
