@@ -27,13 +27,27 @@ fun NavGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "owners") {
 
         // LISTA PROPRIETARI
-        composable("owners") {
-            OwnersScreen(
-                owners = owners,
-                onAddOwner = { navController.navigate("owner/add") },
-                onOpenOwner = { owner -> navController.navigate("owner/${owner.ownerId}") }
+composable("owners") {
+    val vm: OwnersViewModel = hiltViewModel()
+    val owners by vm.owners.collectAsState()
+
+    OwnersScreen(
+        owners = owners,
+        onAddOwner = { lastName, firstName ->
+            // crea e salva subito il proprietario
+            vm.upsertOwner(
+                com.cz.equiconti.data.Owner(
+                    ownerId = 0L,          // usa 0/autoId
+                    lastName = lastName.trim(),
+                    firstName = firstName.trim()
+                )
             )
+        },
+        onOpenOwner = { id ->
+            navController.navigate("owner/$id")
         }
+    )
+}
 
         // NUOVO PROPRIETARIO (lo screen salva da solo tramite VM)
         composable("owner/add") {
