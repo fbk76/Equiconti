@@ -5,19 +5,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class Repo @Inject constructor(private val db: EquiDb) {
+class Repo @Inject constructor(
+    private val db: EquiDb
+) {
+    // stream reattivi per la UI
+    fun getOwners(): Flow<List<Owner>> = db.ownerDao().getOwners()
+    fun getHorses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getHorses(ownerId)
+    fun getTxns(horseId: Long): Flow<List<Txn>> = db.txnDao().getTxns(horseId)
 
-    // Owners
-    fun owners(): Flow<List<Owner>> = db.ownerDao().getOwners()
-    suspend fun addOwner(name: String): Long = db.ownerDao().insert(Owner(name = name))
-
-    // Owner detail
-    fun owner(ownerId: Long): Flow<Owner?> = db.ownerDao().getOwner(ownerId)
-    fun horses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getOwnerHorses(ownerId)
-    suspend fun addHorse(ownerId: Long, name: String): Long =
-        db.horseDao().insert(Horse(ownerId = ownerId, name = name))
-
-    fun txns(ownerId: Long): Flow<List<Txn>> = db.txnDao().getOwnerTxns(ownerId)
-    suspend fun addTxn(ownerId: Long, amount: Double, note: String?) =
-        db.txnDao().insert(Txn(ownerId = ownerId, amount = amount, note = note))
+    // operazioni base (se servono)
+    suspend fun upsert(owner: Owner) = db.ownerDao().upsert(owner)
+    suspend fun upsert(horse: Horse) = db.horseDao().upsert(horse)
+    suspend fun insert(txn: Txn) = db.txnDao().insert(txn)
+    suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
+    suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
+    suspend fun delete(txn: Txn) = db.txnDao().delete(txn)
 }
