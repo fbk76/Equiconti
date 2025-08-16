@@ -1,77 +1,66 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
-import com.cz.equiconti.ui.owner.OwnersListScreen
-import com.cz.equiconti.ui.owner.OwnersViewModel
-import com.cz.equiconti.ui.horse.HorseEditScreen
-import com.cz.equiconti.ui.txn.TxnScreen
+import com.cz.equiconti.ui.owner.OwnersScreen
 
+/**
+ * Semplice grafo di navigazione:
+ * - owners               -> lista proprietari
+ * - owner/{ownerId}      -> dettaglio proprietario
+ *
+ * Nota: per ora navighiamo a:
+ *   - "horse/edit/{ownerId}" quando si preme "Aggiungi cavallo"
+ *   - "txns/{ownerId}"     quando si premono i movimenti (puoi cambiare route in seguito)
+ */
 @Composable
-fun NavGraph(modifier: Modifier = Modifier) {
-    val nav = rememberNavController()
-    val vm: OwnersViewModel = hiltViewModel()
+fun AppNavHost() {
+    val navController = rememberNavController()
 
     NavHost(
-        navController = nav,
-        startDestination = "owners",
-        modifier = modifier
+        navController = navController,
+        startDestination = "owners"
     ) {
         // Lista proprietari
         composable("owners") {
-            val owners = vm.owners.collectAsState().value
-            OwnersListScreen(
-                owners = owners,
-                onAddOwner = { nav.navigate("owner/new") }, // opzionale se implementi la schermata "new"
-                onOpenOwner = { owner -> nav.navigate("owner/${owner.id}") }
+            OwnersScreen(
+                onOpenOwner = { ownerId ->
+                    navController.navigate("owner/$ownerId")
+                }
             )
         }
 
         // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { back ->
-            val ownerId = back.arguments?.getLong("ownerId") ?: 0L
+            arguments = listOf(
+                navArgument("ownerId") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val ownerIdArg = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+
             OwnerDetailScreen(
-                ownerId = ownerId,
-                onBack = { nav.popBackStack() },
-                onAddHorse = { nav.navigate("owner/$ownerId/addHorse") },
-                onOpenTxnForHorse = { horseId -> nav.navigate("horse/$horseId/txns") }
+                ownerId = ownerIdArg,
+                onBack = { navController.popBackStack() },
+                onAddHorse = {
+                    // rotta di esempio per la schermata di edit/creazione cavallo
+                    navController.navigate("horse/edit/$ownerIdArg")
+                },
+                onOpenTxns = {
+                    // rotta di esempio per i movimenti; adatta a "txns/{horseId}" se la tua schermata usa l'id del cavallo
+                    navController.navigate("txns/$ownerIdArg")
+                }
             )
         }
 
-        // Aggiungi cavallo
-        composable(
-            route = "owner/{ownerId}/addHorse",
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
-        ) { back ->
-            val ownerId = back.arguments?.getLong("ownerId") ?: 0L
-            HorseEditScreen(
-                ownerId = ownerId,
-                onCancel = { nav.popBackStack() },
-                onSaved = { nav.popBackStack() }
-            )
-        }
-
-        // Movimenti per cavallo
-        composable(
-            route = "horse/{horseId}/txns",
-            arguments = listOf(navArgument("horseId") { type = NavType.LongType })
-        ) { back ->
-            val horseId = back.arguments?.getLong("horseId") ?: 0L
-            TxnScreen(
-                horseId = horseId,
-                onBack = { nav.popBackStack() }
-            )
-        }
+        // --- ESEMPI (facoltativi): aggiungi qui le altre schermate quando le colleghi ---
+        // composable("horse/edit/{ownerId}") { ... }
+        // composable("txns/{horseOrOwnerId}") { ... }
+        // composable("report/{ownerId}") { ... }
     }
 }
