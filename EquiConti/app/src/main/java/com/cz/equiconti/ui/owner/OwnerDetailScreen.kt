@@ -1,108 +1,75 @@
-package com.cz.equiconti.ui.owner
+package com.cz.equiconti.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.cz.equiconti.data.Horse
-import com.cz.equiconti.data.Owner
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.cz.equiconti.ui.owner.OwnerDetailScreen
+import com.cz.equiconti.ui.owner.OwnersScreen
+import com.cz.equiconti.ui.owner.horse.HorseEditScreen
+import com.cz.equiconti.ui.txn.TxnScreen
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun OwnerDetailScreen(
-    ownerId: Long,
-    onBack: () -> Unit,
-    onAddHorse: () -> Unit,
-    onOpenTxns: () -> Unit,
-    vm: OwnerDetailViewModel = hiltViewModel()
-) {
-    // Stato: proprietario e cavalli
-    val owner: Owner? by vm.ownerFlow().collectAsState(initial = null)
-    val horses: List<Horse> by vm.horses().collectAsState(initial = emptyList())
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(owner?.name ?: "Proprietario") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Text("←") // semplice e senza dipendenze extra
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onOpenTxns) {
-                        Icon(Icons.Filled.Receipt, contentDescription = "Movimenti")
-                    }
-                    IconButton(onClick = onAddHorse) {
-                        Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
-                    }
-                }
-            )
-        }
-    ) { pad ->
-        Column(
-            modifier = Modifier
-                .padding(pad)
-                .padding(16.dp)
-        ) {
-            Text("Dati proprietario", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "Nome: ${owner?.name ?: "-"}",
-                fontWeight = FontWeight.Medium
-            )
-
-            Spacer(Modifier.height(16.dp))
-            Text("Cavalli", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-
-            if (horses.isEmpty()) {
-                Text("Nessun cavallo. Tocca \"+\" per aggiungerne uno.")
-            } else {
-                HorsesList(horses)
-            }
-
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = "Totale cavalli: ${horses.size}",
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
+private object Routes {
+    const val OWNERS = "owners"
+    const val OWNER_DETAIL = "owner/{ownerId}"
+    const val HORSE_EDIT = "horseEdit/{ownerId}"
+    const val TXNS = "txns/{horseId}"
 }
 
 @Composable
-private fun HorsesList(horses: List<Horse>) {
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(horses) { h ->
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(h.name, style = MaterialTheme.typography.titleMedium)
-                    h.breed?.let { Text("Razza: $it") }
+fun AppNavHost() {
+    val nav = rememberNavController()
+
+    NavHost(
+        navController = nav,
+        startDestination = Routes.OWNERS
+    ) {
+        composable(Routes.OWNERS) {
+            OwnersScreen(
+                onOwnerClick = { ownerId -> nav.navigate("owner/$ownerId") },
+                onAddOwner = { /* se serve */ }
+            )
+        }
+
+        composable(
+            Routes.OWNER_DETAIL,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
+            OwnerDetailScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onAddHorse = { nav.navigate("horseEdit/$ownerId") },
+                onOpenTxns = {
+                    // se vuoi aprire i movimenti del primo cavallo scegli tu la logica,
+                    // qui è solo un esempio navigazionale generico
+                    // nav.navigate("txns/$horseId")
                 }
-            }
+            )
+        }
+
+        composable(
+            Routes.HORSE_EDIT,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
+            HorseEditScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() }
+            )
+        }
+
+        composable(
+            Routes.TXNS,
+            arguments = listOf(navArgument("horseId") { type = NavType.LongType })
+        ) { backStack ->
+            val horseId = backStack.arguments!!.getLong("horseId")
+            TxnScreen(
+                horseId = horseId,
+                onBack = { nav.popBackStack() }
+            )
         }
     }
 }
