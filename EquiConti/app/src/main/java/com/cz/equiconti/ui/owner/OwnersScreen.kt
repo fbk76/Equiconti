@@ -4,86 +4,49 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Owner
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnersScreen(
-    owners: List<Owner>,
-    onAddOwner: (lastName: String, firstName: String) -> Unit,
-    onOpenOwner: (ownerId: Long) -> Unit
+    onOpenOwner: (Owner) -> Unit,
+    vm: OwnersViewModel = hiltViewModel()
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    val owners by vm.owners.collectAsState(initial = emptyList())
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Proprietari") }) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Aggiungi")
-            }
-        }
+        topBar = { TopAppBar(title = { Text("Proprietari") }) }
     ) { pad ->
-        Column(Modifier.padding(pad).padding(16.dp)) {
-            val sorted = remember(owners) {
-                owners.sortedWith(compareBy({ it.lastName.lowercase() }, { it.firstName.lowercase() }))
+        if (owners.isEmpty()) {
+            Box(Modifier.padding(pad).padding(16.dp)) {
+                Text("Nessun proprietario")
             }
-            if (sorted.isEmpty()) {
-                Text("Nessun proprietario", style = MaterialTheme.typography.bodyMedium)
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(sorted, key = { it.id }) { o ->
-                        Surface(
-                            tonalElevation = 1.dp,
-                            shadowElevation = 0.dp
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onOpenOwner(o.id) }
-                                    .padding(12.dp)
-                            ) {
-                                Text("${o.lastName} ${o.firstName}", style = MaterialTheme.typography.titleMedium)
-                            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(pad)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(owners) { owner ->
+                    ElevatedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenOwner(owner) }
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            // 🔁 Sostituito firstName/lastName -> name
+                            Text(owner.name, style = MaterialTheme.typography.titleMedium)
+                            owner.phone?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                         }
                     }
                 }
             }
         }
     }
-
-    if (showDialog) AddOwnerDialog(
-        onDismiss = { showDialog = false },
-        onSave = { ln, fn -> onAddOwner(ln, fn); showDialog = false }
-    )
-}
-
-@Composable
-private fun AddOwnerDialog(
-    onDismiss: () -> Unit,
-    onSave: (lastName: String, firstName: String) -> Unit
-) {
-    var ln by remember { mutableStateOf("") }
-    var fn by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = { onSave(ln.trim(), fn.trim()) }, enabled = ln.isNotBlank() && fn.isNotBlank()) {
-                Text("Salva")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annulla") } },
-        title = { Text("Nuovo proprietario") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = ln, onValueChange = { ln = it }, label = { Text("Cognome") })
-                OutlinedTextField(value = fn, onValueChange = { fn = it }, label = { Text("Nome") })
-            }
-        }
-    )
 }
