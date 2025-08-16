@@ -55,7 +55,7 @@ fun TxnScreen(
                 Text("Nessun movimento per questo cavallo.")
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(txns) { t -> TxnRow(t) }
+                    items(txns) { t: Txn -> TxnRow(t) }
                 }
             }
         }
@@ -71,7 +71,7 @@ private fun TxnRow(t: Txn) {
                 style = MaterialTheme.typography.titleMedium
             )
             t.note?.let { Text(it) }
-            Text(formatDate(t.timestamp), style = MaterialTheme.typography.bodySmall)
+            Text(formatDate(t.timestamp), style = MaterialTheme.typTypography.bodySmall)
         }
     }
 }
