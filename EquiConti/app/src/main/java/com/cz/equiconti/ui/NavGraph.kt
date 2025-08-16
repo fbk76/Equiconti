@@ -1,6 +1,7 @@
 package com.cz.equiconti.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -24,16 +25,17 @@ fun NavGraph(modifier: Modifier = Modifier) {
         startDestination = "owners",
         modifier = modifier
     ) {
-        // Lista proprietari
+        // lista proprietari
         composable("owners") {
+            val owners = vm.owners.collectAsState().value
             OwnersListScreen(
-                owners = vm.owners.collectAsState(initial = emptyList()).value,
+                owners = owners,
                 onAddOwner = { nav.navigate("owner/new") },
                 onOpenOwner = { owner -> nav.navigate("owner/${owner.id}") }
             )
         }
 
-        // Dettaglio proprietario
+        // dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -43,13 +45,11 @@ fun NavGraph(modifier: Modifier = Modifier) {
                 ownerId = ownerId,
                 onBack = { nav.popBackStack() },
                 onAddHorse = { nav.navigate("owner/$ownerId/addHorse") },
-                onOpenTxnForHorse = { horseId ->
-                    nav.navigate("horse/$horseId/txns")
-                }
+                onOpenTxnForHorse = { horseId -> nav.navigate("horse/$horseId/txns") }
             )
         }
 
-        // Aggiunta cavallo
+        // aggiungi cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -62,7 +62,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // Movimenti per cavallo
+        // movimenti per cavallo
         composable(
             route = "horse/{horseId}/txns",
             arguments = listOf(navArgument("horseId") { type = NavType.LongType })
