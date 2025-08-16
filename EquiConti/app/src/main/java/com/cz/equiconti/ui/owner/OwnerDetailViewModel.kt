@@ -16,19 +16,19 @@ import javax.inject.Inject
 class OwnerDetailViewModel @Inject constructor(
     private val repo: Repo,
     savedStateHandle: SavedStateHandle
-) : androidx.lifecycle.ViewModel() { // <- FQCN per evitare errori in kapt
+) : androidx.lifecycle.ViewModel() {   // <- FQCN, niente import ambiguo
 
     private val ownerId: Long = checkNotNull(savedStateHandle["ownerId"])
 
     val owner: StateFlow<Owner?> =
-        repo.owner(ownerId)   // Assicurati che in Repo esista fun owner(id): Flow<Owner?>
+        repo.owner(ownerId)   // assicurati che esista in Repo
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val horses: StateFlow<List<Horse>> =
-        repo.horses(ownerId)  // Assicurati che in Repo esista fun horses(ownerId): Flow<List<Horse>>
+        repo.horses(ownerId)  // assicurati che esista in Repo
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun addHorse(name: String) {
-        viewModelScope.launch { repo.addHorse(ownerId, name) } // id. per Repo.addHorse(...)
+        viewModelScope.launch { repo.addHorse(ownerId, name) } // idem in Repo
     }
 }
