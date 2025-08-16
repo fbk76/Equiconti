@@ -1,35 +1,32 @@
-package com.cz.equiconti.ui.horse
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+package com.cz.equiconti.ui.owner.horse
+
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.cz.equiconti.ui.owner.OwnersViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HorseEditScreen(
-    ownerId: Long,
-    onCancel: () -> Unit,
-    onSaved: () -> Unit,
-    vm: OwnersViewModel = hiltViewModel()
+    initialName: String = "",
+    onSave: (String) -> Unit,
+    onCancel: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var breed by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Nuovo cavallo") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Cavallo") }
+            )
+        }
     ) { pad ->
         Column(
             modifier = Modifier
                 .padding(pad)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp)
         ) {
             OutlinedTextField(
                 value = name,
@@ -37,22 +34,16 @@ fun HorseEditScreen(
                 label = { Text("Nome cavallo") },
                 modifier = Modifier.fillMaxWidth()
             )
-            OutlinedTextField(
-                value = breed,
-                onValueChange = { breed = it },
-                label = { Text("Razza (opzionale)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+
+            Spacer(Modifier.height(16.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = onCancel) { Text("Annulla") }
-                Button(
-                    onClick = {
-                        vm.saveHorse(ownerId, name.trim(), breed.ifBlank { null })
-                        onSaved()
-                    },
-                    enabled = name.isNotBlank()
-                ) { Text("Salva") }
+                Button(onClick = { onSave(name) }, enabled = name.isNotBlank()) {
+                    Text("Salva")
+                }
+                OutlinedButton(onClick = onCancel) {
+                    Text("Annulla")
+                }
             }
         }
     }
