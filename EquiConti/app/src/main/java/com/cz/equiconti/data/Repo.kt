@@ -8,21 +8,37 @@ import javax.inject.Singleton
 class Repo @Inject constructor(
     private val db: EquiDb
 ) {
-    // --- Letture reattive ---
-    fun getOwners(): Flow<List<Owner>> = db.ownerDao().getOwners()
-    fun getOwner(ownerId: Long): Flow<Owner?> = db.ownerDao().getOwner(ownerId)
-    fun getHorses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getHorses(ownerId)
-    fun getTxns(horseId: Long): Flow<List<Txn>> = db.txnDao().getTxns(horseId)
+    /* ========= LETTURE REATTIVE (Flow) ========= */
 
-    // --- Scritture di base ---
-    suspend fun upsert(owner: Owner) = db.ownerDao().upsert(owner)
-    suspend fun upsert(horse: Horse) = db.horseDao().upsert(horse)
-    suspend fun insert(txn: Txn) = db.txnDao().insert(txn)
-    suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
-    suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
-    suspend fun delete(txn: Txn) = db.txnDao().delete(txn)
+    fun getOwners(): Flow<List<Owner>> =
+        db.ownerDao().getOwners()
 
-    // Comodità usata dal ViewModel dei dettagli
-    suspend fun addHorse(ownerId: Long, name: String) =
-        db.horseDao().upsert(Horse(ownerId = ownerId, name = name))
+    fun getHorses(ownerId: Long): Flow<List<Horse>> =
+        db.horseDao().getHorses(ownerId)
+
+    fun getTxns(horseId: Long): Flow<List<Txn>> =
+        db.txnDao().getTxns(horseId)
+
+    /* ========= SCRITTURE (TXN) =========
+       Allineate ai metodi presenti in TxnDao:
+       - insert(txn): Long
+       - delete(txn): Unit
+    */
+
+    suspend fun insert(txn: Txn): Long =
+        db.txnDao().insert(txn)
+
+    suspend fun delete(txn: Txn) =
+        db.txnDao().delete(txn)
+
+    /* ========= NOTA SU OWNER/HORSE =========
+       Se/Quando aggiungerai nei rispettivi DAO i metodi @Upsert/@Insert/@Delete,
+       potrai sbloccare anche queste funzioni:
+
+       suspend fun upsert(owner: Owner): Long = db.ownerDao().upsert(owner)
+       suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
+
+       suspend fun upsert(horse: Horse): Long = db.horseDao().upsert(horse)
+       suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
+    */
 }
