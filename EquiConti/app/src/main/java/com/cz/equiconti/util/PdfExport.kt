@@ -12,61 +12,14 @@ import java.io.FileOutputStream
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
 import kotlin.math.max
 
 private const val A4_WIDTH = 595  // punti (≈ 8.27")
 private const val A4_HEIGHT = 842 // punti (≈ 11.7")
 
-/* ========= Helpers reflection (niente dipendenze extra) ========= */
-
-@Suppress("UNCHECKED_CAST")
-private fun <T> Any.getFieldOrNull(vararg names: String): T? {
-    val cls = this.javaClass
-    for (n in names) {
-        try {
-            val f = cls.getDeclaredField(n)
-            f.isAccessible = true
-            val v = f.get(this) ?: continue
-            return v as? T
-        } catch (_: NoSuchFieldException) {
-        } catch (_: SecurityException) {
-        }
-    }
-    return null
-}
-
-private fun Txn.readDateMillis(): Long {
-    // Prova una serie di nomi comuni
-    return (getFieldOrNull<Number>("dateMillis", "date", "timeMillis", "timestamp")?.toLong())
-        ?: 0L
-}
-
-private fun Txn.readOperation(): String {
-    // Prova varianti comuni per la descrizione
-    return getFieldOrNull<String>("operation", "desc", "description", "note")
-        ?: ""
-}
-
-private fun Txn.readIncomeExpense(): Pair<Long, Long> {
-    // Preferisci campi separati se esistono
-    val inc = getFieldOrNull<Number>("incomeCents")?.toLong()
-    val exp = getFieldOrNull<Number>("expenseCents")?.toLong()
-    if (inc != null || exp != null) {
-        return (inc ?: 0L) to (exp ?: 0L)
-    }
-    // In alternativa un unico importo con segno (amountCents)
-    val amount = getFieldOrNull<Number>("amountCents", "amount", "valueCents")?.toLong() ?: 0L
-    val income = max(0L, amount)
-    val expense = max(0L, -amount)
-    return income to expense
-}
-
-private fun formatEuro(cents: Long): String {
-    val v = cents / 100.0
-    return "€ " + String.format("%.2f", v)
-}
-
-/* ======================= Export PDF ======================= */
+private fun formatEuro(cents: Long): String =
+    "€ " + String.format("%.2f", cents / 100.0)
 
 /**
  * Esporta i movimenti in PDF e restituisce un Uri per Intent (VIEW/SHARE).
@@ -159,27 +112,27 @@ fun exportTxnsPdf(
     var totOut = 0L
 
     txns.forEach { t ->
-        if (y > A4_HEIGHT - 80) {
-            newPage("Report movimenti (continua)")
-        }
+        if (y > A4_HEIGHT - 80) newPage("Report movimenti (continua)")
 
-        val (inc, exp) = t.readIncomeExpense()
-        running += inc - exp
-        totIn += inc
-        totOut += exp
+        // Con il tuo modello:
+        // amountCents: positivo = ENTRATA, negativo = USCITA
+        val income = max(0L, t.amountCents)
+        val expense = max(0L, -t.amountCents)
+        running += income - expense
+        totIn += income
+        totOut += expense
 
-        val d = Instant.ofEpochMilli(t.readDateMillis()).atZone(zone).toLocalDate().format(fmtDate)
+        val d = Instant.ofEpochMilli(t.timestamp).atZone(zone).toLocalDate().format(fmtDate)
         var cx = left
         canvas.drawText(d, cx, y, textPaint); cx += colDateW
 
-        // tronca descrizione se troppo lunga
-        val opText = t.readOperation()
+        val opText = t.note?.takeIf { it.isNotBlank() } ?: "Operazione"
         val maxChars = 34
         val opClip = if (opText.length > maxChars) opText.take(maxChars - 1) + "…" else opText
         canvas.drawText(opClip, cx, y, textPaint); cx += colOpW
 
-        canvas.drawText(formatEuro(inc), cx, y, textPaint); cx += colInW
-        canvas.drawText(formatEuro(exp), cx, y, textPaint); cx += colOutW
+        canvas.drawText(formatEuro(income), cx, y, textPaint); cx += colInW
+        canvas.drawText(formatEuro(expense), cx, y, textPaint); cx += colOutW
         canvas.drawText(formatEuro(running), cx, y, textPaint)
 
         y += lineGap
