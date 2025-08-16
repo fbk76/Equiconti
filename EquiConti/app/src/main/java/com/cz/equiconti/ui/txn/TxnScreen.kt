@@ -5,14 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,8 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cz.equiconti.data.Txn
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +23,7 @@ fun TxnScreen(
     onBack: () -> Unit,
     vm: TxnViewModel = hiltViewModel()
 ) {
-    val txns: List<Txn> by vm.txns(horseId).collectAsState()
+    val txns: List<Txn> by vm.txns(horseId).collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -39,7 +31,7 @@ fun TxnScreen(
                 title = { Text("Movimenti") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
                     }
                 }
             )
@@ -49,13 +41,14 @@ fun TxnScreen(
             modifier = Modifier
                 .padding(pad)
                 .padding(16.dp)
-                .fillMaxSize()
         ) {
             if (txns.isEmpty()) {
-                Text("Nessun movimento per questo cavallo.")
+                Text("Nessun movimento registrato.")
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(txns) { t: Txn -> TxnRow(t) }
+                    items(txns) { t ->
+                        TxnRow(t)
+                    }
                 }
             }
         }
@@ -65,24 +58,16 @@ fun TxnScreen(
 @Composable
 private fun TxnRow(t: Txn) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            Text(
-                text = formatEuro(t.amountCents),
-                style = MaterialTheme.typography.titleMedium
-            )
-            t.note?.let { Text(it) }
-            // 🔧 fix: typography (non typTypography)
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("Importo: €${t.amountCents / 100.0}")
+            t.note?.let { Text("Nota: $it") }
+            // ✅ Fix: era scritto "typTypography"
             Text(formatDate(t.timestamp), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
-private fun formatEuro(cents: Long): String {
-    val v = cents / 100.0
-    return "€ " + String.format(Locale.getDefault(), "%.2f", v)
-}
-
-private fun formatDate(millis: Long): String {
-    val df = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-    return df.format(Date(millis))
+private fun formatDate(ts: Long): String {
+    val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(ts))
 }
