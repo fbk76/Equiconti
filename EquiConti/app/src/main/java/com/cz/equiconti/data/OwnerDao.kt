@@ -2,8 +2,6 @@ package com.cz.equiconti.data
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -11,19 +9,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface OwnerDao {
 
-    // READ
-    @Query("SELECT * FROM owners ORDER BY name")
+    @Query("SELECT * FROM owners ORDER BY name COLLATE NOCASE")
     fun getOwners(): Flow<List<Owner>>
 
-    @Query("SELECT * FROM owners WHERE id = :id")
+    @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
+    fun observeById(id: Long): Flow<Owner?>
+
+    @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): Owner?
 
-    // WRITE
     @Upsert
-    suspend fun upsert(owner: Owner)
-
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(owner: Owner): Long
+    suspend fun upsert(owner: Owner): Long
 
     @Delete
     suspend fun delete(owner: Owner)
