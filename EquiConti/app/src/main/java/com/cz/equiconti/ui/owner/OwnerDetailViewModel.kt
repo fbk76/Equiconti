@@ -1,6 +1,7 @@
 package com.cz.equiconti.ui.owner
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cz.equiconti.data.Horse
 import com.cz.equiconti.data.Owner
@@ -9,26 +10,23 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class OwnerDetailViewModel @Inject constructor(
     private val repo: Repo,
     savedStateHandle: SavedStateHandle
-) : androidx.lifecycle.ViewModel() {   // <- FQCN, niente import ambiguo
+) : ViewModel() {
 
     private val ownerId: Long = checkNotNull(savedStateHandle["ownerId"])
 
     val owner: StateFlow<Owner?> =
-        repo.owner(ownerId)   // assicurati che esista in Repo
+        repo.getOwner(ownerId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val horses: StateFlow<List<Horse>> =
-        repo.horses(ownerId)  // assicurati che esista in Repo
+        repo.getHorses(ownerId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun addHorse(name: String) {
-        viewModelScope.launch { repo.addHorse(ownerId, name) } // idem in Repo
-    }
+    // Niente fun di scrittura (addHorse/…): le rimetteremo quando i DAO avranno i metodi.
 }
