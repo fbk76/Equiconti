@@ -8,20 +8,21 @@ import javax.inject.Singleton
 class Repo @Inject constructor(
     private val db: EquiDb
 ) {
-    // Stream reattivi per la UI
+    // --- Letture reattive ---
     fun getOwners(): Flow<List<Owner>> = db.ownerDao().getOwners()
+    fun getOwner(ownerId: Long): Flow<Owner?> = db.ownerDao().getOwner(ownerId)
     fun getHorses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getHorses(ownerId)
     fun getTxns(horseId: Long): Flow<List<Txn>> = db.txnDao().getTxns(horseId)
 
-    // --- Operazioni di scrittura ---
-    // Al momento i DAO non hanno metodi @Upsert/@Insert/@Delete,
-    // quindi li commentiamo per evitare errori di compilazione.
-    // Quando aggiungi i metodi nei DAO, puoi riabilitarli.
+    // --- Scritture di base ---
+    suspend fun upsert(owner: Owner) = db.ownerDao().upsert(owner)
+    suspend fun upsert(horse: Horse) = db.horseDao().upsert(horse)
+    suspend fun insert(txn: Txn) = db.txnDao().insert(txn)
+    suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
+    suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
+    suspend fun delete(txn: Txn) = db.txnDao().delete(txn)
 
-    // suspend fun upsert(owner: Owner) = db.ownerDao().upsert(owner)
-    // suspend fun upsert(horse: Horse) = db.horseDao().upsert(horse)
-    // suspend fun insert(txn: Txn) = db.txnDao().insert(txn)
-    // suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
-    // suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
-    // suspend fun delete(txn: Txn) = db.txnDao().delete(txn)
+    // Comodità usata dal ViewModel dei dettagli
+    suspend fun addHorse(ownerId: Long, name: String) =
+        db.horseDao().upsert(Horse(ownerId = ownerId, name = name))
 }
