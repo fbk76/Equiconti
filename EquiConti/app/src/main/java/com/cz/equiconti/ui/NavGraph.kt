@@ -8,59 +8,68 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
+import com.cz.equiconti.ui.owner.horse.HorseEditScreen
+import com.cz.equiconti.ui.txn.TxnScreen
 
-/**
- * Semplice grafo di navigazione:
- * - owners               -> lista proprietari
- * - owner/{ownerId}      -> dettaglio proprietario
- *
- * Nota: per ora navighiamo a:
- *   - "horse/edit/{ownerId}" quando si preme "Aggiungi cavallo"
- *   - "txns/{ownerId}"     quando si premono i movimenti (puoi cambiare route in seguito)
- */
+private object Routes {
+    const val OWNERS = "owners"
+    const val OWNER_DETAIL = "owner/{ownerId}"
+    const val HORSE_EDIT = "horseEdit/{ownerId}"
+    const val TXNS = "txns/{horseId}"
+}
+
 @Composable
 fun AppNavHost() {
-    val navController = rememberNavController()
+    val nav = rememberNavController()
 
     NavHost(
-        navController = navController,
-        startDestination = "owners"
+        navController = nav,
+        startDestination = Routes.OWNERS
     ) {
-        // Lista proprietari
-        composable("owners") {
+        composable(Routes.OWNERS) {
             OwnersScreen(
-                onOpenOwner = { ownerId ->
-                    navController.navigate("owner/$ownerId")
-                }
+                onOwnerClick = { ownerId -> nav.navigate("owner/$ownerId") },
+                onAddOwner = { /* se serve */ }
             )
         }
 
-        // Dettaglio proprietario
         composable(
-            route = "owner/{ownerId}",
-            arguments = listOf(
-                navArgument("ownerId") { type = NavType.LongType }
-            )
-        ) { backStackEntry ->
-            val ownerIdArg = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-
+            Routes.OWNER_DETAIL,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
             OwnerDetailScreen(
-                ownerId = ownerIdArg,
-                onBack = { navController.popBackStack() },
-                onAddHorse = {
-                    // rotta di esempio per la schermata di edit/creazione cavallo
-                    navController.navigate("horse/edit/$ownerIdArg")
-                },
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onAddHorse = { nav.navigate("horseEdit/$ownerId") },
                 onOpenTxns = {
-                    // rotta di esempio per i movimenti; adatta a "txns/{horseId}" se la tua schermata usa l'id del cavallo
-                    navController.navigate("txns/$ownerIdArg")
+                    // se vuoi aprire i movimenti del primo cavallo scegli tu la logica,
+                    // qui è solo un esempio navigazionale generico
+                    // nav.navigate("txns/$horseId")
                 }
             )
         }
 
-        // --- ESEMPI (facoltativi): aggiungi qui le altre schermate quando le colleghi ---
-        // composable("horse/edit/{ownerId}") { ... }
-        // composable("txns/{horseOrOwnerId}") { ... }
-        // composable("report/{ownerId}") { ... }
+        composable(
+            Routes.HORSE_EDIT,
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStack ->
+            val ownerId = backStack.arguments!!.getLong("ownerId")
+            HorseEditScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() }
+            )
+        }
+
+        composable(
+            Routes.TXNS,
+            arguments = listOf(navArgument("horseId") { type = NavType.LongType })
+        ) { backStack ->
+            val horseId = backStack.arguments!!.getLong("horseId")
+            TxnScreen(
+                horseId = horseId,
+                onBack = { nav.popBackStack() }
+            )
+        }
     }
 }
