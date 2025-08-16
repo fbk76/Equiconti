@@ -44,7 +44,7 @@ fun OwnerDetailScreen(
                 navigationIcon = { IconButton(onClick = onBack) { Text("←") } },
                 actions = {
                     IconButton(onClick = onOpenTxns) {
-                        Icon(Icons.Filled.ReceiptLong, contentDescription = "Movimenti")
+                        Icon(Icons.Filled.Receipt, contentDescription = "Movimenti")
                     }
                     IconButton(onClick = onAddHorse) {
                         Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
