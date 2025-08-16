@@ -71,7 +71,8 @@ private fun TxnRow(t: Txn) {
                 style = MaterialTheme.typography.titleMedium
             )
             t.note?.let { Text(it) }
-            Text(formatDate(t.timestamp), style = MaterialTheme.typTypography.bodySmall)
+            // 🔧 fix: typography (non typTypography)
+            Text(formatDate(t.timestamp), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
