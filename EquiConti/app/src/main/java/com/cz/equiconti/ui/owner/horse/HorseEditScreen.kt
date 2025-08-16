@@ -1,3 +1,4 @@
+@file:OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
 package com.cz.equiconti.ui.horse
 
 import androidx.compose.foundation.layout.*
