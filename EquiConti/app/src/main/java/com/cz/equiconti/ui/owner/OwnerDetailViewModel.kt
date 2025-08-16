@@ -1,7 +1,6 @@
-package com.cz.equiconti.ui
+package com.cz.equiconti.ui.owner
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel   // <--- importante che ci sia questo import
 import androidx.lifecycle.viewModelScope
 import com.cz.equiconti.data.Horse
 import com.cz.equiconti.data.Owner
@@ -17,19 +16,19 @@ import javax.inject.Inject
 class OwnerDetailViewModel @Inject constructor(
     private val repo: Repo,
     savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : androidx.lifecycle.ViewModel() { // <- FQCN per evitare errori in kapt
 
     private val ownerId: Long = checkNotNull(savedStateHandle["ownerId"])
 
     val owner: StateFlow<Owner?> =
-        repo.owner(ownerId)
+        repo.owner(ownerId)   // Assicurati che in Repo esista fun owner(id): Flow<Owner?>
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val horses: StateFlow<List<Horse>> =
-        repo.horses(ownerId)
+        repo.horses(ownerId)  // Assicurati che in Repo esista fun horses(ownerId): Flow<List<Horse>>
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun addHorse(name: String) {
-        viewModelScope.launch { repo.addHorse(ownerId, name) }
+        viewModelScope.launch { repo.addHorse(ownerId, name) } // id. per Repo.addHorse(...)
     }
 }
