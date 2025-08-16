@@ -14,7 +14,7 @@ interface TxnDao {
     fun getTxns(horseId: Long): Flow<List<Txn>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(txn: Txn)
+    suspend fun insert(txn: Txn): Long   // 🔥 ora ritorna l’ID del record
 
     @Delete
     suspend fun delete(txn: Txn)
