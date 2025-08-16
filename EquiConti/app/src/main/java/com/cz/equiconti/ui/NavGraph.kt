@@ -25,17 +25,17 @@ fun NavGraph(modifier: Modifier = Modifier) {
         startDestination = "owners",
         modifier = modifier
     ) {
-        // lista proprietari
+        // Lista proprietari
         composable("owners") {
             val owners = vm.owners.collectAsState().value
             OwnersListScreen(
                 owners = owners,
-                onAddOwner = { nav.navigate("owner/new") },
+                onAddOwner = { nav.navigate("owner/new") }, // opzionale se implementi la schermata "new"
                 onOpenOwner = { owner -> nav.navigate("owner/${owner.id}") }
             )
         }
 
-        // dettaglio proprietario
+        // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -49,7 +49,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // aggiungi cavallo
+        // Aggiungi cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -62,7 +62,7 @@ fun NavGraph(modifier: Modifier = Modifier) {
             )
         }
 
-        // movimenti per cavallo
+        // Movimenti per cavallo
         composable(
             route = "horse/{horseId}/txns",
             arguments = listOf(navArgument("horseId") { type = NavType.LongType })
