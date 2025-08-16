@@ -13,13 +13,7 @@ class EquiContiApp : Application() {
         super.onCreate()
 
         val db = EquiDb.get(this)
-
-        // ✅ Usa argomenti POSIZIONALI, nell'ordine previsto da Repo
-        // (OwnerDao, HorseDao, TxnDao) – senza nomi
-        repo = Repo(
-            db.ownerDao(),
-            db.horseDao(),
-            db.txnDao()
-        )
+        // ✅ Repo vuole solo il database
+        repo = Repo(db)
     }
 }
