@@ -1,12 +1,24 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,18 +35,26 @@ fun OwnerDetailScreen(
     ownerId: Long,
     onBack: () -> Unit,
     onAddHorse: () -> Unit,
-    onOpenTxnForHorse: (Long) -> Unit,
-    vm: OwnersViewModel = hiltViewModel()
+    onOpenTxns: () -> Unit,
+    vm: OwnerDetailViewModel = hiltViewModel()
 ) {
-    val owner: Owner? by vm.ownerFlow(ownerId).collectAsState(initial = null)
-    val horses: List<Horse> by vm.horses(ownerId).collectAsState(initial = emptyList())
+    // Stato: proprietario e cavalli
+    val owner: Owner? by vm.ownerFlow().collectAsState(initial = null)
+    val horses: List<Horse> by vm.horses().collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(owner?.name ?: "Proprietario") },
-                navigationIcon = { IconButton(onClick = onBack) { Text("←") } },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Text("←") // semplice e senza dipendenze extra
+                    }
+                },
                 actions = {
+                    IconButton(onClick = onOpenTxns) {
+                        Icon(Icons.Filled.Receipt, contentDescription = "Movimenti")
+                    }
                     IconButton(onClick = onAddHorse) {
                         Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
                     }
@@ -49,7 +69,10 @@ fun OwnerDetailScreen(
         ) {
             Text("Dati proprietario", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            Text(text = "Nome: ${owner?.name ?: "-"}", fontWeight = FontWeight.Medium)
+            Text(
+                text = "Nome: ${owner?.name ?: "-"}",
+                fontWeight = FontWeight.Medium
+            )
 
             Spacer(Modifier.height(16.dp))
             Text("Cavalli", style = MaterialTheme.typography.titleMedium)
@@ -58,36 +81,26 @@ fun OwnerDetailScreen(
             if (horses.isEmpty()) {
                 Text("Nessun cavallo. Tocca \"+\" per aggiungerne uno.")
             } else {
-                HorsesList(horses = horses, onOpenTxnForHorse = onOpenTxnForHorse)
+                HorsesList(horses)
             }
 
             Spacer(Modifier.height(12.dp))
-            Text(text = "Totale cavalli: ${horses.size}", fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "Totale cavalli: ${horses.size}",
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
 
 @Composable
-private fun HorsesList(
-    horses: List<Horse>,
-    onOpenTxnForHorse: (Long) -> Unit
-) {
+private fun HorsesList(horses: List<Horse>) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(horses) { h ->
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(h.name, style = MaterialTheme.typography.titleMedium)
-                        h.breed?.let { Text("Razza: $it") }
-                    }
-                    IconButton(onClick = { onOpenTxnForHorse(h.id) }) {
-                        Icon(Icons.Filled.ReceiptLong, contentDescription = "Movimenti cavallo")
-                    }
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(h.name, style = MaterialTheme.typography.titleMedium)
+                    h.breed?.let { Text("Razza: $it") }
                 }
             }
         }
