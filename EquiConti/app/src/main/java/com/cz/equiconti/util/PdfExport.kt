@@ -1,6 +1,7 @@
 package com.cz.equiconti.util
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
@@ -12,24 +13,20 @@ import java.io.FileOutputStream
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
 import kotlin.math.max
 
-private const val A4_WIDTH = 595  // punti (≈ 8.27")
-private const val A4_HEIGHT = 842 // punti (≈ 11.7")
-
-private fun formatEuro(cents: Long): String =
-    "€ " + String.format("%.2f", cents / 100.0)
+private const val A4_WIDTH = 595   // punti
+private const val A4_HEIGHT = 842  // punti
 
 /**
- * Esporta i movimenti in PDF e restituisce un Uri per Intent (VIEW/SHARE).
+ * Esporta i movimenti in PDF e restituisce un Uri utilizzabile con Intent (VIEW/SHARE).
  *
- * @param ownerName  "Cognome Nome"
- * @param horses     elenco nomi cavalli
- * @param txns       movimenti (già filtrati e ordinati per data crescente)
- * @param fromLabel  periodo "da" (es. 2025-08-01)
- * @param toLabel    periodo "a"  (es. 2025-08-31)
- * @param fileName   nome file senza estensione
+ * ownerName:   "Cognome Nome"
+ * horses:      elenco nomi cavalli
+ * txns:        movimenti (già filtrati/ordinati come vuoi)
+ * fromLabel:   "2025-08-01"
+ * toLabel:     "2025-08-31"
+ * fileName:    nome base file senza estensione
  */
 fun exportTxnsPdf(
     context: Context,
@@ -42,10 +39,6 @@ fun exportTxnsPdf(
 ): Uri {
     val zone = ZoneId.systemDefault()
     val fmtDate = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
-    val pdf = PdfDocument()
-    var page = pdf.startPage(PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, 1).create())
-    var canvas = page.canvas
 
     val titlePaint = Paint().apply {
         isAntiAlias = true
@@ -62,78 +55,81 @@ fun exportTxnsPdf(
         textSize = 11f
     }
 
+    val pdf = PdfDocument()
+    var page = pdf.startPage(PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, 1).create())
+    var canvas = page.canvas
+
     val left = 40f
-    var y = 40f
+    val top = 40f
     val lineGap = 16f
 
-    fun newPage(title: String? = null) {
-        pdf.finishPage(page)
-        val nextNum = pdf.pages.size + 1
-        page = pdf.startPage(PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, nextNum).create())
-        canvas = page.canvas
-        y = 40f
-        title?.let {
-            canvas.drawText(it, left, y, titlePaint)
-            y += lineGap * 1.5f
-        }
-        drawHeader()
+    var y = top
+
+    fun drawHeader(c: Canvas, yStart: Float): Float {
+        var yy = yStart
+        var cx = left
+        val colDateW = 80f
+        val colOpW = 220f
+        val colInW = 80f
+        val colOutW = 80f
+        // balance lo calcoliamo ma non lo stampiamo per semplicità; se lo vuoi, aggiungi una colonna
+        c.drawText("Data", cx, yy, headerPaint); cx += colDateW
+        c.drawText("Movimento", cx, yy, headerPaint); cx += colOpW
+        c.drawText("Entrate", cx, yy, headerPaint); cx += colInW
+        c.drawText("Uscite", cx, yy, headerPaint); cx += colOutW
+        return yy + lineGap
     }
 
-    // Titolo
+    fun newPage(title: String) {
+        pdf.finishPage(page)
+        page = pdf.startPage(PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, pdf.pages.size + 1).create())
+        canvas = page.canvas
+        y = top
+        canvas.drawText(title, left, y, titlePaint)
+        y += lineGap * 1.5f
+        y = drawHeader(canvas, y)
+    }
+
+    // Titolo iniziale
     canvas.drawText("Report movimenti", left, y, titlePaint); y += lineGap
     canvas.drawText("Proprietario: $ownerName", left, y, textPaint); y += lineGap
     if (horses.isNotEmpty()) {
         canvas.drawText("Cavalli: ${horses.joinToString(", ")}", left, y, textPaint); y += lineGap
     }
     canvas.drawText("Periodo: $fromLabel  –  $toLabel", left, y, textPaint); y += lineGap * 1.5f
+    y = drawHeader(canvas, y)
 
-    // Intestazioni tabella
+    // colonne
     val colDateW = 80f
-    val colOpW   = 220f
-    val colInW   = 80f
-    val colOutW  = 80f
-    val colBalW  = 80f
+    val colOpW = 220f
+    val colInW = 80f
+    val colOutW = 80f
 
-    fun drawHeader() {
-        var cx = left
-        canvas.drawText("Data", cx, y, headerPaint); cx += colDateW
-        canvas.drawText("Movimento", cx, y, headerPaint); cx += colOpW
-        canvas.drawText("Entrate", cx, y, headerPaint); cx += colInW
-        canvas.drawText("Uscite", cx, y, headerPaint); cx += colOutW
-        canvas.drawText("Saldo", cx, y, headerPaint)
-        y += lineGap
-    }
-
-    drawHeader()
-
-    // Righe + saldo progressivo
-    var running = 0L
     var totIn = 0L
     var totOut = 0L
 
     txns.forEach { t ->
-        if (y > A4_HEIGHT - 80) newPage("Report movimenti (continua)")
+        if (y > A4_HEIGHT - 80) {
+            newPage("Report movimenti (continua)")
+        }
 
-        // Con il tuo modello:
-        // amountCents: positivo = ENTRATA, negativo = USCITA
-        val income = max(0L, t.amountCents)
-        val expense = max(0L, -t.amountCents)
-        running += income - expense
-        totIn += income
-        totOut += expense
+        val amount = t.amountCents
+        val inc = max(amount, 0L)
+        val out = max(-amount, 0L)
+        totIn += inc
+        totOut += out
 
-        val d = Instant.ofEpochMilli(t.timestamp).atZone(zone).toLocalDate().format(fmtDate)
+        val dateStr = Instant.ofEpochMilli(t.timestamp).atZone(zone).toLocalDate().format(fmtDate)
         var cx = left
-        canvas.drawText(d, cx, y, textPaint); cx += colDateW
+        canvas.drawText(dateStr, cx, y, textPaint); cx += colDateW
 
-        val opText = t.note?.takeIf { it.isNotBlank() } ?: "Operazione"
+        val opText = t.note ?: ""
         val maxChars = 34
         val opClip = if (opText.length > maxChars) opText.take(maxChars - 1) + "…" else opText
         canvas.drawText(opClip, cx, y, textPaint); cx += colOpW
 
-        canvas.drawText(formatEuro(income), cx, y, textPaint); cx += colInW
-        canvas.drawText(formatEuro(expense), cx, y, textPaint); cx += colOutW
-        canvas.drawText(formatEuro(running), cx, y, textPaint)
+        canvas.drawText(formatEuro(inc), cx, y, textPaint); cx += colInW
+        canvas.drawText(formatEuro(out), cx, y, textPaint)
 
         y += lineGap
     }
@@ -142,7 +138,7 @@ fun exportTxnsPdf(
     y += lineGap
     canvas.drawText("Totale Entrate: ${formatEuro(totIn)}", left, y, headerPaint); y += lineGap
     canvas.drawText("Totale Uscite:  ${formatEuro(totOut)}", left, y, headerPaint); y += lineGap
-    canvas.drawText("Saldo Finale:   ${formatEuro(running)}", left, y, headerPaint)
+    canvas.drawText("Saldo Finale:   ${formatEuro(totIn - totOut)}", left, y, headerPaint)
 
     pdf.finishPage(page)
 
@@ -152,10 +148,15 @@ fun exportTxnsPdf(
     pdf.writeTo(FileOutputStream(outFile))
     pdf.close()
 
-    // URI sicuro via FileProvider
+    // URI sicuro via FileProvider (assicurati del provider nel Manifest)
     return FileProvider.getUriForFile(
         context,
         "${context.packageName}.fileprovider",
         outFile
     )
+}
+
+private fun formatEuro(cents: Long): String {
+    val v = cents / 100.0
+    return "€ " + String.format("%.2f", v)
 }
