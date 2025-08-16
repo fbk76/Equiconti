@@ -1,22 +1,40 @@
-@file:OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
-package com.cz.equiconti.ui
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
+package com.cz.equiconti.ui.report
+
+import android.content.Context
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 @Composable
-fun ReportScreen(nav: NavController, ownerId: Long) {
+fun ReportScreen(
+    onGeneratePdf: (Context) -> Unit,
+    onBack: () -> Unit
+) {
+    val ctx = LocalContext.current
+
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("Report") }) }
+        topBar = {
+            TopAppBar(title = { Text("Report") })
+        }
     ) { pad ->
-        Column(Modifier.padding(pad)) {
-            Text("Report in sviluppo (ownerId = $ownerId)")
+        Column(
+            modifier = Modifier
+                .padding(pad)
+                .padding(16.dp)
+        ) {
+            Text(
+                "Genera il PDF dei movimenti per il periodo selezionato.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = { onGeneratePdf(ctx) }) { Text("Genera PDF") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onBack) { Text("Indietro") }
         }
     }
 }
