@@ -6,14 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,7 +23,7 @@ fun OwnerDetailScreen(
     ownerId: Long,
     onBack: () -> Unit,
     onAddHorse: () -> Unit,
-    onOpenTxnForHorse: (Long) -> Unit,   // 👈 PASSA l’ID del cavallo
+    onOpenTxnForHorse: (Long) -> Unit,
     vm: OwnersViewModel = hiltViewModel()
 ) {
     val owner: Owner? by vm.ownerFlow(ownerId).collectAsState(initial = null)
@@ -42,7 +35,6 @@ fun OwnerDetailScreen(
                 title = { Text(owner?.name ?: "Proprietario") },
                 navigationIcon = { IconButton(onClick = onBack) { Text("←") } },
                 actions = {
-                    // Pulsante "nuovo cavallo"
                     IconButton(onClick = onAddHorse) {
                         Icon(Icons.Filled.Add, contentDescription = "Aggiungi cavallo")
                     }
@@ -93,7 +85,6 @@ private fun HorsesList(
                         Text(h.name, style = MaterialTheme.typography.titleMedium)
                         h.breed?.let { Text("Razza: $it") }
                     }
-                    // Pulsante per aprire i movimenti del cavallo
                     IconButton(onClick = { onOpenTxnForHorse(h.id) }) {
                         Icon(Icons.Filled.ReceiptLong, contentDescription = "Movimenti cavallo")
                     }
