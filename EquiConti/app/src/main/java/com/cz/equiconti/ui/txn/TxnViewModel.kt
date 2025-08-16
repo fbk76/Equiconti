@@ -18,27 +18,34 @@ class TxnViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // recupero dell’ID cavallo dallo state (navArgs)
-    private val horseId: Long = checkNotNull(savedStateHandle["horseId"])
+    // Leggo l'ID del cavallo dalla nav route / SavedStateHandle (deve esserci).
+    private val horseId: Long = checkNotNull(savedStateHandle["horseId"]) {
+        "Missing 'horseId' in SavedStateHandle"
+    }
 
-    // lista movimenti per cavallo, ordinati (il Dao già li ordina per timestamp DESC)
+    /** Stream reattivo dei movimenti di questo cavallo. */
     val txns: StateFlow<List<Txn>> =
         repo.getTxns(horseId)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    // inserimento: amountCents può essere >0 (entrata) o <0 (uscita)
-    fun addTxn(amountCents: Long, note: String?) {
-        viewModelScope.launch {
-            repo.insert(
-                Txn(
-                    horseId = horseId,
-                    amountCents = amountCents,
-                    note = note
-                )
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
             )
+
+    /** Inserisce un nuovo movimento. */
+    fun addTxn(amountCents: Long, note: String? = null) {
+        viewModelScope.launch {
+            val txn = Txn(
+                horseId = horseId,
+                amountCents = amountCents,
+                note = note
+                // timestamp e id hanno default nel data class
+            )
+            repo.insert(txn)
         }
     }
 
+    /** Cancella un movimento esistente. */
     fun deleteTxn(txn: Txn) {
         viewModelScope.launch { repo.delete(txn) }
     }
