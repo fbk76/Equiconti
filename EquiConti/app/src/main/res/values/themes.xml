@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Tema dell’app: eredita dal tema Material3 DayNight senza ActionBar -->
-    <style name="Theme.Equiconti" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- NIENTE windowActionBar / colorPrimaryVariant ecc. (deprecati in M3) -->
-        <!-- Esempi di personalizzazione sicura -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
-
-        <!-- Se usi view system con TextInputLayout/Buttons ecc., il pacchetto material fornisce i widget -->
+    <!-- Tema dell’app -->
+    <style name="Theme.Equiconti" parent="Theme.Material3.DayNight">
+        <!-- Colore status bar trasparente su API 21+ -->
+        <item name="android:statusBarColor"
+              tools:targetApi="21">@android:color/transparent</item>
+        <!-- Aggiungi qui eventuali altri item (colori, typography, ecc.) -->
     </style>
 
 </resources>
