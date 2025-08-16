@@ -1,28 +1,23 @@
-package com.cz.equiconti.ui
+package com.cz.equiconti.ui.owner
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.cz.equiconti.data.Horse
+import com.cz.equiconti.data.HorseDao
 import com.cz.equiconti.data.Owner
-import com.cz.equiconti.data.Repo
+import com.cz.equiconti.data.OwnerDao
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 @HiltViewModel
 class OwnersViewModel @Inject constructor(
-    private val repo: Repo
+    private val ownerDao: OwnerDao,
+    private val horseDao: HorseDao
 ) : ViewModel() {
 
-    val owners: StateFlow<List<Owner>> =
-        repo.owners()
-            .map { it }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** Proprietario singolo (può essere null se non esiste) */
+    fun ownerFlow(ownerId: Long): Flow<Owner?> = ownerDao.getOwnerById(ownerId)
 
-    fun addOwner(name: String) {
-        viewModelScope.launch { repo.addOwner(name) }
-    }
+    /** Lista cavalli del proprietario */
+    fun horses(ownerId: Long): Flow<List<Horse>> = horseDao.getHorses(ownerId)
 }
