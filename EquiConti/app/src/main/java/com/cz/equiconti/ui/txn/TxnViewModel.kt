@@ -5,9 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.cz.equiconti.data.Repo
 import com.cz.equiconti.data.Txn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -15,7 +14,17 @@ class TxnViewModel @Inject constructor(
     private val repo: Repo
 ) : ViewModel() {
 
-    fun txns(horseId: Long): StateFlow<List<Txn>> =
-        repo.getTxns(horseId)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun txns(horseId: Long): Flow<List<Txn>> = repo.getTxns(horseId)
+
+    fun addTxn(horseId: Long, amountCents: Long, note: String?) {
+        viewModelScope.launch {
+            repo.insert(
+                Txn(
+                    horseId = horseId,
+                    amountCents = amountCents,
+                    note = note
+                )
+            )
+        }
+    }
 }
