@@ -8,37 +8,23 @@ import javax.inject.Singleton
 class Repo @Inject constructor(
     private val db: EquiDb
 ) {
-    /* ========= LETTURE REATTIVE (Flow) ========= */
+    /* ========= LETTURE REATTIVE ========= */
+    fun getOwners(): Flow<List<Owner>> = db.ownerDao().getOwners()
+    fun getHorses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getHorses(ownerId)
+    fun getTxns(horseId: Long): Flow<List<Txn>> = db.txnDao().getTxns(horseId)
 
-    fun getOwners(): Flow<List<Owner>> =
-        db.ownerDao().getOwners()
+    fun owner(id: Long): Flow<Owner?> = db.ownerDao().observeById(id)
 
-    fun getHorses(ownerId: Long): Flow<List<Horse>> =
-        db.horseDao().getHorses(ownerId)
+    /* ========= LETTURE ONE-SHOT ========= */
+    suspend fun getOwnerById(id: Long): Owner? = db.ownerDao().getById(id)
 
-    fun getTxns(horseId: Long): Flow<List<Txn>> =
-        db.txnDao().getTxns(horseId)
+    /* ========= SCRITTURE ========= */
+    suspend fun upsert(owner: Owner): Long = db.ownerDao().upsert(owner)
+    suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
 
-    /* ========= SCRITTURE (TXN) =========
-       Allineate ai metodi presenti in TxnDao:
-       - insert(txn): Long
-       - delete(txn): Unit
-    */
+    suspend fun upsert(horse: Horse): Long = db.horseDao().upsert(horse)
+    suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
 
-    suspend fun insert(txn: Txn): Long =
-        db.txnDao().insert(txn)
-
-    suspend fun delete(txn: Txn) =
-        db.txnDao().delete(txn)
-
-    /* ========= NOTA SU OWNER/HORSE =========
-       Se/Quando aggiungerai nei rispettivi DAO i metodi @Upsert/@Insert/@Delete,
-       potrai sbloccare anche queste funzioni:
-
-       suspend fun upsert(owner: Owner): Long = db.ownerDao().upsert(owner)
-       suspend fun delete(owner: Owner) = db.ownerDao().delete(owner)
-
-       suspend fun upsert(horse: Horse): Long = db.horseDao().upsert(horse)
-       suspend fun delete(horse: Horse) = db.horseDao().delete(horse)
-    */
+    suspend fun insert(txn: Txn): Long = db.txnDao().insert(txn)
+    suspend fun delete(txn: Txn) = db.txnDao().delete(txn)
 }
