@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema base per Material3 (MDC) -->
+    <!-- Tema semplice, senza item legacy che fanno fallire il linking -->
     <style name="Theme.Equiconti" parent="Theme.Material3.DayNight" />
 </resources>
