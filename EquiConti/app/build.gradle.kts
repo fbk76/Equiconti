@@ -1,3 +1,32 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
+}
+
+android {
+    namespace = "com.cz.equiconti"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.cz.equiconti"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
+    }
+}
+
 dependencies {
     // Kotlin/AndroidX di base
     implementation("androidx.core:core-ktx:1.13.1")
@@ -5,9 +34,7 @@ dependencies {
 
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")   // <-- per ViewModel
-
-    // (opzionale ma utile con Compose)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
     // Compose BOM + Material3
@@ -21,13 +48,13 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    // Navigation (Compose)
+    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
-    // Material (legacy Views, se ti serve)
+    // Material legacy (se serve)
     implementation("com.google.android.material:material:1.12.0")
 
-    // Room (KSP)
+    // Room (con KSP)
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
