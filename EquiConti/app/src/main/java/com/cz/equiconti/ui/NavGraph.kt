@@ -36,7 +36,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Aggiunta cavallo (usa il form e salva tramite ViewModel interno allo screen)
+        // Aggiunta cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
