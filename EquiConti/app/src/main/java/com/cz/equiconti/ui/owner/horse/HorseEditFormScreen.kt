@@ -1,63 +1,36 @@
 package com.cz.equiconti.ui.owner.horse
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.cz.equiconti.data.Horse
+import com.cz.equiconti.ui.owner.OwnersViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Schermata che usa il form e salva davvero un nuovo cavallo per un dato ownerId,
+ * poi torna indietro.
+ */
 @Composable
-fun HorseEditFormScreen(
-    title: String = "Cavallo",
-    initialName: String = "",
+fun HorseAddScreen(
+    ownerId: Long,
     onBack: () -> Unit,
-    onSave: (String) -> Unit
+    vm: OwnersViewModel = hiltViewModel()
 ) {
-    var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(initialName))
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Indietro"
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { onSave(name.text.trim()) },
-                        enabled = name.text.isNotBlank()
-                    ) {
-                        Icon(Icons.Filled.Save, contentDescription = "Salva")
-                    }
-                }
+    HorseEditFormScreen(
+        title = "Nuovo cavallo",
+        initialName = "",
+        onBack = onBack,
+        onSave = { name ->
+            // monthlyFeeCents a 0: l’utente potrà gestirlo in seguito (o aggiungilo al form se vuoi)
+            vm.upsertHorse(
+                Horse(
+                    id = 0L,
+                    ownerId = ownerId,
+                    name = name,
+                    monthlyFeeCents = 0L,
+                    notes = null
+                )
             )
+            onBack()
         }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nome cavallo") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
+    )
 }
