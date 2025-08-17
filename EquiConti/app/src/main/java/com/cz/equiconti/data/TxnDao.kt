@@ -3,6 +3,7 @@ package com.cz.equiconti.data
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -15,13 +16,16 @@ interface TxnDao {
     @Delete
     suspend fun delete(txn: Txn)
 
-    // Filtra le transazioni di un owner passando dalla relazione horse -> owner
+    // Tutte le transazioni dei cavalli di un owner:
+    // selezioniamo SOLO righe dalla tabella txns (mappatura più semplice per Room)
+    @RewriteQueriesToDropUnusedColumns
     @Query("""
-        SELECT t.* 
-        FROM txns AS t
-        INNER JOIN horses AS h ON h.id = t.horseId
-        WHERE h.ownerId = :ownerId
-        ORDER BY t.date DESC
+        SELECT * 
+        FROM txns
+        WHERE horseId IN (
+            SELECT id FROM horses WHERE ownerId = :ownerId
+        )
+        ORDER BY date DESC
     """)
     fun getByOwner(ownerId: Long): Flow<List<Txn>>
 }
