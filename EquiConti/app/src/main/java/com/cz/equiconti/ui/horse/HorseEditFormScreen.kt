@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -25,18 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
-/**
- * Schermata di creazione/modifica cavallo.
- *
- * @param horseId  id del cavallo se modifica, altrimenti null (creazione)
- * @param initialName   valore iniziale nome
- * @param initialBreed  razza iniziale (facoltativo)
- * @param initialYear   anno di nascita iniziale (facoltativo)
- * @param initialNotes  note iniziali (facoltativo)
- * @param onBack   callback per tornare indietro
- * @param onSave   callback di salvataggio: (name, breed, year, notes) -> Unit
- */
-@OptIn(ExperimentalMaterial3Api::class) // solo per TopAppBar (stabile ma richiede opt-in in alcune versioni)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HorseEditFormScreen(
     horseId: Long? = null,
@@ -56,20 +46,18 @@ fun HorseEditFormScreen(
         topBar = {
             TopAppBar(
                 title = { Text(if (horseId == null) "Nuovo cavallo" else "Modifica cavallo") },
-                navigationIcon = { /* se vuoi inserire un icona Back in futuro */ },
                 colors = TopAppBarDefaults.topAppBarColors()
             )
         }
-    ) { padding ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .then(Modifier.padding(padding))
+                .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            // Nome (obbligatorio)
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -80,7 +68,6 @@ fun HorseEditFormScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Razza (facoltativa)
             OutlinedTextField(
                 value = breed,
                 onValueChange = { breed = it },
@@ -91,12 +78,10 @@ fun HorseEditFormScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Anno di nascita numerico e max 4 cifre
             OutlinedTextField(
                 value = yearText,
                 onValueChange = { newValue ->
-                    // Solo cifre e max 4
-                    yearText = newValue.filter { ch -> ch.isDigit() }.take(4)
+                    yearText = newValue.filter { it.isDigit() }.take(4)
                 },
                 label = { Text("Anno nascita (opz.)") },
                 singleLine = true,
@@ -106,7 +91,6 @@ fun HorseEditFormScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Note
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
