@@ -81,7 +81,9 @@ fun exportTxnsPdf(
 
     fun newPage(title: String) {
         pdf.finishPage(page)
-        page = pdf.startPage(PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, pdf.pages.size + 1).create())
+        page = pdf.startPage(
+            PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, pdf.pages.size + 1).create()
+        )
         canvas = page.canvas
         y = top
         canvas.drawText(title, left, y, titlePaint)
@@ -118,11 +120,13 @@ fun exportTxnsPdf(
         totIn += inc
         totOut += out
 
-        val dateStr = Instant.ofEpochMilli(t.timestamp).atZone(zone).toLocalDate().format(fmtDate)
+        // ✅ campi corretti dalla data class Txn
+        val dateStr = Instant.ofEpochMilli(t.createdAt).atZone(zone).toLocalDate().format(fmtDate)
+        val opText = t.notes ?: ""
+
         var cx = left
         canvas.drawText(dateStr, cx, y, textPaint); cx += colDateW
 
-        val opText = t.note ?: ""
         val maxChars = 34
         val opClip = if (opText.length > maxChars) opText.take(maxChars - 1) + "…" else opText
         canvas.drawText(opClip, cx, y, textPaint); cx += colOpW
