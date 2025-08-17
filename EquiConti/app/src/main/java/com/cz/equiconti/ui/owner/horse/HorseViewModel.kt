@@ -1,37 +1,29 @@
 package com.cz.equiconti.ui.owner.horse
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cz.equiconti.data.Horse
 import com.cz.equiconti.data.Repo
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class HorseViewModel @Inject constructor(
-    private val repo: Repo // <-- lo userai quando collegherai Room
+    private val repo: Repo
 ) : ViewModel() {
 
-    /**
-     * Aggiunge un cavallo per l'owner indicato.
-     * Al momento fa solo log per non dipendere dal DB.
-     */
+    /** Crea un cavallo legato a ownerId, solo con il nome minimo. */
     fun addHorse(ownerId: Long, name: String) {
+        if (name.isBlank()) return
         viewModelScope.launch {
-            Log.d("HorseVM", "addHorse(ownerId=$ownerId, name=$name)")
-            // TODO: collega al DB, es:
-            // repo.addHorse(ownerId, name)
-        }
-    }
-
-    /**
-     * Aggiorna un cavallo esistente (placeholder).
-     */
-    fun updateHorse(horseId: Long, name: String) {
-        viewModelScope.launch {
-            Log.d("HorseVM", "updateHorse(horseId=$horseId, name=$name)")
-            // TODO: collega al DB
+            repo.upsertHorse(
+                Horse(
+                    id = 0L,
+                    ownerId = ownerId,
+                    name = name
+                )
+            )
         }
     }
 }
