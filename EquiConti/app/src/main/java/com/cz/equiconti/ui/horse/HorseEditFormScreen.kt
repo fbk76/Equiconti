@@ -1,16 +1,26 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+package com.cz.equiconti.ui.horse
 
-package com.cz.equiconti.ui.owner.horse
-
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -18,65 +28,59 @@ import androidx.compose.ui.unit.dp
 /**
  * Schermata di creazione/modifica cavallo.
  *
- * @param horseId   se non null, stai modificando un cavallo esistente (carica i dati a monte)
- * @param onSave    callback con i valori inseriti (name, breed, year)
- * @param onBack    callback per tornare indietro
+ * @param horseId  id del cavallo se modifica, altrimenti null (creazione)
+ * @param initialName   valore iniziale nome
+ * @param initialBreed  razza iniziale (facoltativo)
+ * @param initialYear   anno di nascita iniziale (facoltativo)
+ * @param initialNotes  note iniziali (facoltativo)
+ * @param onBack   callback per tornare indietro
+ * @param onSave   callback di salvataggio: (name, breed, year, notes) -> Unit
  */
+@OptIn(ExperimentalMaterial3Api::class) // solo per TopAppBar (stabile ma richiede opt-in in alcune versioni)
 @Composable
 fun HorseEditFormScreen(
     horseId: Long? = null,
-    onSave: (name: String, breed: String?, year: Int?) -> Unit,
-    onBack: () -> Unit,
-    // opzionale: valori iniziali se li passi da VM
     initialName: String = "",
-    initialBreed: String? = null,
+    initialBreed: String = "",
     initialYear: Int? = null,
+    initialNotes: String = "",
+    onBack: () -> Unit = {},
+    onSave: (name: String, breed: String?, year: Int?, notes: String?) -> Unit = { _, _, _, _ -> }
 ) {
     var name by rememberSaveable { mutableStateOf(initialName) }
-    var breed by rememberSaveable { mutableStateOf(initialBreed ?: "") }
+    var breed by rememberSaveable { mutableStateOf(initialBreed) }
     var yearText by rememberSaveable { mutableStateOf(initialYear?.toString() ?: "") }
-
-    val canSave = name.isNotBlank()
+    var notes by rememberSaveable { mutableStateOf(initialNotes) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(if (horseId == null) "Nuovo cavallo" else "Modifica cavallo") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro")
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            val year = yearText.toIntOrNull()
-                            onSave(name.trim(), breed.trim().ifEmpty { null }, year)
-                        },
-                        enabled = canSave
-                    ) {
-                        Icon(Icons.Filled.Save, contentDescription = "Salva")
-                    }
-                }
+                navigationIcon = { /* se vuoi inserire un icona Back in futuro */ },
+                colors = TopAppBarDefaults.topAppBarColors()
             )
         }
-    ) { inner ->
+    ) { padding ->
         Column(
             modifier = Modifier
-                .padding(inner)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(rememberScrollState())
+                .then(Modifier.padding(padding))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top
         ) {
+            // Nome (obbligatorio)
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nome *") },
+                label = { Text("Nome*") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(Modifier.height(12.dp))
+
+            // Razza (facoltativa)
             OutlinedTextField(
                 value = breed,
                 onValueChange = { breed = it },
@@ -85,28 +89,54 @@ fun HorseEditFormScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(Modifier.height(12.dp))
+
+            // Anno di nascita numerico e max 4 cifre
             OutlinedTextField(
                 value = yearText,
-                onValueChange = { yearText = it.filter { ch -> ch.isDigit() }.take(4) },
+                onValueChange = { newValue ->
+                    // Solo cifre e max 4
+                    yearText = newValue.filter { ch -> ch.isDigit() }.take(4)
+                },
                 label = { Text("Anno nascita (opz.)") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
+
+            // Note
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Note (opz.)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    val year = yearText.toIntOrNull()
-                    onSave(name.trim(), breed.trim().ifEmpty { null }, year)
+                    val yearInt = yearText.toIntOrNull()
+                    val breedOut = breed.ifBlank { null }
+                    val notesOut = notes.ifBlank { null }
+                    onSave(name.trim(), breedOut, yearInt, notesOut)
+                    onBack()
                 },
-                enabled = canSave,
+                enabled = name.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Filled.Save, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
                 Text("Salva")
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Annulla")
             }
         }
     }
