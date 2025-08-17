@@ -8,14 +8,16 @@ import javax.inject.Singleton
 class Repo @Inject constructor(
     private val db: EquiDb
 ) {
-    // stream reattivi
+    // ===== Owners =====
     fun getOwners(): Flow<List<Owner>> = db.ownerDao().getOwners()
+
+    // ===== Horses =====
     fun getHorses(ownerId: Long): Flow<List<Horse>> = db.horseDao().getHorses(ownerId)
+
+    suspend fun upsertHorse(horse: Horse): Long = db.horseDao().upsert(horse)
+    suspend fun deleteHorse(horse: Horse) = db.horseDao().delete(horse)
+
+    // ===== Transactions (se servono più avanti) =====
     fun getTxns(horseId: Long): Flow<List<Txn>> = db.txnDao().getTxns(horseId)
-
-    // scritture per Txn (coerenti con il tuo TxnDao)
-    suspend fun insert(txn: Txn): Long = db.txnDao().insert(txn)
-    suspend fun delete(txn: Txn) = db.txnDao().delete(txn)
-
-    // (eventuali metodi per Owner/Horse li puoi aggiungere quando servono)
+    // aggiungeremo qui insert/delete Txn quando colleghiamo la schermata Movimenti
 }
