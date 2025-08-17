@@ -11,6 +11,7 @@ import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.owner.horse.HorseAddScreen
 import com.cz.equiconti.ui.txn.TxnScreen
+import com.cz.equiconti.ui.txn.AddTxnScreen   // ⬅️ nuova import
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -59,7 +60,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Movimenti del proprietario
+        // Movimenti del proprietario (lista)
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -68,6 +69,24 @@ fun NavGraph(navController: NavHostController) {
             TxnScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() }
+                // Se nel tuo TxnScreen hai il pulsante "+", fagli chiamare:
+                // navController.navigate("owner/$ownerId/txns/add")
+            )
+        }
+
+        // ➕ Inserimento nuovo movimento
+        composable(
+            route = "owner/{ownerId}/txns/add",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            AddTxnScreen(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onSaved = {
+                    // Dopo il salvataggio, torna alla lista movimenti
+                    navController.popBackStack() // esce da /txns/add
+                }
             )
         }
     }
