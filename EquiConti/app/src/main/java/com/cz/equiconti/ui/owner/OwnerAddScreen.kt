@@ -1,8 +1,6 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
@@ -30,9 +28,7 @@ fun OwnerAddScreen(
 
     fun doSave() {
         val n = name.text.trim()
-        if (n.isNotEmpty()) {
-            vm.saveOwner(n, onBack)
-        }
+        if (n.isNotEmpty()) vm.saveOwner(n, onBack)
     }
 
     Scaffold(
@@ -55,7 +51,10 @@ fun OwnerAddScreen(
         Column(
             modifier = Modifier
                 .padding(pad)
+                .imePadding()
+                .navigationBarsPadding()
                 .padding(16.dp)
+                .fillMaxSize()
         ) {
             OutlinedTextField(
                 value = name,
@@ -64,6 +63,19 @@ fun OwnerAddScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
+            Spacer(Modifier.weight(1f))
+
+            // Pulsante SALVA sempre visibile
+            Button(
+                onClick = ::doSave,
+                enabled = name.text.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Save, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Salva")
+            }
         }
     }
 }
