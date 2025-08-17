@@ -16,16 +16,16 @@ interface TxnDao {
     @Delete
     suspend fun delete(txn: Txn)
 
-    // Tutte le transazioni dei cavalli di un owner:
-    // selezioniamo SOLO righe dalla tabella txns (mappatura più semplice per Room)
+    // Tutte le transazioni dei cavalli di un owner.
+    // Nessuna JOIN diretta: subquery su horses -> mapping più semplice per Room.
     @RewriteQueriesToDropUnusedColumns
     @Query("""
-        SELECT * 
+        SELECT *
         FROM txns
         WHERE horseId IN (
             SELECT id FROM horses WHERE ownerId = :ownerId
         )
-        ORDER BY date DESC
+        ORDER BY id DESC
     """)
     fun getByOwner(ownerId: Long): Flow<List<Txn>>
 }
