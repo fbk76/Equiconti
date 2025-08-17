@@ -1,55 +1,50 @@
 package com.cz.equiconti.ui.txn
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.cz.equiconti.data.Horse
-import com.cz.equiconti.data.Repo
-import com.cz.equiconti.data.Txn
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import javax.inject.Inject
+import androidx.compose.material.icons.Icons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTxnScreen(
     ownerId: Long,
     onBack: () -> Unit,
-    vm: AddTxnViewModel = hiltViewModel()
+    vm: TxnViewModel = hiltViewModel()
 ) {
-    val horses by vm.horses.collectAsState()
-    var selectedHorse: Horse? by remember { mutableStateOf(null) }
-    var expanded by remember { mutableStateOf(false) }
+    // campi semplice: horseId testuale, importo in cent, note
+    var horseIdText by rememberSaveable { mutableStateOf("") }
+    var amountText by rememberSaveable { mutableStateOf("") }
+    var notes by rememberSaveable { mutableStateOf("") }
 
-    var amountTxt by remember { mutableStateOf(TextFieldValue("")) }
-    var notes by remember { mutableStateOf(TextFieldValue("")) }
-
-    val canSave = selectedHorse != null && (amountTxt.text.toLongOrNull() ?: 0L) != 0L
+    // (opzionale) potresti mostrare i cavalli in dropdown:
+    // val horses by vm.getHorses(ownerId).collectAsState(initial = emptyList())
 
     fun doSave() {
-        val horse = selectedHorse ?: return
-        val cents = amountTxt.text.toLongOrNull() ?: 0L
-        if (cents == 0L) return
-        vm.saveTxn(
-            horseId = horse.id,
-            amountCents = cents,
-            notes = notes.text.trim().ifEmpty { null },
-            onDone = onBack
-        )
+        val horseId = horseIdText.toLongOrNull()
+        val amount = amountText.toLongOrNull()
+        if (horseId != null && amount != null) {
+            vm.addTxn(horseId = horseId, amountCents = amount, notes = notes.ifBlank { null })
+            onBack()
+        }
     }
 
     Scaffold(
@@ -62,7 +57,10 @@ fun AddTxnScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = ::doSave, enabled = canSave) {
+                    IconButton(
+                        onClick = ::doSave,
+                        enabled = horseIdText.isNotBlank() && amountText.isNotBlank()
+                    ) {
                         Icon(Icons.Filled.Save, contentDescription = "Salva")
                     }
                 }
@@ -73,87 +71,32 @@ fun AddTxnScreen(
             modifier = Modifier
                 .padding(pad)
                 .padding(16.dp)
-                .fillMaxSize()
         ) {
-            // SELEZIONE CAVALLO
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = selectedHorse?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Cavallo") },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                        .clickable { expanded = true }
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    horses.forEach { h ->
-                        DropdownMenuItem(
-                            text = { Text(h.name) },
-                            onClick = {
-                                selectedHorse = h
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
             OutlinedTextField(
-                value = amountTxt,
-                onValueChange = { amountTxt = it },
-                label = { Text("Importo in centesimi") },
+                value = horseIdText,
+                onValueChange = { horseIdText = it },
+                label = { Text("ID cavallo") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(Modifier.height(12.dp))
-
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = { Text("Importo (cent)") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            )
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Note (opzionali)") },
+                label = { Text("Note (opzionale)") },
                 singleLine = false,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = false)
+                    .padding(top = 12.dp)
             )
-        }
-    }
-}
-
-@HiltViewModel
-class AddTxnViewModel @Inject constructor(
-    private val repo: Repo,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    private val ownerId: Long = savedStateHandle.get<Long>("ownerId") ?: 0L
-
-    // cavalli del proprietario per il menu
-    val horses: StateFlow<List<Horse>> =
-        repo.getHorses(ownerId)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    fun saveTxn(horseId: Long, amountCents: Long, notes: String?, onDone: () -> Unit) {
-        viewModelScope.launch {
-            repo.upsertTxn(
-                Txn(
-                    id = 0L,
-                    horseId = horseId,
-                    amountCents = amountCents,
-                    notes = notes
-                )
-            )
-            onDone()
         }
     }
 }
