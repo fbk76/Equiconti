@@ -1,90 +1,111 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cz.equiconti.data.Txn
 
-/**
- * Dettaglio proprietario con lista cavalli.
- * Mostra: titolo, bottone "Movimenti", FAB "Aggiungi cavallo".
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OwnerDetailScreen(
-    ownerId: Long,
-    onBack: () -> Unit,
-    onAddHorse: () -> Unit,
-    onOpenTxns: () -> Unit,
-    vm: OwnerDetailViewModel = hiltViewModel()
-) {
-    // NB: vm.ownerId è quello della route: lo usiamo ma manteniamo la firma richiesta
-    val owner by vm.owner
-    val horses by vm.horses
+fun OwnerDetailScreen(onBack: () -> Unit, vm: OwnerDetailViewModel = hiltViewModel()) {
+    val owner = vm.owner.collectAsState().value
+    val horses = vm.horses.collectAsState().value
+    val txns = vm.txns.collectAsState().value
+    var showHorseDialog = remember { mutableStateOf(false) }
+    var showTxnDialog = remember { mutableStateOf(false) }
+    var horseName = remember { mutableStateOf(TextFieldValue("")) }
+    var txnAmount = remember { mutableStateOf(TextFieldValue("")) }
+    var txnNote = remember { mutableStateOf(TextFieldValue("")) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(owner?.name ?: "Proprietario #$ownerId") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
-                    }
-                },
-                actions = {
-                    TextButton(onClick = onOpenTxns) {
-                        Text("Movimenti")
-                    }
-                }
-            )
-        },
+        topBar = { TopAppBar(title = { Text(owner?.name ?: "Dettaglio") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro") } }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddHorse) {
-                Icon(Icons.Filled.Add, contentDescription = "Nuovo cavallo")
+            Column {
+                FloatingActionButton(onClick = { showHorseDialog.value = true }, modifier = Modifier.padding(bottom = 16.dp)) { Icon(Icons.Filled.Add, contentDescription = "Nuovo cavallo") }
+                FloatingActionButton(onClick = { showTxnDialog.value = true }) { Icon(Icons.Filled.Add, contentDescription = "Nuova transazione") }
             }
         }
-    ) { pad ->
-        if (horses.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Nessun cavallo. Tocca + per aggiungerne uno.")
+    ) { padding ->
+        Column(Modifier.padding(padding).padding(16.dp).fillMaxSize()) {
+            Text("Cavalli", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(8.dp))
+            if (horses.isEmpty()) { Text("Nessun cavallo per questo proprietario.") }
+            else {
+                LazyColumn { items(horses) { h -> Text("- ${h.name}", Modifier.padding(vertical = 6.dp)) } }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(horses, key = { it.id }) { h ->
-                    ElevatedCard(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(h.name, style = MaterialTheme.typography.titleMedium)
-                            if (!h.notes.isNullOrBlank()) {
-                                Spacer(Modifier.height(4.dp))
-                                Text(h.notes!!, style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
+
+            Spacer(Modifier.height(16.dp))
+            Text("Transazioni", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(8.dp))
+            if (txns.isEmpty()) { Text("Nessuna transazione.") }
+            else {
+                LazyColumn {
+                    items(txns) { txn ->
+                        Text("Importo: ${txn.amount} € - Nota: ${txn.note ?: "Nessuna"}", Modifier.padding(vertical = 6.dp))
                     }
                 }
             }
         }
+    }
+
+    if (showHorseDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showHorseDialog.value = false },
+            title = { Text("Nuovo cavallo") },
+            text = { OutlinedTextField(value = horseName.value, onValueChange = { horseName.value = it }, label = { Text("Nome") }) },
+            confirmButton = { TextButton(onClick = { val n = horseName.value.text.trim(); if (n.isNotEmpty()) { vm.addHorse(n); showHorseDialog.value = false; horseName.value = TextFieldValue("") } }) { Text("Salva") } },
+            dismissButton = { TextButton(onClick = { showHorseDialog.value = false }) { Text("Annulla") } }
+        )
+    }
+
+    if (showTxnDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showTxnDialog.value = false },
+            title = { Text("Nuova transazione") },
+            text = {
+                Column {
+                    OutlinedTextField(value = txnAmount.value, onValueChange = { txnAmount.value = it }, label = { Text("Importo") })
+                    OutlinedTextField(value = txnNote.value, onValueChange = { txnNote.value = it }, label = { Text("Nota (opzionale)") })
+                }
+            },
+            confirmButton = { TextButton(onClick = {
+                val amountStr = txnAmount.value.text.trim()
+                val note = txnNote.value.text.trim().ifEmpty { null }
+                val amount = amountStr.toDoubleOrNull()
+                if (amount != null) {
+                    vm.addTxn(amount, note)
+                    showTxnDialog.value = false
+                    txnAmount.value = TextFieldValue("")
+                    txnNote.value = TextFieldValue("")
+                }
+            }) { Text("Salva") } },
+            dismissButton = { TextButton(onClick = { showTxnDialog.value = false }) { Text("Annulla") } }
+        )
     }
 }
