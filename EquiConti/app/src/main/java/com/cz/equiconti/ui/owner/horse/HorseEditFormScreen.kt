@@ -3,6 +3,7 @@ package com.cz.equiconti.ui.owner.horse
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -22,7 +23,7 @@ fun HorseEditFormScreen(
     initialName: String = "",
     onBack: () -> Unit,
     onSave: (String) -> Unit,
-    // parametri aggiunti SOLO per compatibilità con chiamate esistenti
+    // compatibilità con chiamate esistenti:
     monthlyFeeCents: Long = 0L,
     notes: String? = null,
 ) {
