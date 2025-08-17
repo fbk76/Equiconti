@@ -15,6 +15,13 @@ interface TxnDao {
     @Delete
     suspend fun delete(txn: Txn)
 
-    @Query("SELECT * FROM txns WHERE ownerId = :ownerId ORDER BY date DESC")
+    // Filtra le transazioni di un owner passando dalla relazione horse -> owner
+    @Query("""
+        SELECT t.* 
+        FROM txns AS t
+        INNER JOIN horses AS h ON h.id = t.horseId
+        WHERE h.ownerId = :ownerId
+        ORDER BY t.date DESC
+    """)
     fun getByOwner(ownerId: Long): Flow<List<Txn>>
 }
