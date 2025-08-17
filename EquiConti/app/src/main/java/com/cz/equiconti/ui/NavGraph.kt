@@ -8,7 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
-import com.cz.equiconti.ui.owner.horse.HorseAddScreen
+import com.cz.equiconti.ui.owner.horse.HorseEditFormScreen   // <-- usa il nuovo form
 import com.cz.equiconti.ui.txn.TxnScreen
 
 @Composable
@@ -31,20 +31,59 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
+                // nuova rotta "nuovo cavallo"
+                onAddHorse = { navController.navigate("owner/$ownerId/horse/new") },
                 onOpenTxns  = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
-        // Aggiungi cavallo (usa il nuovo form + salvataggio)
+        // === CAVALLI ===
+
+        // 1) Nuovo cavallo
         composable(
-            route = "owner/{ownerId}/addHorse",
+            route = "owner/{ownerId}/horse/new",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-            HorseAddScreen(
-                ownerId = ownerId,
-                onBack = { navController.popBackStack() }
+
+            HorseEditFormScreen(
+                title = "Nuovo cavallo",
+                initialName = "",
+                onBack = { navController.popBackStack() },
+                onSave = { name ->
+                    // TODO: salva il cavallo nel tuo ViewModel/Repo (ownerId, name)
+                    // es.: viewModel.addHorse(ownerId, name)
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // 2) Modifica cavallo (facoltativo, lasciato pronto)
+        composable(
+            route = "owner/{ownerId}/horse/{horseId}/edit?name={name}",
+            arguments = listOf(
+                navArgument("ownerId") { type = NavType.LongType },
+                navArgument("horseId") { type = NavType.LongType },
+                navArgument("name") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val /* ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L */
+                horseId = backStackEntry.arguments?.getLong("horseId") ?: 0L
+            val initialName = backStackEntry.arguments?.getString("name") ?: ""
+
+            HorseEditFormScreen(
+                title = "Modifica cavallo",
+                initialName = initialName,
+                onBack = { navController.popBackStack() },
+                onSave = { name ->
+                    // TODO: aggiorna cavallo nel tuo ViewModel/Repo (horseId, name)
+                    // es.: viewModel.updateHorse(horseId, name)
+                    navController.popBackStack()
+                }
             )
         }
 
