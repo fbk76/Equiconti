@@ -4,46 +4,56 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.cz.equiconti.data.Owner
 
+/**
+ * Schermata lista proprietari (versione minima che compila).
+ * Puoi sostituire l’elenco fittizio con i tuoi dati reali.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnersScreen(
-    onOpenOwner: (Owner) -> Unit,
-    vm: OwnersViewModel = hiltViewModel()
+    onOwnerClick: (ownerId: Long) -> Unit,
+    onAddOwner: () -> Unit
 ) {
-    val owners by vm.owners.collectAsState(initial = emptyList())
+    val fakeOwners = listOf(
+        1L to "Mario Rossi",
+        2L to "Luca Bianchi",
+        3L to "Anna Verdi"
+    )
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Proprietari") }) }
-    ) { pad ->
-        if (owners.isEmpty()) {
-            Box(Modifier.padding(pad).padding(16.dp)) {
-                Text("Nessun proprietario")
-            }
-        } else {
-            LazyColumn(
+    ) { padding ->
+        Column(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            Button(
+                onClick = onAddOwner,
                 modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(owners) { owner ->
-                    ElevatedCard(
+                    .padding(16.dp)
+                    .align(Alignment.End)
+            ) { Text("Aggiungi") }
+
+            LazyColumn(Modifier.fillMaxSize()) {
+                items(fakeOwners) { (id, name) ->
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenOwner(owner) }
+                            .clickable { onOwnerClick(id) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        Column(Modifier.padding(12.dp)) {
-                            // 🔁 Sostituito firstName/lastName -> name
-                            Text(owner.name, style = MaterialTheme.typography.titleMedium)
-                            owner.phone?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                        }
+                        Text(text = name)
                     }
                 }
             }
