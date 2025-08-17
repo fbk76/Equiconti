@@ -1,12 +1,9 @@
 package com.cz.equiconti.ui.owner
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -14,48 +11,44 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.icons.Icons
+import androidx.compose.material3.icons.filled.ArrowBack
 
 /**
- * Versione semplificata:
- * - Niente ownerFlow / horses (placeholders locali) finché non definisci il ViewModel reale.
- * - Icona compatibile: Icons.Filled.List (al posto di Receipt).
+ * Dettaglio proprietario (versione minima che compila).
+ * Mantiene le firme tipiche usate nel NavGraph.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnerDetailScreen(
-    onBack: () -> Unit = {}
+    ownerId: Long,
+    onBack: () -> Unit,
+    onOpenTxns: (horseId: Long) -> Unit
 ) {
-    // Placeholders temporanei per evitare unresolved reference
-    val ownerName: String? = null
-    val horses: List<String> = emptyList()
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(ownerName ?: "Dettaglio proprietario") },
+                title = { Text("Dettaglio proprietario") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        // icona garantita
-                        Icon(imageVector = Icons.Filled.List, contentDescription = "Indietro")
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = "Indietro"
+                        )
                     }
                 }
             )
-        },
-        content = { innerPadding: PaddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp)
-            ) {
-                Text(text = "Informazioni proprietario")
-                if (horses.isEmpty()) {
-                    Text(text = "Nessun cavallo associato")
-                } else {
-                    horses.forEach { h ->
-                        Text("• $h")
-                    }
-                }
-            }
         }
-    )
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxSize()
+        ) {
+            Text("Owner ID: $ownerId")
+            // Qui puoi aggiungere la UI reale (cavalli, movimenti, ecc.)
+            // Chiama onOpenTxns(horseId) quando vuoi aprire i movimenti di un cavallo.
+        }
+    }
 }
