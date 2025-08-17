@@ -5,8 +5,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Repository: strato unico che delega alle DAO.
- * Aggiunti i metodi getHorses(ownerId) e getTxns(ownerId).
+ * Repository centrale che delega alle DAO.
+ * - Owners: getAll, getById, upsert, delete
+ * - Horses: getByOwner, getById, upsert, delete
+ * - Txns:   getByOwner, upsert, delete
  */
 @Singleton
 class Repo @Inject constructor(
@@ -28,9 +30,8 @@ class Repo @Inject constructor(
     suspend fun deleteHorse(horse: Horse) = horseDao.delete(horse)
 
     // -------- Transactions --------
-    /** Tutti i movimenti di un proprietario */
+    /** Tutti i movimenti dei cavalli di un proprietario */
     fun getTxns(ownerId: Long): Flow<List<Txn>> = txnDao.getByOwner(ownerId)
-    fun getTxn(txnId: Long): Flow<Txn?> = txnDao.getById(txnId)
     suspend fun upsertTxn(txn: Txn) = txnDao.upsert(txn)
     suspend fun deleteTxn(txn: Txn) = txnDao.delete(txn)
 }
