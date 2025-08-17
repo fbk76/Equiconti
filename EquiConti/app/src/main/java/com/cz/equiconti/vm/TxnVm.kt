@@ -1,6 +1,5 @@
 package com.cz.equiconti.vm
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cz.equiconti.data.Repo
@@ -11,20 +10,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/**
- * VM per la schermata dei movimenti di un cavallo.
- * Assume che in SavedStateHandle ci sia "horseId".
- */
 @HiltViewModel
 class TxnVm @Inject constructor(
-    private val repo: Repo,
-    savedStateHandle: SavedStateHandle
+    private val repo: Repo
 ) : ViewModel() {
 
-    private val horseId: Long = checkNotNull(savedStateHandle["horseId"])
-
-    /** Flusso di movimenti (sola lettura) */
-    val txns: StateFlow<List<Txn>> =
-        repo.getTxns(horseId)
+    /** Flusso delle transazioni di un owner */
+    fun txns(ownerId: Long): StateFlow<List<Txn>> =
+        repo.getTxns(ownerId)               // <— usa il metodo che aggiungiamo nel Repo (punto 2)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    suspend fun upsert(txn: Txn) = repo.upsertTxn(txn)
+    suspend fun delete(txn: Txn) = repo.deleteTxn(txn)
 }
