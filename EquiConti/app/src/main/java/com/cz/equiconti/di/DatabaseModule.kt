@@ -1,3 +1,4 @@
+// app/src/main/java/com/cz/equiconti/di/DatabaseModule.kt
 package com.cz.equiconti.di
 
 import android.content.Context
