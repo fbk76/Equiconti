@@ -1,127 +1,78 @@
-package com.cz.equiconti.ui.horse
+package com.cz.equiconti.ui.owner.horse
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 
+/**
+ * Schermata semplice per creare/modificare un cavallo.
+ *
+ * @param title      Titolo dell'AppBar (es. "Nuovo cavallo" / "Modifica cavallo")
+ * @param initialName Nome iniziale (vuoto per creazione)
+ * @param onBack     Callback quando si torna indietro
+ * @param onSave     Callback salvataggio: viene passato il nome inserito
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HorseEditFormScreen(
-    horseId: Long? = null,
+    title: String = "Cavallo",
     initialName: String = "",
-    initialBreed: String = "",
-    initialYear: Int? = null,
-    initialNotes: String = "",
-    onBack: () -> Unit = {},
-    onSave: (name: String, breed: String?, year: Int?, notes: String?) -> Unit = { _, _, _, _ -> }
+    onBack: () -> Unit,
+    onSave: (String) -> Unit
 ) {
-    var name by rememberSaveable { mutableStateOf(initialName) }
-    var breed by rememberSaveable { mutableStateOf(initialBreed) }
-    var yearText by rememberSaveable { mutableStateOf(initialYear?.toString() ?: "") }
-    var notes by rememberSaveable { mutableStateOf(initialNotes) }
+    var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(initialName))
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (horseId == null) "Nuovo cavallo" else "Modifica cavallo") },
-                colors = TopAppBarDefaults.topAppBarColors()
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Indietro"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { onSave(name.text.trim()) },
+                        enabled = name.text.isNotBlank()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Save,
+                            contentDescription = "Salva"
+                        )
+                    }
+                }
             )
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top
+                .padding(16.dp)
         ) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nome*") },
+                label = { Text("Nome cavallo") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = breed,
-                onValueChange = { breed = it },
-                label = { Text("Razza (opz.)") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = yearText,
-                onValueChange = { newValue ->
-                    yearText = newValue.filter { it.isDigit() }.take(4)
-                },
-                label = { Text("Anno nascita (opz.)") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text("Note (opz.)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    val yearInt = yearText.toIntOrNull()
-                    val breedOut = breed.ifBlank { null }
-                    val notesOut = notes.ifBlank { null }
-                    onSave(name.trim(), breedOut, yearInt, notesOut)
-                    onBack()
-                },
-                enabled = name.isNotBlank(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Salva")
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Button(
-                onClick = onBack,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Annulla")
-            }
         }
     }
 }
