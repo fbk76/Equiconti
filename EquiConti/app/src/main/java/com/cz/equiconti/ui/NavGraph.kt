@@ -82,10 +82,7 @@ fun NavGraph(navController: NavHostController) {
             AddTxnScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onSaved = {
-                    // dopo il salvataggio torni automaticamente alla lista
-                    navController.popBackStack()
-                }
+                onSaved = { navController.popBackStack() } // ritorna alla lista dopo il salvataggio
             )
         }
     }
