@@ -31,12 +31,13 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onOpenTxns = { navController.navigate("owner/$ownerId/txns") },
+                // NB: per aprire i movimenti ora devi passare un horseId: vedi nota sotto.
+                onOpenTxns = { /* placeholder, vedi nota sotto */ },
                 nav = navController
             )
         }
 
-        // Aggiunta cavallo
+        // Aggiunta cavallo per un proprietario
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -48,14 +49,14 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Movimenti del proprietario
+        // Movimenti per UN cavallo specifico
         composable(
-            route = "owner/{ownerId}/txns",
-            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+            route = "horse/{horseId}/txns",
+            arguments = listOf(navArgument("horseId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            val horseId = backStackEntry.arguments?.getLong("horseId") ?: 0L
             TxnScreen(
-                ownerId = ownerId,
+                horseId = horseId,
                 onBack = { navController.popBackStack() }
             )
         }
