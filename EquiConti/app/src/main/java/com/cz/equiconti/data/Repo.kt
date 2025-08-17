@@ -4,25 +4,33 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Repository: strato unico che delega alle DAO.
+ * Aggiunti i metodi getHorses(ownerId) e getTxns(ownerId).
+ */
 @Singleton
 class Repo @Inject constructor(
-    private val db: EquiDb
+    private val ownerDao: OwnerDao,
+    private val horseDao: HorseDao,
+    private val txnDao: TxnDao
 ) {
-    // ------- Owners -------
-    fun getOwners(): Flow<List<Owner>> = db.ownerDao().getAll()
-    fun getOwner(ownerId: Long): Flow<Owner?> = db.ownerDao().getById(ownerId)
+    // -------- Owners --------
+    fun getOwners(): Flow<List<Owner>> = ownerDao.getAll()
+    fun getOwner(ownerId: Long): Flow<Owner?> = ownerDao.getById(ownerId)
+    suspend fun upsertOwner(owner: Owner) = ownerDao.upsert(owner)
+    suspend fun deleteOwner(owner: Owner) = ownerDao.delete(owner)
 
-    // ------- Horses -------
-    fun getHorsesByOwner(ownerId: Long): Flow<List<Horse>> =
-        db.horseDao().getByOwner(ownerId)
+    // -------- Horses --------
+    /** Tutti i cavalli di un proprietario */
+    fun getHorses(ownerId: Long): Flow<List<Horse>> = horseDao.getByOwner(ownerId)
+    fun getHorse(horseId: Long): Flow<Horse?> = horseDao.getById(horseId)
+    suspend fun upsertHorse(horse: Horse) = horseDao.upsert(horse)
+    suspend fun deleteHorse(horse: Horse) = horseDao.delete(horse)
 
-    suspend fun upsertHorse(horse: Horse) = db.horseDao().upsert(horse)
-    suspend fun deleteHorse(horse: Horse) = db.horseDao().delete(horse)
-
-    // ------- Transactions (Txns) -------
-    fun getTxnsForOwner(ownerId: Long): Flow<List<Txn>> =
-        db.txnDao().getByOwner(ownerId)
-
-    suspend fun upsertTxn(txn: Txn) = db.txnDao().upsert(txn)
-    suspend fun deleteTxn(txn: Txn) = db.txnDao().delete(txn)
+    // -------- Transactions --------
+    /** Tutti i movimenti di un proprietario */
+    fun getTxns(ownerId: Long): Flow<List<Txn>> = txnDao.getByOwner(ownerId)
+    fun getTxn(txnId: Long): Flow<Txn?> = txnDao.getById(txnId)
+    suspend fun upsertTxn(txn: Txn) = txnDao.upsert(txn)
+    suspend fun deleteTxn(txn: Txn) = txnDao.delete(txn)
 }
