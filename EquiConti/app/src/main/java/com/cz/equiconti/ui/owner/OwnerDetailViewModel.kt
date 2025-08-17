@@ -7,9 +7,8 @@ import com.cz.equiconti.data.Horse
 import com.cz.equiconti.data.Owner
 import com.cz.equiconti.data.Repo
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -19,26 +18,13 @@ class OwnerDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val ownerId: Long = checkNotNull(savedStateHandle["ownerId"]) {
-        "Missing ownerId in nav arguments"
-    }
+    val ownerId: Long = savedStateHandle["ownerId"] ?: 0L
 
-    /**
-     * Flow dell’Owner corrente ricavato dalla lista completa.
-     * Non richiede aggiunte ai DAO.
-     */
-    fun ownerFlow(): Flow<Owner?> =
-        repo.getOwners().map { list -> list.firstOrNull { it.id == ownerId } }
+    val owner: StateFlow<Owner?> =
+        repo.getOwner(ownerId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /**
-     * Flow dei cavalli dell’owner.
-     */
-    fun horses(): Flow<List<Horse>> = repo.getHorses(ownerId)
-
-    // Facoltativo: versioni StateFlow pronte per essere collectAsState()
-    val ownerState = ownerFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    val horsesState = horses()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val horses: StateFlow<List<Horse>> =
+        repo.getHorses(ownerId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
