@@ -1,44 +1,67 @@
 package com.cz.equiconti.ui
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 
 /**
- * NavGraph minimale per far compilare:
- * - rimosse le lambda non presenti (onOwnerClick / onAddOwner / onOpenOwner / onOpenTxns, ecc.)
- * - rotta lista proprietari -> dettaglio proprietario (con ownerId come stringa opzionale)
- *
- * Adegua liberamente in seguito aggiungendo i parametri che realmente esistono nelle tue screen.
+ * NavGraph principale dell’app.
+ * - owners -> lista proprietari
+ * - owner/{ownerId} -> dettaglio proprietario
+ * - txns/{horseId} -> (stub) lista movimenti cavallo
  */
 @Composable
-fun AppNavGraph(
-    navController: NavHostController = rememberNavController(),
-    startDestination: String = "owners"
-) {
-    NavHost(navController = navController, startDestination = startDestination) {
+fun AppNavGraph() {
+    val nav = rememberNavController()
 
+    NavHost(navController = nav, startDestination = "owners") {
+
+        // Lista proprietari
         composable("owners") {
-            // Versione senza parametri, in linea con il log (OwnersScreen non li espone).
             OwnersScreen(
-                // Se in futuro aggiungi callback, potrai re-introdurli qui.
-                onOpenOwner = { ownerId ->
-                    navController.navigate("owner/$ownerId")
+                onOwnerClick = { ownerId ->
+                    nav.navigate("owner/$ownerId")
+                },
+                onAddOwner = {
+                    // TODO: schermata “nuovo proprietario”
+                    // per ora non navighiamo da nessuna parte
                 }
             )
         }
 
-        // Rotta dettaglio proprietario con parametro (stringa per essere permissivi)
-        composable("owner/{ownerId}") {
-            // Estrai l'argomento se ti serve; per ora lo ignoriamo nella schermata semplificata
-            // val ownerId = it.arguments?.getString("ownerId")
-            OwnerDetailScreen(
-                onBack = { navController.popBackStack() }
+        // Dettaglio proprietario
+        composable(
+            route = "owner/{ownerId}",
+            arguments = listOf(
+                navArgument("ownerId") { type = NavType.LongType }
             )
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+
+            OwnerDetailScreen(
+                ownerId = ownerId,
+                onBack = { nav.popBackStack() },
+                onOpenTxns = { horseId ->
+                    nav.navigate("txns/$horseId")
+                }
+            )
+        }
+
+        // Stub movimenti cavallo (per evitare rotte mancanti a runtime)
+        composable(
+            route = "txns/{horseId}",
+            arguments = listOf(
+                navArgument("horseId") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val horseId = backStackEntry.arguments?.getLong("horseId") ?: 0L
+            Text("Movimenti cavallo #$horseId (stub)")
         }
     }
 }
