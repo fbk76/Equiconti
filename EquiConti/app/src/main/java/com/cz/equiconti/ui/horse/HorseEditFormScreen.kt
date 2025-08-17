@@ -19,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 
 /**
@@ -38,9 +37,7 @@ fun HorseEditFormScreen(
     onBack: () -> Unit,
     onSave: (String) -> Unit
 ) {
-    var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(initialName))
-    }
+    var name by rememberSaveable { mutableStateOf(initialName) }
 
     Scaffold(
         topBar = {
@@ -56,8 +53,8 @@ fun HorseEditFormScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = { onSave(name.text.trim()) },
-                        enabled = name.text.isNotBlank()
+                        onClick = { onSave(name.trim()) },
+                        enabled = name.isNotBlank()
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Save,
