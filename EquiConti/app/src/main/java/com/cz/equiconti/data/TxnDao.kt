@@ -16,16 +16,24 @@ interface TxnDao {
     @Delete
     suspend fun delete(txn: Txn)
 
-    // Tutte le transazioni dei cavalli di un owner.
-    // Nessuna JOIN diretta: subquery su horses -> mapping più semplice per Room.
+    /** Restituisce una transazione per id (serve a Repo.getTxn). */
+    @Query("SELECT * FROM txns WHERE id = :txnId LIMIT 1")
+    fun getById(txnId: Long): Flow<Txn?>
+
+    /**
+     * Tutte le transazioni dei cavalli di un owner.
+     * Nessuna JOIN diretta: subquery su horses per semplificare la mappatura Room.
+     */
     @RewriteQueriesToDropUnusedColumns
-    @Query("""
+    @Query(
+        """
         SELECT *
         FROM txns
         WHERE horseId IN (
             SELECT id FROM horses WHERE ownerId = :ownerId
         )
         ORDER BY id DESC
-    """)
+        """
+    )
     fun getByOwner(ownerId: Long): Flow<List<Txn>>
 }
