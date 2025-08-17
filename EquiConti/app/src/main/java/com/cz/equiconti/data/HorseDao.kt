@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HorseDao {
 
-    @Query("SELECT * FROM horses WHERE ownerId = :ownerId ORDER BY name COLLATE NOCASE")
+    // Flusso reattivo dei cavalli per proprietario
+    @Query("SELECT * FROM horses WHERE ownerId = :ownerId ORDER BY name")
     fun getHorses(ownerId: Long): Flow<List<Horse>>
 
+    // Inserisce o aggiorna (Room 2.6+)
     @Upsert
     suspend fun upsert(horse: Horse): Long
 
