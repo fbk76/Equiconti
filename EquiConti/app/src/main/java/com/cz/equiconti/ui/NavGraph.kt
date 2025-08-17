@@ -31,8 +31,8 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                // invece di onAddHorse ora navighi direttamente
-                onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
+                onOpenTxns = { navController.navigate("owner/$ownerId/txns") },
+                nav = navController // <-- passiamo il NavController allo screen
             )
         }
 
@@ -45,7 +45,6 @@ fun NavGraph(navController: NavHostController) {
             HorseAddScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() }
-                // onSave è opzionale, se vuoi puoi non passarlo
             )
         }
 
@@ -62,3 +61,4 @@ fun NavGraph(navController: NavHostController) {
         }
     }
 }
+```0
