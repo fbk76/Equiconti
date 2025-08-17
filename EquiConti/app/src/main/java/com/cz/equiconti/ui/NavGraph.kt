@@ -18,15 +18,14 @@ fun NavGraph(navController: NavHostController) {
         startDestination = "owners"
     ) {
         // Lista proprietari
-        composable(route = "owners") {
+        composable("owners") {
             OwnersScreen(
                 onOwnerClick = { ownerId ->
                     navController.navigate("owner/$ownerId")
                 },
                 onAddOwner = {
-                    // Se hai una schermata dedicata alla creazione, cambia rotta qui.
-                    // Per ora apriamo il dettaglio con id 0 (gestiscilo nello screen).
-                    navController.navigate("owner/0")
+                    // Se lo screen gestisce da sé l'inserimento, qui non serve navigare.
+                    // Lascio lo stub per coerenza con la firma richiesta.
                 }
             )
         }
@@ -40,7 +39,6 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
                 onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
             )
         }
@@ -57,7 +55,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Movimenti del proprietario
+        // Movimenti del proprietario (passiamo ownerId)
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
