@@ -1,58 +1,48 @@
 package com.cz.equiconti.ui.owner
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 
 /**
- * Dettaglio proprietario: app bar con back, azione "Aggiungi cavallo"
- * e pulsante per aprire i movimenti del proprietario.
- *
- * @param ownerId     id del proprietario
- * @param onBack      callback per tornare indietro
- * @param onOpenTxns  naviga alla lista movimenti del proprietario
- * @param nav         NavController per navigare alla schermata di aggiunta cavallo
+ * Dettaglio Proprietario.
+ * Versione “safe” senza NavController nel parametro.
+ * Usa solo callback: onBack e onOpenTxns.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OwnerDetailScreen(
     ownerId: Long,
     onBack: () -> Unit,
-    onOpenTxns: () -> Unit,
-    nav: NavHostController
+    onOpenTxns: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dettagli proprietario") },
+                title = { Text(text = "Proprietario #$ownerId") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Indietro"
                         )
                     }
                 },
                 actions = {
-                    // Aggiungi cavallo
-                    IconButton(onClick = { nav.navigate("owner/$ownerId/addHorse") }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Aggiungi cavallo"
-                        )
+                    TextButton(onClick = onOpenTxns) {
+                        Text("Movimenti")
                     }
                 }
             )
@@ -60,31 +50,13 @@ fun OwnerDetailScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
-            // Qui puoi mostrare i dettagli reali del proprietario e la lista cavalli
-            Text(
-                text = "Proprietario #$ownerId",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            // Pulsante/testo tappabile per aprire i movimenti
-            // (sostituisci con un vero Button se preferisci)
-            Text(
-                text = "Vedi movimenti",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 4.dp)
-                    .then(Modifier) // placeholder per eventuali clickable
-            )
-
-            // Esempio: chiama onOpenTxns quando vuoi aprire i movimenti
-            // Se preferisci un vero bottone:
-            // Button(onClick = onOpenTxns) { Text("Vedi movimenti") }
+            // TODO: qui puoi mostrare i dati reali del proprietario e la lista cavalli
+            Text("Dettagli proprietario (placeholder)")
+            Text("Lista cavalli (placeholder)")
         }
     }
 }
