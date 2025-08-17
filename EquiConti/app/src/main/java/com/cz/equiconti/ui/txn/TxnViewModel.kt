@@ -1,52 +1,40 @@
 package com.cz.equiconti.ui.txn
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cz.equiconti.data.Repo
 import com.cz.equiconti.data.Txn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class TxnViewModel @Inject constructor(
-    private val repo: Repo,
-    savedStateHandle: SavedStateHandle
+    private val repo: Repo
 ) : ViewModel() {
 
-    // Leggo l'ID del cavallo dalla nav route / SavedStateHandle (deve esserci).
-    private val horseId: Long = checkNotNull(savedStateHandle["horseId"]) {
-        "Missing 'horseId' in SavedStateHandle"
-    }
+    /**
+     * Stream dei movimenti per un dato proprietario.
+     * Chi usa questa VM può esporre/collezionare questo StateFlow.
+     */
+    fun txnsForOwner(ownerId: Long): StateFlow<List<Txn>> =
+        repo.getTxnsForOwner(ownerId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** Stream reattivo dei movimenti di questo cavallo. */
-    val txns: StateFlow<List<Txn>> =
-        repo.getTxns(horseId)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = emptyList()
-            )
-
-    /** Inserisce un nuovo movimento. */
-    fun addTxn(amountCents: Long, note: String? = null) {
+    /** Inserisce/aggiorna un movimento. */
+    fun addTxn(txn: Txn) {
         viewModelScope.launch {
-            val txn = Txn(
-                horseId = horseId,
-                amountCents = amountCents,
-                note = note
-                // timestamp e id hanno default nel data class
-            )
-            repo.insert(txn)
+            repo.upsertTxn(txn)
         }
     }
 
-    /** Cancella un movimento esistente. */
-    fun deleteTxn(txn: Txn) {
-        viewModelScope.launch { repo.delete(txn) }
+    /** Elimina un movimento. */
+    fun removeTxn(txn: Txn) {
+        viewModelScope.launch {
+            repo.deleteTxn(txn)
+        }
     }
 }
