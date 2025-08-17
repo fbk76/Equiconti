@@ -1,12 +1,15 @@
 package com.cz.equiconti.ui.owner
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -16,10 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
 /**
- * Dettaglio proprietario.
+ * Dettaglio proprietario: app bar con back, azione "Aggiungi cavallo"
+ * e pulsante per aprire i movimenti del proprietario.
  *
- * - Il FAB/azione “+” nella TopAppBar porta a: owner/{ownerId}/addHorse
- * - Non espone più il parametro onAddHorse: la navigazione è gestita internamente
+ * @param ownerId     id del proprietario
+ * @param onBack      callback per tornare indietro
+ * @param onOpenTxns  naviga alla lista movimenti del proprietario
+ * @param nav         NavController per navigare alla schermata di aggiunta cavallo
  */
 @Composable
 fun OwnerDetailScreen(
@@ -31,11 +37,11 @@ fun OwnerDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dettaglio proprietario #$ownerId") },
+                title = { Text("Dettagli proprietario") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.automirrored.filled.ArrowBack,
+                            imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Indietro"
                         )
                     }
@@ -44,23 +50,40 @@ fun OwnerDetailScreen(
                     // Aggiungi cavallo
                     IconButton(onClick = { nav.navigate("owner/$ownerId/addHorse") }) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.filled.Add,
+                            imageVector = Icons.Filled.Add,
                             contentDescription = "Aggiungi cavallo"
                         )
                     }
                 }
             )
         }
-    ) { inner ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(inner)
-                .padding(16.dp)
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Qui puoi mostrare i dati del proprietario, lista cavalli, ecc.
-            Text("Scheda proprietario in sviluppo")
-            // Puoi aggiungere un bottone/azione per movimenti:
+            // Qui puoi mostrare i dettagli reali del proprietario e la lista cavalli
+            Text(
+                text = "Proprietario #$ownerId",
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            // Pulsante/testo tappabile per aprire i movimenti
+            // (sostituisci con un vero Button se preferisci)
+            Text(
+                text = "Vedi movimenti",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 4.dp)
+                    .then(Modifier) // placeholder per eventuali clickable
+            )
+
+            // Esempio: chiama onOpenTxns quando vuoi aprire i movimenti
+            // Se preferisci un vero bottone:
             // Button(onClick = onOpenTxns) { Text("Vedi movimenti") }
         }
     }
