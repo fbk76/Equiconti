@@ -108,4 +108,54 @@ fun exportTxnsPdf(
     var totOut = 0L
 
     txns.forEach { t ->
-        if (y > A4_HEIGHT - 80)
+        if (y > A4_HEIGHT - 80) {
+            newPage("Report movimenti (continua)")
+        }
+
+        val amount = t.amountCents
+        val inc = max(amount, 0L)
+        val out = max(-amount, 0L)
+        totIn += inc
+        totOut += out
+
+        val dateStr = Instant.ofEpochMilli(t.timestamp).atZone(zone).toLocalDate().format(fmtDate)
+        var cx = left
+        canvas.drawText(dateStr, cx, y, textPaint); cx += colDateW
+
+        val opText = t.note ?: ""
+        val maxChars = 34
+        val opClip = if (opText.length > maxChars) opText.take(maxChars - 1) + "…" else opText
+        canvas.drawText(opClip, cx, y, textPaint); cx += colOpW
+
+        canvas.drawText(formatEuro(inc), cx, y, textPaint); cx += colInW
+        canvas.drawText(formatEuro(out), cx, y, textPaint)
+
+        y += lineGap
+    }
+
+    // Totali
+    y += lineGap
+    canvas.drawText("Totale Entrate: ${formatEuro(totIn)}", left, y, headerPaint); y += lineGap
+    canvas.drawText("Totale Uscite:  ${formatEuro(totOut)}", left, y, headerPaint); y += lineGap
+    canvas.drawText("Saldo Finale:   ${formatEuro(totIn - totOut)}", left, y, headerPaint)
+
+    pdf.finishPage(page)
+
+    // Scrivi file
+    val dir = context.getExternalFilesDir(null) ?: context.filesDir
+    val outFile = File(dir, "$fileName.pdf")
+    pdf.writeTo(FileOutputStream(outFile))
+    pdf.close()
+
+    // URI sicuro via FileProvider (assicurati del provider nel Manifest)
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        outFile
+    )
+}
+
+private fun formatEuro(cents: Long): String {
+    val v = cents / 100.0
+    return "€ " + String.format("%.2f", v)
+}
