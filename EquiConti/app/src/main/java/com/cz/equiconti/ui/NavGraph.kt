@@ -32,7 +32,7 @@ fun NavGraph(navController: NavHostController) {
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
                 onOpenTxns = { navController.navigate("owner/$ownerId/txns") },
-                nav = navController // <-- passiamo il NavController allo screen
+                nav = navController
             )
         }
 
