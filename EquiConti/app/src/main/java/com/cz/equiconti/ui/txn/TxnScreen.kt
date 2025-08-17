@@ -3,6 +3,8 @@ package com.cz.equiconti.ui.txn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,32 +24,31 @@ import javax.inject.Inject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TxnScreen(
-    ownerId: Long,                 // compatibile col tuo NavGraph
+    ownerId: Long,
     onBack: () -> Unit,
+    onAddTxn: () -> Unit,                 // <— nuovo callback
     vm: TxnViewModel = hiltViewModel()
 ) {
     val txns by vm.txns.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Movimenti proprietario #$ownerId") }) }
+        topBar = { TopAppBar(title = { Text("Movimenti proprietario #$ownerId") }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddTxn) {
+                Icon(Icons.Filled.Add, contentDescription = "Nuovo movimento")
+            }
+        }
     ) { pad ->
         if (txns.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
-            ) {
+            Box(Modifier.padding(pad).fillMaxSize()) {
                 Text(
                     text = "Nessun movimento",
-                    modifier = Modifier
-                        .padding(16.dp)
+                    modifier = Modifier.padding(16.dp)
                 )
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .padding(pad)
-                    .padding(16.dp),
+                modifier = Modifier.padding(pad).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(txns, key = { it.id }) { t ->
@@ -62,8 +63,6 @@ fun TxnScreen(
 private fun TxnRow(t: Txn) {
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text("ID: ${t.id}", style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(4.dp))
             val amount = "${t.amountCents / 100}.${(t.amountCents % 100).toString().padStart(2, '0')} €"
             Text("Importo: $amount", style = MaterialTheme.typography.titleMedium)
             t.notes?.takeIf { it.isNotBlank() }?.let {
@@ -80,8 +79,6 @@ class TxnViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val ownerId: Long = savedStateHandle.get<Long>("ownerId") ?: 0L
-
-    // flusso movimenti del proprietario
     val txns: StateFlow<List<Txn>> =
         repo.getTxns(ownerId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
