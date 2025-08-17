@@ -37,6 +37,9 @@ android {
     kotlinOptions { jvmTarget = "17" }
 
     buildFeatures { compose = true }
+
+    // Allinea il compiler di Compose
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 }
 
 dependencies {
@@ -44,11 +47,11 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.2")
 
-    // Lifecycle / ViewModel (fondamentali per ViewModel)
+    // Lifecycle / ViewModel
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-    implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.4")        // <-- class ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")    // <-- coroutines
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")// <-- integrazione Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
     // Compose BOM + Material3
     val composeBom = platform("androidx.compose:compose-bom:2024.08.00")
@@ -58,6 +61,9 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    // 👇 aggiunta per le icone (Save, ecc.)
+    implementation("androidx.compose.material:material-icons-extended")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
