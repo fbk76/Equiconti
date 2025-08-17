@@ -1,67 +1,63 @@
 package com.cz.equiconti.ui
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
+import com.cz.equiconti.ui.owner.horse.HorseAddScreen
+import com.cz.equiconti.ui.txn.TxnScreen
 
-/**
- * NavGraph principale dell’app.
- * - owners -> lista proprietari
- * - owner/{ownerId} -> dettaglio proprietario
- * - txns/{horseId} -> (stub) lista movimenti cavallo
- */
 @Composable
-fun AppNavGraph() {
-    val nav = rememberNavController()
-
-    NavHost(navController = nav, startDestination = "owners") {
-
+fun NavGraph(navController: NavHostController) {
+    NavHost(
+        navController = navController,
+        startDestination = "owners"
+    ) {
         // Lista proprietari
         composable("owners") {
-            OwnersScreen(
-                onOwnerClick = { ownerId ->
-                    nav.navigate("owner/$ownerId")
-                },
-                onAddOwner = {
-                    // TODO: schermata “nuovo proprietario”
-                    // per ora non navighiamo da nessuna parte
-                }
-            )
+            OwnersScreen(nav = navController)
         }
 
         // Dettaglio proprietario
         composable(
             route = "owner/{ownerId}",
-            arguments = listOf(
-                navArgument("ownerId") { type = NavType.LongType }
-            )
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
-
             OwnerDetailScreen(
                 ownerId = ownerId,
-                onBack = { nav.popBackStack() },
-                onOpenTxns = { horseId ->
-                    nav.navigate("txns/$horseId")
-                }
+                onBack = { navController.popBackStack() },
+                onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
+                onOpenTxns  = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
-        // Stub movimenti cavallo (per evitare rotte mancanti a runtime)
+        // Aggiungi cavallo (usa il nuovo form + salvataggio)
         composable(
-            route = "txns/{horseId}",
-            arguments = listOf(
-                navArgument("horseId") { type = NavType.LongType }
-            )
+            route = "owner/{ownerId}/addHorse",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val horseId = backStackEntry.arguments?.getLong("horseId") ?: 0L
-            Text("Movimenti cavallo #$horseId (stub)")
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            HorseAddScreen(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // Movimenti del proprietario
+        composable(
+            route = "owner/{ownerId}/txns",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
+            TxnScreen(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
