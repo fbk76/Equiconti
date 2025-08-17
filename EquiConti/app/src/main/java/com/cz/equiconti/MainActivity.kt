@@ -12,7 +12,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Surface(color = MaterialTheme.colorScheme.background) {
-                // ⚠️ prima qui si chiamava AppNavHost(): lo sostituiamo con AppNavGraph()
                 AppNavGraph()
             }
         }
