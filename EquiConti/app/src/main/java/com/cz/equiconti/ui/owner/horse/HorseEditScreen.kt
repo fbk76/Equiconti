@@ -1,44 +1,52 @@
+@file:JvmName("HorseEditScreenFileA") // <— evita il “Duplicate JVM class name”
+
 package com.cz.equiconti.ui.owner.horse
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+/**
+ * Schermata di edit cavallo (stub che compila).
+ * Puoi mantenere la tua UI: il JvmName risolve solo la collisione tra due file omonimi.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HorseEditScreen(
-    ownerId: Long,
+    horseId: Long?,
     onBack: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var breed by remember { mutableStateOf("") }
-
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Nuovo cavallo") }) }
-    ) { pad ->
+        topBar = {
+            TopAppBar(
+                title = { Text("Modifica cavallo") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Indietro")
+                    }
+                }
+            )
+        }
+    ) { padding ->
         Column(
-            Modifier
-                .padding(pad)
+            modifier = Modifier
+                .padding(padding)
                 .padding(16.dp)
-                .fillMaxWidth()
+                .fillMaxSize()
         ) {
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome") })
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = breed, onValueChange = { breed = it }, label = { Text("Razza (opz.)") })
-            Spacer(Modifier.height(20.dp))
-            Button(onClick = {
-                // TODO: salva (usa il tuo VM se già presente)
-                onBack()
-            }) {
-                Text("Salva")
-            }
+            Text("Horse ID: ${horseId ?: 0L}")
+            // TODO: qui i campi reali di edit
         }
     }
 }
