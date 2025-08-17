@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.cz.equiconti.ui.owner.OwnerAddScreen
 import com.cz.equiconti.ui.owner.OwnerDetailScreen
 import com.cz.equiconti.ui.owner.OwnersScreen
 import com.cz.equiconti.ui.owner.horse.HorseAddScreen
@@ -20,13 +21,15 @@ fun NavGraph(navController: NavHostController) {
         // Lista proprietari
         composable("owners") {
             OwnersScreen(
-                onOwnerClick = { ownerId ->
-                    navController.navigate("owner/$ownerId")
-                },
-                onAddOwner = {
-                    // Se lo screen gestisce da sé l'inserimento, qui non serve navigare.
-                    // Lascio lo stub per coerenza con la firma richiesta.
-                }
+                onOwnerClick = { id -> navController.navigate("owner/$id") },
+                onAddOwner = { navController.navigate("addOwner") }
+            )
+        }
+
+        // Aggiunta proprietario
+        composable("addOwner") {
+            OwnerAddScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -39,11 +42,12 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
+                onAddHorse = { navController.navigate("owner/$ownerId/addHorse") },
                 onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
-        // Aggiunta cavallo
+        // Aggiunta cavallo per proprietario
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -55,7 +59,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Movimenti del proprietario (passiamo ownerId)
+        // Movimenti del proprietario
         composable(
             route = "owner/{ownerId}/txns",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
