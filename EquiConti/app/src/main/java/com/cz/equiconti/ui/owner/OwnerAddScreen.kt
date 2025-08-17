@@ -3,6 +3,7 @@ package com.cz.equiconti.ui.owner
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -52,7 +53,9 @@ fun OwnerAddScreen(
         }
     ) { pad ->
         Column(
-            modifier = Modifier.padding(pad).padding(16.dp)
+            modifier = Modifier
+                .padding(pad)
+                .padding(16.dp)
         ) {
             OutlinedTextField(
                 value = name,
