@@ -20,12 +20,16 @@ fun NavGraph(navController: NavHostController) {
         // Lista proprietari
         composable("owners") {
             OwnersScreen(
+                nav = navController,
                 onOwnerClick = { ownerId ->
+                    // apre il dettaglio del proprietario selezionato
                     navController.navigate("owner/$ownerId")
                 },
                 onAddOwner = {
-                    // esempio: se avrai uno screen dedicato aggiungilo qui
-                    // navController.navigate("addOwner")
+                    // apre la schermata di dettaglio in modalità "nuovo".
+                    // Se il tuo OwnerDetailScreen gestisce ownerId=0 come "nuovo", va bene così.
+                    // In caso contrario, dimmelo e ti preparo una rotta dedicata.
+                    navController.navigate("owner/0")
                 }
             )
         }
@@ -39,7 +43,8 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
+                onOpenTxns = { navController.navigate("owner/$ownerId/txns") },
+                nav = navController
             )
         }
 
@@ -62,7 +67,7 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             TxnScreen(
-                horseId = ownerId, // ⚠️ se in realtà serviva horseId cambia qui!
+                ownerId = ownerId,
                 onBack = { navController.popBackStack() }
             )
         }
