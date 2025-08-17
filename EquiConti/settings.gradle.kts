@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "EquiConti"
+rootProject.name = "Equiconti"
 include(":app")
