@@ -19,7 +19,15 @@ fun NavGraph(navController: NavHostController) {
     ) {
         // Lista proprietari
         composable("owners") {
-            OwnersScreen(nav = navController)
+            OwnersScreen(
+                onOwnerClick = { ownerId ->
+                    navController.navigate("owner/$ownerId")
+                },
+                onAddOwner = {
+                    // esempio: se avrai uno screen dedicato aggiungilo qui
+                    // navController.navigate("addOwner")
+                }
+            )
         }
 
         // Dettaglio proprietario
@@ -31,13 +39,11 @@ fun NavGraph(navController: NavHostController) {
             OwnerDetailScreen(
                 ownerId = ownerId,
                 onBack = { navController.popBackStack() },
-                // NB: per aprire i movimenti ora devi passare un horseId: vedi nota sotto.
-                onOpenTxns = { /* placeholder, vedi nota sotto */ },
-                nav = navController
+                onOpenTxns = { navController.navigate("owner/$ownerId/txns") }
             )
         }
 
-        // Aggiunta cavallo per un proprietario
+        // Aggiunta cavallo
         composable(
             route = "owner/{ownerId}/addHorse",
             arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
@@ -49,14 +55,14 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // Movimenti per UN cavallo specifico
+        // Movimenti del proprietario
         composable(
-            route = "horse/{horseId}/txns",
-            arguments = listOf(navArgument("horseId") { type = NavType.LongType })
+            route = "owner/{ownerId}/txns",
+            arguments = listOf(navArgument("ownerId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val horseId = backStackEntry.arguments?.getLong("horseId") ?: 0L
+            val ownerId = backStackEntry.arguments?.getLong("ownerId") ?: 0L
             TxnScreen(
-                horseId = horseId,
+                horseId = ownerId, // ⚠️ se in realtà serviva horseId cambia qui!
                 onBack = { navController.popBackStack() }
             )
         }
