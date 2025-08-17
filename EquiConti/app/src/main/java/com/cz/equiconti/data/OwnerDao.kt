@@ -9,17 +9,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface OwnerDao {
 
-    @Query("SELECT * FROM owners ORDER BY name COLLATE NOCASE")
-    fun getOwners(): Flow<List<Owner>>
+    @Query("SELECT * FROM owners ORDER BY id DESC")
+    fun getAll(): Flow<List<Owner>>
 
-    @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
-    fun observeById(id: Long): Flow<Owner?>
-
-    @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
-    suspend fun getById(id: Long): Owner?
+    @Query("SELECT * FROM owners WHERE id = :ownerId LIMIT 1")
+    fun getById(ownerId: Long): Flow<Owner?>
 
     @Upsert
-    suspend fun upsert(owner: Owner): Long
+    suspend fun upsert(owner: Owner)
 
     @Delete
     suspend fun delete(owner: Owner)
