@@ -38,7 +38,7 @@ android {
 
     buildFeatures { compose = true }
 
-    // Allinea il compiler di Compose
+    // Allinea il compiler di Compose (ok con Kotlin 1.9.x)
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 }
 
@@ -61,7 +61,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    // 👇 aggiunta per le icone (Save, ecc.)
+    // Icone estese (Save, ReceiptLong, ecc.)
     implementation("androidx.compose.material:material-icons-extended")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
@@ -85,7 +85,7 @@ dependencies {
     implementation("androidx.hilt:hilt-work:1.2.0")
     kapt("androidx.hilt:hilt-compiler:1.2.0")
 
-    // Material (Views) opzionale
+    // (Opzionale) Material Views
     implementation("com.google.android.material:material:1.12.0")
 
     // Test
